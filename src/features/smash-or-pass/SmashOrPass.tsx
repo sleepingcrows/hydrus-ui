@@ -341,8 +341,8 @@ export function SmashOrPass() {
       setLoadingB(false)
       setFadingA(false)
       setFadingB(false)
-      queueIndexRef.current += 2
-      loadMatch()
+      queueIndexRef.current = 0
+      fillQueue().then(() => loadMatch())
     }
   }
 
