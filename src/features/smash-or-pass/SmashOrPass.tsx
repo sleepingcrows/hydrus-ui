@@ -35,7 +35,7 @@ export function SmashOrPass() {
   const [urlA, setUrlA] = useState<string | null>(null)
   const [urlB, setUrlB] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [stats, setStats] = useState({ wins: 0, draws: 0 })
+  const [stats, setStats] = useState({ wins: 0, draws: 0, streak: 0 })
   const [tagVersion, setTagVersion] = useState(0)
   const [loadingA, setLoadingA] = useState(false)
   const [loadingB, setLoadingB] = useState(false)
@@ -198,33 +198,39 @@ export function SmashOrPass() {
     let newA: TrueSkillRating
     let newB: TrueSkillRating
 
+    let currentStreak = stats.streak
+
     if (winner === 'left') {
       const result = rate(ratingA, ratingB)
       newA = result.winner
       newB = result.loser
-      setStats((s) => ({ ...s, wins: s.wins + 1 }))
+      currentStreak++
+      setStats((s) => ({ ...s, wins: s.wins + 1, streak: s.streak + 1 }))
     } else if (winner === 'right') {
       const result = rate(ratingB, ratingA)
       newB = result.winner
       newA = result.loser
-      setStats((s) => ({ ...s, wins: s.wins + 1 }))
+      currentStreak++
+      setStats((s) => ({ ...s, wins: s.wins + 1, streak: s.streak + 1 }))
     } else {
       newA = ratingA
       newB = ratingB
-      setStats((s) => ({ ...s, draws: s.draws + 1 }))
+      currentStreak = 0
+      setStats((s) => ({ ...s, draws: s.draws + 1, streak: 0 }))
     }
 
     ratingsRef.current.set(fileA.file_id, newA)
     ratingsRef.current.set(fileB.file_id, newB)
 
     if (winner !== 'draw' && ratingServiceKey) {
-      const WINNER_INC = 5
+      const BASE_INC = 5
       const LOSER_DEC = 2
 
       const winnerId = winner === 'left' ? fileA.file_id : fileB.file_id
       const loserId = winner === 'left' ? fileB.file_id : fileA.file_id
 
-      const winnerNew = (syncedRatingRef.current.get(winnerId) ?? 0) + WINNER_INC
+      const streakBonus = (currentStreak > 0 && currentStreak % 3 === 0) ? (Math.floor(Math.random() * 2) + 1) : 0
+      const winnerNew = (syncedRatingRef.current.get(winnerId) ?? 0) + BASE_INC + streakBonus
       const loserNew = Math.max(0, (syncedRatingRef.current.get(loserId) ?? 0) - LOSER_DEC)
 
       try {
@@ -381,6 +387,7 @@ export function SmashOrPass() {
       </div>
       <div className="flex justify-center gap-6 py-2 text-sm text-gray-500">
         <span>Rounds <b className="text-green-400">{stats.wins}</b></span>
+        {stats.streak > 0 && <span>Streak <b className={stats.streak % 3 === 0 ? 'text-orange-400' : 'text-gray-400'}>{stats.streak}</b></span>}
         <span>Draws <b className="text-yellow-400">{stats.draws}</b></span>
         <span className="text-gray-400">Queue: <b>{Math.max(0, fileIdsRef.current.length - queueIndexRef.current)}</b></span>
       </div>
