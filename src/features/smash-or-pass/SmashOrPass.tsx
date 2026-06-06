@@ -402,9 +402,9 @@ export function SmashOrPass() {
             onClick={() => votingOpen && decide('left')}
           >
             {urlA && fileA?.mime?.startsWith('video/')
-              ? <video src={urlA} className="max-w-full max-h-full object-contain" controls autoPlay loop />
+              ? <video src={urlA} className="w-full h-full object-contain" controls autoPlay loop />
               : urlA
-                ? <img src={urlA} alt="" className="max-w-full max-h-full object-contain" />
+                ? <img src={urlA} alt="" className="w-full h-full object-contain" />
                 : null
             }
             {votingOpen && fileA && (() => {
@@ -436,9 +436,9 @@ export function SmashOrPass() {
             onClick={() => votingOpen && decide('right')}
           >
             {urlB && fileB?.mime?.startsWith('video/')
-              ? <video src={urlB} className="max-w-full max-h-full object-contain" controls autoPlay loop />
+              ? <video src={urlB} className="w-full h-full object-contain" controls autoPlay loop />
               : urlB
-                ? <img src={urlB} alt="" className="max-w-full max-h-full object-contain" />
+                ? <img src={urlB} alt="" className="w-full h-full object-contain" />
                 : null
             }
             {votingOpen && fileB && (() => {
