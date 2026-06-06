@@ -466,9 +466,12 @@ export function SmashOrPass() {
                   <span key={`elo-a-${pulseAKey}`} className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${baseGlow} ${pulseAKey > 0 ? 'elo-pulse' : ''}`}>
                     {rating}
                   </span>
-                  <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded">
-                    [← / A]
-                  </span>
+                  <button
+                    className="bg-black/50 hover:bg-black hover:border hover:border-green-500 border border-transparent text-white text-xs px-2 py-0.5 rounded cursor-pointer transition-colors"
+                    onClick={e => { e.stopPropagation(); votingOpen && decide('left') }}
+                  >
+                    ← / A
+                  </button>
                 </div>
               )
             })()}
@@ -499,9 +502,12 @@ export function SmashOrPass() {
                   <span key={`elo-b-${pulseBKey}`} className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${baseGlow} ${pulseBKey > 0 ? 'elo-pulse' : ''}`}>
                     {rating}
                   </span>
-                  <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded">
-                    [→ / D]
-                  </span>
+                  <button
+                    className="bg-black/50 hover:bg-black hover:border hover:border-green-500 border border-transparent text-white text-xs px-2 py-0.5 rounded cursor-pointer transition-colors"
+                    onClick={e => { e.stopPropagation(); votingOpen && decide('right') }}
+                  >
+                    → / D
+                  </button>
                 </div>
               )
             })()}

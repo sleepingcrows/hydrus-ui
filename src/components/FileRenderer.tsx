@@ -38,30 +38,52 @@ function isText(mime: string): boolean {
 
 function SwfPlayer({ url, className }: { url: string; className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const playerRef = useRef<any>(null)
 
   useEffect(() => {
-    let destroyed = false
-    let player: any = null
+    let cancelled = false
 
     async function init() {
-      const { default: Ruffle } = await import('@ruffle-rs/ruffle')
-      if (destroyed || !containerRef.current) return
-      const ruffle = Ruffle as any
-      player = new ruffle.RufflePlayer()
+      const w = window as any
+      if (!w.RufflePlayer) w.RufflePlayer = { config: {} }
+      w.RufflePlayer.config = w.RufflePlayer.config ?? {}
+      w.RufflePlayer.config.publicPath = '/'
+      await import('@ruffle-rs/ruffle')
+      if (cancelled) return
+      await new Promise<void>(r => setTimeout(r, 0))
+      if (cancelled) return
+      const rp = w.RufflePlayer
+      const source = rp?.local?.() ?? rp?.newest?.() ?? rp?.sources?.local
+      if (!source?.createPlayer) {
+        console.warn('RufflePlayer source not available')
+        return
+      }
+      const el = source.createPlayer()
+      if (cancelled || !containerRef.current) return
+      el.style.width = '100%'
+      el.style.height = '100%'
       containerRef.current.innerHTML = ''
-      containerRef.current.appendChild(player)
-      player.load({ url, allowFullscreen: true })
+      containerRef.current.appendChild(el)
+      playerRef.current = el
+      el.load({ url })
     }
     init()
 
     return () => {
-      destroyed = true
-      player?.destroy?.()
+      playerRef.current?.destroy?.()
     }
   }, [url])
 
   return (
-    <div ref={containerRef} className={className} style={{ width: '100%', height: '100%' }} />
+    <div
+      className={className}
+      style={{ width: '100%', height: '100%' }}
+      onPointerDown={e => e.stopPropagation()}
+      onClick={e => e.stopPropagation()}
+      onKeyDown={e => e.stopPropagation()}
+    >
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+    </div>
   )
 }
 
@@ -167,9 +189,26 @@ function PsdViewer({ url, className }: { url: string; className?: string }) {
   return <canvas ref={canvasRef} className={`max-w-full max-h-full object-contain ${className ?? ''}`} />
 }
 
+function InteractiveMedia({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div
+      className={className}
+      onPointerDown={e => e.stopPropagation()}
+      onClick={e => e.stopPropagation()}
+      onKeyDown={e => e.stopPropagation()}
+    >
+      {children}
+    </div>
+  )
+}
+
 export function FileRenderer({ url, mime, className }: FileRendererProps) {
   if (isVideo(mime)) {
-    return <video src={url} className={className} controls autoPlay loop />
+    return (
+      <InteractiveMedia>
+        <video src={url} controls autoPlay loop />
+      </InteractiveMedia>
+    )
   }
 
   if (isSwf(mime)) {
@@ -186,20 +225,21 @@ export function FileRenderer({ url, mime, className }: FileRendererProps) {
 
   if (isAudio(mime)) {
     return (
-      <div className={`flex items-center justify-center ${className ?? ''}`}>
+      <InteractiveMedia className={`flex items-center justify-center ${className ?? ''}`}>
         <audio src={url} controls autoPlay className="w-full max-w-md" />
-      </div>
+      </InteractiveMedia>
     )
   }
 
   if (isText(mime)) {
     return (
-      <iframe
-        src={url}
-        className={className}
-        title="File preview"
-        style={{ width: '100%', height: '100%', border: 'none' }}
-      />
+      <InteractiveMedia>
+        <iframe
+          src={url}
+          title="File preview"
+          style={{ width: '100%', height: '100%', border: 'none' }}
+        />
+      </InteractiveMedia>
     )
   }
 
