@@ -41,6 +41,8 @@ export function SmashOrPass() {
   const [loadingB, setLoadingB] = useState(false)
   const [fadingA, setFadingA] = useState(false)
   const [fadingB, setFadingB] = useState(false)
+  const [pulseA, setPulseA] = useState(false)
+  const [pulseB, setPulseB] = useState(false)
 
   const smashPassTags = useSettingsStore((s) => s.smashPassTags)
   const setSmashPassTags = useSettingsStore((s) => s.setSmashPassTags)
@@ -206,12 +208,16 @@ export function SmashOrPass() {
       newB = result.loser
       currentStreak++
       setStats((s) => ({ ...s, wins: s.wins + 1, streak: s.streak + 1 }))
+      setPulseA(true)
+      setTimeout(() => setPulseA(false), 600)
     } else if (winner === 'right') {
       const result = rate(ratingB, ratingA)
       newB = result.winner
       newA = result.loser
       currentStreak++
       setStats((s) => ({ ...s, wins: s.wins + 1, streak: s.streak + 1 }))
+      setPulseB(true)
+      setTimeout(() => setPulseB(false), 600)
     } else {
       newA = ratingA
       newB = ratingB
@@ -419,7 +425,7 @@ export function SmashOrPass() {
               const rating = (s ?? 0).toString() + ' ELO'
               return (
                 <div className="absolute bottom-2 left-2 flex flex-col items-start gap-0.5">
-                  <span className="bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono">
+                  <span className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${pulseA ? 'elo-pulse' : ''}`}>
                     {rating}
                   </span>
                   <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded">
@@ -453,7 +459,7 @@ export function SmashOrPass() {
               const rating = (s ?? 0).toString() + ' ELO'
               return (
                 <div className="absolute bottom-2 right-2 flex flex-col items-end gap-0.5">
-                  <span className="bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono">
+                  <span className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${pulseB ? 'elo-pulse' : ''}`}>
                     {rating}
                   </span>
                   <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded">
