@@ -7,14 +7,12 @@ import { ConnectionSettings } from './features/settings/ConnectionSettings'
 import { SearchPage } from './features/search/SearchPage'
 import { SmashOrPass } from './features/smash-or-pass/SmashOrPass'
 import { TagAnalyticsPanel } from './features/smash-or-pass/TagAnalyticsPanel'
-import { HotkeySettings } from './features/settings/HotkeySettings'
-
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
 })
 
-type Tab = 'search' | 'smash-pass' | 'analytics' | 'leaderboard' | 'favorites' | 'settings' | 'hotkeys'
+type Tab = 'search' | 'smash-pass' | 'analytics' | 'leaderboard' | 'favorites' | 'settings'
 
 export default function App() {
   const { connected, hydrate } = useApiStore()
@@ -37,7 +35,6 @@ export default function App() {
     { id: 'leaderboard', label: 'Leaderboard' },
     { id: 'favorites', label: 'Favorites' },
     { id: 'analytics', label: 'Analytics' },
-    { id: 'hotkeys', label: 'Hotkeys' },
     { id: 'settings', label: 'Settings' },
   ]
 
@@ -79,7 +76,6 @@ export default function App() {
           {tab === 'leaderboard' && <SearchPage key="leaderboard" presetTags={['system:has count for skill']} title="Leaderboard" sortByRating displayLimit={500} />}
           {tab === 'favorites' && <SearchPage key="favorites" presetTags={['system:rating for Like-Dislike is like']} title="Favorites" />}
           {tab === 'analytics' && <TagAnalyticsPanel />}
-          {tab === 'hotkeys' && <HotkeySettings />}
           {tab === 'settings' && <ConnectionSettings />}
         </main>
       </div>

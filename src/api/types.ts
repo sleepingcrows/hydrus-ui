@@ -112,21 +112,6 @@ export function isRatingService(s: Service): s is RatingService {
   return RATING_SERVICE_TYPES.has(s.type)
 }
 
-export interface HotkeyBinding {
-  key: string
-  ctrl?: boolean
-  shift?: boolean
-  alt?: boolean
-  meta?: boolean
-  scope?: 'global' | 'gallery' | 'smash-pass' | 'search' | 'ratings'
-  service_key?: string
-}
-
-export interface HotkeyConfig {
-  version: number
-  bindings: Record<string, HotkeyBinding>
-}
-
 export interface TagRatingRecord {
   id: string
   tag: string
