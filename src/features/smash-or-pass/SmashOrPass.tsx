@@ -52,6 +52,7 @@ export function SmashOrPass() {
   const syncedRatingRef = useRef<Map<number, number>>(new Map())
   const loadingRef = useRef(false)
   const fillingRef = useRef(false)
+  const roundRef = useRef(0)
 
   const ratingService = useRatingServicesStore((s) =>
     s.services.find((rs) => rs.type === SERVICE_TYPE.INC_DEC_RATING) ?? null
@@ -288,11 +289,14 @@ export function SmashOrPass() {
     console.log('  ratingA:', newA.mu.toFixed(1), '±', newA.sigma.toFixed(2))
     console.log('  ratingB:', newB.mu.toFixed(1), '±', newB.sigma.toFixed(2))
 
+    const thisRound = ++roundRef.current
+
     if (winner === 'left') {
       queueIndexRef.current += 1
       setFadingB(true)
       setLoadingB(true)
       const newB = await loadFileByIndex(queueIndexRef.current + 1)
+      if (roundRef.current !== thisRound) return
       if (newB) {
         setFileB(newB)
         if (!ratingsRef.current.has(newB.file_id)) {
@@ -303,16 +307,18 @@ export function SmashOrPass() {
           syncedRatingRef.current.set(newB.file_id, typeof hydrusVal === 'number' ? hydrusVal : 0)
         }
         getFileUrl(newB.hash).then((u) => {
+          if (roundRef.current !== thisRound) return
           if (u) setUrlB(u)
           setLoadingB(false)
-          setTimeout(() => setFadingB(false), 150)
-        }).catch(() => { setLoadingB(false); setFadingB(false) })
+          setTimeout(() => { if (roundRef.current === thisRound) setFadingB(false) }, 150)
+        }).catch(() => { if (roundRef.current !== thisRound) return; setLoadingB(false); setFadingB(false) })
       }
     } else if (winner === 'right') {
       queueIndexRef.current += 1
       setFadingA(true)
       setLoadingA(true)
       const newA = await loadFileByIndex(queueIndexRef.current + 1)
+      if (roundRef.current !== thisRound) return
       if (newA) {
         setFileA(newA)
         if (!ratingsRef.current.has(newA.file_id)) {
@@ -323,12 +329,14 @@ export function SmashOrPass() {
           syncedRatingRef.current.set(newA.file_id, typeof hydrusVal === 'number' ? hydrusVal : 0)
         }
         getFileUrl(newA.hash).then((u) => {
+          if (roundRef.current !== thisRound) return
           if (u) setUrlA(u)
           setLoadingA(false)
-          setTimeout(() => setFadingA(false), 150)
-        }).catch(() => { setLoadingA(false); setFadingA(false) })
+          setTimeout(() => { if (roundRef.current === thisRound) setFadingA(false) }, 150)
+        }).catch(() => { if (roundRef.current !== thisRound) return; setLoadingA(false); setFadingA(false) })
       }
     } else {
+      roundRef.current++
       queueIndexRef.current += 2
       loadMatch()
     }
