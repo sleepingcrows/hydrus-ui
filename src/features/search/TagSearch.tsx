@@ -78,7 +78,7 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus }: TagSearch
           onKeyDown={handleKeyDown}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          placeholder="Type a tag..."
+          placeholder="Type a tag... Enter to add, Shift+Enter to search"
           className="w-full outline-none bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
         />
         {isFocused && input && results.length > 0 && (
