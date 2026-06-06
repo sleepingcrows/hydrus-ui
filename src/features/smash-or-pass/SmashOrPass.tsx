@@ -194,8 +194,6 @@ export function SmashOrPass() {
 
   useEffect(() => {
     syncedRatingRef.current.clear()
-    setGlowA(0)
-    setGlowB(0)
   }, [configuredKey])
 
   async function decide(winner: 'left' | 'right' | 'draw') {
