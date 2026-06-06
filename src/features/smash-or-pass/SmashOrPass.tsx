@@ -384,64 +384,68 @@ export function SmashOrPass() {
         )}
 
         {/* Left file */}
-        <div
-          className={`flex-1 relative bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center transition-opacity duration-200 ${fadingA ? 'opacity-10' : ''} ${votingOpen ? 'cursor-pointer' : ''}`}
-          onClick={() => votingOpen && decide('left')}
-        >
-          {urlA && fileA?.mime?.startsWith('video/')
-            ? <video src={urlA} className="max-w-full max-h-full object-contain" controls autoPlay loop />
-            : urlA
-              ? <img src={urlA} alt="" className="max-w-full max-h-full object-contain" />
-              : null
-          }
-          {votingOpen && fileA && (() => {
-            const s = syncedRatingRef.current.get(fileA.file_id)
-            const rating = (s ?? 0).toString() + ' ELO'
-            return (
-              <div className="absolute bottom-2 left-2 flex flex-col items-start gap-0.5">
-                <span className="bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono">
-                  {rating}
-                </span>
-                <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded">
-                  [← / A]
-                </span>
-              </div>
-            )
-          })()}
+        <div className="flex-1 relative">
+          <div
+            className={`absolute inset-0 bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center transition-opacity duration-200 ${fadingA ? 'opacity-10' : ''} ${votingOpen ? 'cursor-pointer' : ''}`}
+            onClick={() => votingOpen && decide('left')}
+          >
+            {urlA && fileA?.mime?.startsWith('video/')
+              ? <video src={urlA} className="max-w-full max-h-full object-contain" controls autoPlay loop />
+              : urlA
+                ? <img src={urlA} alt="" className="max-w-full max-h-full object-contain" />
+                : null
+            }
+            {votingOpen && fileA && (() => {
+              const s = syncedRatingRef.current.get(fileA.file_id)
+              const rating = (s ?? 0).toString() + ' ELO'
+              return (
+                <div className="absolute bottom-2 left-2 flex flex-col items-start gap-0.5">
+                  <span className="bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono">
+                    {rating}
+                  </span>
+                  <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded">
+                    [← / A]
+                  </span>
+                </div>
+              )
+            })()}
+          </div>
           {loadingA && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
+            <div className="absolute inset-0 flex items-center justify-center z-20">
               <span className="bg-gray-800 text-gray-300 px-3 py-1.5 rounded text-xs">Loading...</span>
             </div>
           )}
         </div>
 
         {/* Right file */}
-        <div
-          className={`flex-1 relative bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center transition-opacity duration-200 ${fadingB ? 'opacity-10' : ''} ${votingOpen ? 'cursor-pointer' : ''}`}
-          onClick={() => votingOpen && decide('right')}
-        >
-          {urlB && fileB?.mime?.startsWith('video/')
-            ? <video src={urlB} className="max-w-full max-h-full object-contain" controls autoPlay loop />
-            : urlB
-              ? <img src={urlB} alt="" className="max-w-full max-h-full object-contain" />
-              : null
-          }
-          {votingOpen && fileB && (() => {
-            const s = syncedRatingRef.current.get(fileB.file_id)
-            const rating = (s ?? 0).toString() + ' ELO'
-            return (
-              <div className="absolute bottom-2 right-2 flex flex-col items-end gap-0.5">
-                <span className="bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono">
-                  {rating}
-                </span>
-                <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded">
-                  [→ / D]
-                </span>
-              </div>
-            )
-          })()}
+        <div className="flex-1 relative">
+          <div
+            className={`absolute inset-0 bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center transition-opacity duration-200 ${fadingB ? 'opacity-10' : ''} ${votingOpen ? 'cursor-pointer' : ''}`}
+            onClick={() => votingOpen && decide('right')}
+          >
+            {urlB && fileB?.mime?.startsWith('video/')
+              ? <video src={urlB} className="max-w-full max-h-full object-contain" controls autoPlay loop />
+              : urlB
+                ? <img src={urlB} alt="" className="max-w-full max-h-full object-contain" />
+                : null
+            }
+            {votingOpen && fileB && (() => {
+              const s = syncedRatingRef.current.get(fileB.file_id)
+              const rating = (s ?? 0).toString() + ' ELO'
+              return (
+                <div className="absolute bottom-2 right-2 flex flex-col items-end gap-0.5">
+                  <span className="bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono">
+                    {rating}
+                  </span>
+                  <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded">
+                    [→ / D]
+                  </span>
+                </div>
+              )
+            })()}
+          </div>
           {loadingB && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
+            <div className="absolute inset-0 flex items-center justify-center z-20">
               <span className="bg-gray-800 text-gray-300 px-3 py-1.5 rounded text-xs">Loading...</span>
             </div>
           )}
