@@ -192,6 +192,12 @@ export function SmashOrPass() {
     if (smashPassTags.length > 0) setTagVersion((v) => v + 1)
   }, [smashPassTags.join(',')])
 
+  useEffect(() => {
+    syncedRatingRef.current.clear()
+    setGlowA(0)
+    setGlowB(0)
+  }, [configuredKey])
+
   async function decide(winner: 'left' | 'right' | 'draw') {
     if (!fileA || !fileB) return
 
