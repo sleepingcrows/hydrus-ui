@@ -66,6 +66,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
   const searchIdRef = useRef(0)
   const fileIdsRef = useRef<number[]>([])
   const hashesRef = useRef<string[]>([])
+  const hashByIdRef = useRef<Map<number, string>>(new Map())
   const requestedThumbnailsRef = useRef<Set<number>>(new Set())
   const observerRef = useRef<IntersectionObserver | null>(null)
   const trashServiceKeysRef = useRef<Set<string>>(new Set())
@@ -169,6 +170,11 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
       // Set fileIds/hashes immediately so thumbnails start loading
       fileIdsRef.current = ids
       hashesRef.current = hs
+      const byId = new Map<number, string>()
+      for (let i = 0; i < ids.length; i++) {
+        if (hs[i]) byId.set(ids[i], hs[i])
+      }
+      hashByIdRef.current = byId
       setFileIds(ids)
       setHashes(hs)
 
@@ -354,8 +360,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
           const id = Number(entry.target.getAttribute('data-id'))
           if (!id || requestedThumbnailsRef.current.has(id)) continue
           requestedThumbnailsRef.current.add(id)
-          const idx = fileIdsRef.current.indexOf(id)
-          const hash = hashesRef.current[idx]
+          const hash = hashByIdRef.current.get(id)
           if (!hash) continue
           const sid = searchIdRef.current
           getThumbnailUrl(hash)
