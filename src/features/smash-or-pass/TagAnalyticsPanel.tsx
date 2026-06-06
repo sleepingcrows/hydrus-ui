@@ -24,12 +24,18 @@ export function TagAnalyticsPanel() {
   const [minAppearances, setMinAppearances] = useState(3)
   const [sortBy, setSortBy] = useState<'ratio' | 'count' | 'rating' | 'weight'>('weight')
   const [mode, setMode] = useState<'stats' | 'prefs'>('prefs')
+  const [namespaceFilter, setNamespaceFilter] = useState<string>('all')
 
   const handleModeChange = (newMode: 'stats' | 'prefs') => {
     setMode(newMode)
     if (newMode === 'stats' && sortBy === 'weight') setSortBy('ratio')
     if (newMode === 'prefs' && (sortBy === 'ratio')) setSortBy('weight')
   }
+
+  const allNamespaces = [...new Set([
+    ...tagStats.map((t) => { const i = t.tag.indexOf(':'); return i > 0 ? t.tag.slice(0, i) : '(none)' }),
+    ...tagPrefs.map((t) => { const i = t.tag.indexOf(':'); return i > 0 ? t.tag.slice(0, i) : '(none)' }),
+  ])].sort()
 
   useEffect(() => {
     loadStats()
@@ -46,7 +52,14 @@ export function TagAnalyticsPanel() {
     setTotalRated(total)
   }
 
-  const sortedStats = [...tagStats].sort((a, b) => {
+  const nsFilter = (t: { tag: string }) => {
+    if (namespaceFilter === 'all') return true
+    const i = t.tag.indexOf(':')
+    const ns = i > 0 ? t.tag.slice(0, i) : '(none)'
+    return ns === namespaceFilter
+  }
+
+  const sortedStats = [...tagStats].filter(nsFilter).sort((a, b) => {
     if (sortBy === 'count') return b.count - a.count
     if (sortBy === 'rating') return b.current_rating - a.current_rating
     if (sortBy === 'weight') return b.current_rating - a.current_rating
@@ -54,7 +67,7 @@ export function TagAnalyticsPanel() {
   })
 
   const sortedPrefs = [...tagPrefs]
-    .filter((t) => t.appearances >= minAppearances)
+    .filter((t) => t.appearances >= minAppearances && nsFilter(t))
     .sort((a, b) => {
       if (sortBy === 'count') return b.appearances - a.appearances
       if (sortBy === 'weight') return b.weight - a.weight
@@ -114,6 +127,18 @@ export function TagAnalyticsPanel() {
         >
           Ratio
         </button>
+        {allNamespaces.length > 1 && (
+          <select
+            className="text-xs border rounded px-2 py-1 bg-white dark:bg-gray-800 dark:border-gray-600"
+            value={namespaceFilter}
+            onChange={(e) => setNamespaceFilter(e.target.value)}
+          >
+            <option value="all">All namespaces</option>
+            {allNamespaces.map((ns) => (
+              <option key={ns} value={ns}>{ns}</option>
+            ))}
+          </select>
+        )}
         <button className="text-xs text-red-500 ml-auto" onClick={async () => {
           await clearTagHistory()
           loadStats()
