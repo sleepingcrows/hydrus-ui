@@ -1,5 +1,7 @@
 # hydrus-ui
 
+![preview](doc/preview.png)
+
 Vibecoded. Here be dragons.
 
 Hydrus tag rating tool with TrueSkill-based tag analytics, Smash/Pass voting, and gallery browsing.
