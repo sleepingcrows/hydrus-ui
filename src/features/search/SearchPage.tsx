@@ -7,6 +7,7 @@ import { GalleryCarousel } from './GalleryCarousel'
 import { TagChip } from '../../components/TagChip'
 import { fetchServices } from '../../api/services'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
+import { useSettingsStore } from '../../stores/settings-store'
 
 const PAGE_SIZE = 200
 
@@ -455,9 +456,9 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
               {(() => {
                 const f = files.get(id)
                 if (!f) return null
-                const likeService = useRatingServicesStore.getState().services
-                  .find((s) => s.type === SERVICE_TYPE.LIKE_DISLIKE_RATING)
-                const likeKey = likeService?.service_key
+                const configuredKey = useSettingsStore.getState().likeServiceKey
+                const services = useRatingServicesStore.getState().services
+                const likeKey = configuredKey || services.find((s) => s.type === SERVICE_TYPE.LIKE_DISLIKE_RATING)?.service_key
                 if (!likeKey) return null
                 const val = f.ratings?.[likeKey]
                 if (val == null || typeof val !== 'boolean') return null

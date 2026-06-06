@@ -126,6 +126,24 @@ export function ConnectionSettings() {
         )}
       </div>
 
+      <div className="mt-3">
+        <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Like/Dislike service for Gallery hearts</label>
+        <select
+          className="w-full border dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono"
+          value={useSettingsStore((s) => s.likeServiceKey)}
+          onChange={(e) => useSettingsStore.getState().setLikeServiceKey(e.target.value)}
+        >
+          <option value="">Auto-detect (first like/dislike)</option>
+          {useRatingServicesStore((s) => s.services)
+            .filter((svc) => [SERVICE_TYPE.LIKE_DISLIKE_RATING].includes(svc.type as number))
+            .map((svc) => (
+              <option key={svc.service_key} value={svc.service_key}>
+                {svc.name} - {svc.service_key}
+              </option>
+            ))}
+        </select>
+      </div>
+
       <hr className="border-gray-200 dark:border-gray-700" />
       <NamespaceColorsConfig />
     </div>

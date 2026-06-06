@@ -3,6 +3,7 @@ import { getFileUrl } from '../../api/search'
 import type { FileMetadata } from '../../api/types'
 import { SERVICE_TYPE } from '../../api/types'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
+import { useSettingsStore } from '../../stores/settings-store'
 import { setRating } from '../../api/ratings'
 
 interface Props {
@@ -33,8 +34,9 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   const hashRef = useRef(file?.hash)
   hashRef.current = file?.hash
   const likeKeyRef = useRef<string | undefined>(undefined)
-  likeKeyRef.current = useRatingServicesStore.getState().services
-    .find((s) => s.type === SERVICE_TYPE.LIKE_DISLIKE_RATING)?.service_key
+  const configuredLikeKey = useSettingsStore.getState().likeServiceKey
+  const services = useRatingServicesStore.getState().services
+  likeKeyRef.current = configuredLikeKey || services.find((s) => s.type === SERVICE_TYPE.LIKE_DISLIKE_RATING)?.service_key
   const likeValRef = useRef<boolean | null>(null)
   likeValRef.current = likeKeyRef.current && file?.ratings?.[likeKeyRef.current] != null
     ? file.ratings[likeKeyRef.current] as boolean
