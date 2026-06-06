@@ -347,6 +347,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
     : null
 
   function handleKeyDown(e: globalThis.KeyboardEvent) {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return
     if (galleryIndex !== null) return
     if (e.key === 'Enter' && selectedIdx >= 0) {
       e.preventDefault()

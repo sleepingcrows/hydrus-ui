@@ -7,6 +7,7 @@ import { useSettingsStore } from '../../stores/settings-store'
 import { rate, createRating, type TrueSkillRating } from './trueskill'
 import { insertTagRatingRecords, getAllFileRatings, upsertFileRating, clearAllRatings } from './tag-history'
 import { SERVICE_TYPE, FILE_SORT_TYPES } from '../../api/types'
+import { TagSearch } from '../search/TagSearch'
 
 const FILE_LIMIT = 200
 const REFILL_THRESHOLD = FILE_LIMIT * 0.2
@@ -35,6 +36,10 @@ export function SmashOrPass() {
   const [urlB, setUrlB] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [stats, setStats] = useState({ wins: 0, draws: 0 })
+  const [tagVersion, setTagVersion] = useState(0)
+
+  const smashPassTags = useSettingsStore((s) => s.smashPassTags)
+  const setSmashPassTags = useSettingsStore((s) => s.setSmashPassTags)
 
   const fileIdsRef = useRef<number[]>([])
   const hashesRef = useRef<string[]>([])
@@ -54,8 +59,10 @@ export function SmashOrPass() {
     if (fillingRef.current) return
     fillingRef.current = true
     try {
+      const custom = useSettingsStore.getState().smashPassTags
+      const tags = custom.length > 0 ? custom : ['system:everything']
       const result = await searchFiles({
-        tags: ['system:everything'],
+        tags,
         file_sort_type: FILE_SORT_TYPES.RANDOM,
         file_sort_asc: false,
         return_hashes: true,
@@ -155,7 +162,6 @@ export function SmashOrPass() {
           console.warn('Migration clear failed:', e)
         }
       }
-      loadMatch()
       try {
         const ratings = await getAllFileRatings()
         for (const r of ratings) {
@@ -167,9 +173,16 @@ export function SmashOrPass() {
       } catch (e) {
         console.warn('Could not load saved ratings (starting fresh):', e)
       }
+      const tagsRaw = localStorage.getItem('hydrus-smashpass-tags')
+      const hasSavedTags = tagsRaw ? (() => { try { return JSON.parse(tagsRaw).length > 0 } catch { return false } })() : false
+      if (!hasSavedTags) loadMatch()
     }
     init()
   }, [])
+
+  useEffect(() => {
+    if (smashPassTags.length > 0) setTagVersion((v) => v + 1)
+  }, [smashPassTags.join(',')])
 
   async function decide(winner: 'left' | 'right' | 'draw') {
     if (!fileA || !fileB) return
@@ -276,6 +289,7 @@ export function SmashOrPass() {
   }
 
   function handleKeyDown(e: globalThis.KeyboardEvent) {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return
     if (e.key === 'ArrowLeft' || e.key === 'a') { e.preventDefault(); decide('left') }
     else if (e.key === 'ArrowRight' || e.key === 'd') { e.preventDefault(); decide('right') }
     else if (e.key === ' ' || e.key === 's') { e.preventDefault(); decide('draw') }
@@ -286,10 +300,27 @@ export function SmashOrPass() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   })
 
+  useEffect(() => {
+    loadingRef.current = false
+    fillingRef.current = false
+    setLoading(true)
+    setFileA(null)
+    setFileB(null)
+    setUrlA(null)
+    setUrlB(null)
+    fillQueue().then(() => {
+      queueIndexRef.current = 0
+      loadMatch()
+    })
+  }, [tagVersion])
+
   const votingOpen = !loading && fileA && fileB && urlA && urlB
 
   return (
     <div className="flex flex-col h-full">
+      <div className="px-2 pt-1">
+        <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
+      </div>
       <div className="flex justify-center gap-6 py-2 text-sm text-gray-500">
         <span>Wins <b className="text-green-400">{stats.wins}</b></span>
         <span>Draws <b className="text-yellow-400">{stats.draws}</b></span>

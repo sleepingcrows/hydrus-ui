@@ -94,6 +94,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return
       switch (e.key) {
         case 'Escape':
           onClose()
