@@ -46,6 +46,12 @@ button:focus-visible {
   animation: elo-throb 1s ease-in-out infinite;
 }
 
+.mosaic-item {
+  /*width: 150px;*/
+  break-inside: avoid;
+  margin-bottom: 8px;
+}
+
 .elo-glow {
   animation: elo-glow 1.5s ease-in-out infinite;
 }

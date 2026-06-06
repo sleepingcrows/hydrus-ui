@@ -8,8 +8,12 @@ import { TagChip } from '../../components/TagChip'
 import { fetchServices } from '../../api/services'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
+import Masonry from 'masonry-layout'
+import imagesLoaded from 'imagesloaded'
 
 const PAGE_SIZE = 200
+const COL_WIDTH = 150
+const COL_GAP = 8
 
 function InboxIcon() {
   return (
@@ -55,6 +59,8 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
   const [sortAsc, setSortAsc] = useState(false)
   const [page, setPage] = useState(0)
 
+  const galleryLayoutMode = useSettingsStore((s) => s.galleryLayoutMode)
+
   const tagsRef = useRef(tags)
   const sortTypeRef = useRef(sortType)
   const sortAscRef = useRef(sortAsc)
@@ -67,6 +73,8 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
   const trashServiceKeysRef = useRef<Set<string>>(new Set())
   const filesRef = useRef<Map<number, FileMetadata>>(new Map())
   const loadingPageRef = useRef(false)
+  const masonryRef = useRef<Masonry | null>(null)
+  const gridRef = useRef<HTMLDivElement | null>(null)
 
   tagsRef.current = tags
   sortTypeRef.current = sortType
@@ -298,6 +306,30 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
     return () => thumbnailObserver.disconnect()
   }, [thumbnailObserver])
 
+  useEffect(() => {
+    if (galleryLayoutMode !== 'mosaic') {
+      const msnry = masonryRef.current
+      if (msnry?.destroy) {
+        msnry.destroy()
+        masonryRef.current = null
+      }
+      return
+    }
+    const grid = gridRef.current
+    if (!grid) return
+
+    grid.style.position = 'relative'
+    grid.style.width = '100%'
+
+    setTimeout(() => {
+      if (!gridRef.current) return
+      const gridWidth = gridRef.current.offsetWidth
+      const cols = Math.max(1, Math.floor((gridWidth + COL_GAP) / (COL_WIDTH + COL_GAP)))
+      gridRef.current.style.columnCount = String(cols)
+      gridRef.current.style.columnGap = `${COL_GAP}px`
+    }, 0)
+  }, [galleryLayoutMode])
+
   const thumbnailRef = useCallback((el: HTMLElement | null) => {
     if (el) observerRef.current?.observe(el)
   }, [])
@@ -414,18 +446,23 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
 
       <div className="flex flex-1 overflow-hidden">
         <div
-          className="flex-1 overflow-y-auto p-2 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2 auto-rows-max"
+          className={`flex-1 min-w-0 overflow-y-auto p-2 ${galleryLayoutMode === 'mosaic' ? '' : ''}`}
           ref={scrollRef}
           tabIndex={-1}
+          style={galleryLayoutMode === 'mosaic' ? { width: '100%', boxSizing: 'border-box' } : undefined}
         >
+          <div
+            ref={gridRef}
+            className={galleryLayoutMode === 'mosaic' ? 'mosaic-grid' : 'grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2 auto-rows-max'}
+          >
           {displayFileIds.map((id, i) => (
             <div
               key={id}
               ref={thumbnailRef}
               data-id={id}
-              className={`relative aspect-square bg-gray-100 dark:bg-gray-800 rounded overflow-hidden cursor-pointer border-2 ${
+              className={`bg-gray-100 dark:bg-gray-800 rounded overflow-hidden cursor-pointer border-2 mb-2 ${galleryLayoutMode === 'grid' ? 'aspect-square' : 'mosaic-item'} ${
                 i === selectedIdx ? 'border-blue-500' : 'border-transparent'
-              }`}
+              } relative`}
               onClick={() => setSelectedIdx(i)}
               onDoubleClick={() => setGalleryIndex(i)}
             >
@@ -476,13 +513,13 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
             </div>
           ))}
           {fileIds.length === 0 && !loading && (
-            <div className="col-span-full text-center text-gray-400 py-8">{presetTags ? 'No files found' : 'Add tags and click Search'}</div>
+            <div className={galleryLayoutMode === 'mosaic' ? 'text-center text-gray-400 py-8 w-full' : 'col-span-full text-center text-gray-400 py-8'}>{presetTags ? 'No files found' : 'Add tags and click Search'}</div>
           )}
-          {loading && <div className="col-span-full text-center text-gray-400 py-8">Searching...</div>}
+          {loading && <div className={galleryLayoutMode === 'mosaic' ? 'text-center text-gray-400 py-8 w-full' : 'col-span-full text-center text-gray-400 py-8'}>Searching...</div>}
 
           {fileIds.length > 0 && (
             <>
-            <div className="col-span-full flex items-center justify-center gap-2 py-4 text-sm text-gray-500">
+            <div className={`flex items-center justify-center gap-2 py-4 text-sm text-gray-500 ${galleryLayoutMode === 'mosaic' ? 'w-full' : 'col-span-full'}`}>
               <span className="px-3">
                 Loaded {page + 1} / {totalPages} pages · {displayFileIds.length} / {fileIds.length} files
               </span>
@@ -494,9 +531,10 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
                 Load next page ›
               </button>
             </div>
-            <div ref={sentinelRef} className="col-span-full h-2" />
+            <div ref={sentinelRef} className={galleryLayoutMode === 'mosaic' ? 'w-full h-2' : 'col-span-full h-2'} />
             </>
           )}
+        </div>
         </div>
 
         {selectedFile && (
