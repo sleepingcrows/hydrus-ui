@@ -14,9 +14,10 @@ interface Props {
   hasMore?: boolean
   onRequestMore?: () => void
   onRatingChange?: (hash: string) => void | Promise<void>
+  sortByRating?: boolean
 }
 
-export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onRequestMore, onRatingChange }: Props) {
+export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onRequestMore, onRatingChange, sortByRating }: Props) {
   const [index, setIndex] = useState(initialIndex)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -165,7 +166,10 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           if (!key) return null
           const elo = file?.ratings?.[key]
           if (elo == null || typeof elo !== 'number') return null
-          return <span className="text-white/50 text-sm ml-3">{elo} ELO</span>
+          const rank = sortByRating ? index + 1 : 0
+          const rankSuffix = rank % 10 === 1 && rank % 100 !== 11 ? 'st' : rank % 10 === 2 && rank % 100 !== 12 ? 'nd' : rank % 10 === 3 && rank % 100 !== 13 ? 'rd' : 'th'
+          const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' : rank === 3 ? 'text-amber-600' : ''
+          return <span className={`text-sm ml-3 ${rankColor}`}>{sortByRating && rank > 0 ? `${rank}${rankSuffix} · ` : ''}{elo} ELO</span>
         })()}
         {(() => {
           const key = likeKeyRef.current

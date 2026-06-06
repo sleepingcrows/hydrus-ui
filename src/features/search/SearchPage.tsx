@@ -551,7 +551,20 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
                 const cachedRatings = ratingsCacheRef.current.get(id)
                 const elo = cachedRatings?.[incKey]
                 if (elo == null || typeof elo !== 'number') return null
-                return <div className="absolute bottom-1 left-1 bg-black/60 text-white text-[10px] leading-tight px-1 rounded">{elo} ELO</div>
+                const rank = sortByRating ? displayFileIds.indexOf(id) + 1 : 0
+const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' : rank === 3 ? 'text-amber-600' : 'text-white/70'
+                const rankBg = rank <= 3 ? 'bg-black/60' : 'bg-black/50'
+                const rankSuffix = rank % 10 === 1 && rank % 100 !== 11 ? 'st' : rank % 10 === 2 && rank % 100 !== 12 ? 'nd' : rank % 10 === 3 && rank % 100 !== 13 ? 'rd' : 'th'
+                return (
+                  <div className="absolute bottom-1 left-1 flex flex-col items-start gap-0.5">
+                    {sortByRating && rank > 0 && (
+                      <span className={`${rankBg} ${rankColor} text-[10px] px-1 rounded font-bold`}>
+                        {rank}{rankSuffix}
+                      </span>
+                    )}
+                    <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded">{elo} ELO</span>
+                  </div>
+                )
               })()}
               {(() => {
                 const configuredKey = useSettingsStore.getState().likeServiceKey
@@ -688,6 +701,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
           hasMore={page < totalPages - 1}
           onRequestMore={loadMore}
           onRatingChange={handleRatingChange}
+          sortByRating={sortByRating}
         />
       )}
     </div>

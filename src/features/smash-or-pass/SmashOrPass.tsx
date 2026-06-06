@@ -52,6 +52,7 @@ export function SmashOrPass() {
 
   const [syncedRatings, setSyncedRatings] = useState<Map<number, number>>(new Map())
   const [queueRemaining, setQueueRemaining] = useState(0)
+  const [eloRanks, setEloRanks] = useState<Map<number, number>>(new Map())
 
   const fileIdsRef = useRef<number[]>([])
   const hashesRef = useRef<string[]>([])
@@ -203,6 +204,19 @@ export function SmashOrPass() {
   useEffect(() => {
     setSyncedRatings(new Map())
   }, [configuredKey])
+
+  useEffect(() => {
+    if (syncedRatings.size === 0) {
+      setEloRanks(new Map())
+      return
+    }
+    const sorted = [...syncedRatings.entries()].sort((a, b) => b[1] - a[1])
+    const map = new Map<number, number>()
+    for (let i = 0; i < sorted.length; i++) {
+      map.set(sorted[i][0], i + 1)
+    }
+    setEloRanks(map)
+  }, [syncedRatings])
 
   async function decide(winner: 'left' | 'right' | 'draw') {
     if (!fileA || !fileB) return
@@ -460,9 +474,17 @@ export function SmashOrPass() {
             {votingOpen && fileA && (() => {
               const s = syncedRatings.get(fileA.file_id)
               const rating = (s ?? 0).toString() + ' ELO'
+              const rank = eloRanks.get(fileA.file_id) ?? 0
+              const rankSuffix = rank % 10 === 1 && rank % 100 !== 11 ? 'st' : rank % 10 === 2 && rank % 100 !== 12 ? 'nd' : rank % 10 === 3 && rank % 100 !== 13 ? 'rd' : 'th'
+              const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' : rank === 3 ? 'text-amber-600' : ''
               const baseGlow = glowA === 3 ? 'elo-glow' : glowA === 2 ? 'elo-throb' : ''
               return (
                 <div className="absolute bottom-2 left-2 flex flex-col items-start gap-0.5">
+                  {rank > 0 && (
+                    <span className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-bold ${rankColor}`}>
+                      {rank}{rankSuffix}
+                    </span>
+                  )}
                   <span key={`elo-a-${pulseAKey}`} className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${baseGlow} ${pulseAKey > 0 ? 'elo-pulse' : ''}`}>
                     {rating}
                   </span>
@@ -496,9 +518,17 @@ export function SmashOrPass() {
             {votingOpen && fileB && (() => {
               const s = syncedRatings.get(fileB.file_id)
               const rating = (s ?? 0).toString() + ' ELO'
+              const rank = eloRanks.get(fileB.file_id) ?? 0
+              const rankSuffix = rank % 10 === 1 && rank % 100 !== 11 ? 'st' : rank % 10 === 2 && rank % 100 !== 12 ? 'nd' : rank % 10 === 3 && rank % 100 !== 13 ? 'rd' : 'th'
+              const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' : rank === 3 ? 'text-amber-600' : ''
               const baseGlow = glowB === 3 ? 'elo-glow' : glowB === 2 ? 'elo-throb' : ''
               return (
                 <div className="absolute bottom-2 right-2 flex flex-col items-end gap-0.5">
+                  {rank > 0 && (
+                    <span className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-bold ${rankColor}`}>
+                      {rank}{rankSuffix}
+                    </span>
+                  )}
                   <span key={`elo-b-${pulseBKey}`} className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${baseGlow} ${pulseBKey > 0 ? 'elo-pulse' : ''}`}>
                     {rating}
                   </span>
