@@ -39,6 +39,8 @@ export function SmashOrPass() {
   const [tagVersion, setTagVersion] = useState(0)
   const [loadingA, setLoadingA] = useState(false)
   const [loadingB, setLoadingB] = useState(false)
+  const [fadingA, setFadingA] = useState(false)
+  const [fadingB, setFadingB] = useState(false)
 
   const smashPassTags = useSettingsStore((s) => s.smashPassTags)
   const setSmashPassTags = useSettingsStore((s) => s.setSmashPassTags)
@@ -288,9 +290,9 @@ export function SmashOrPass() {
 
     if (winner === 'left') {
       queueIndexRef.current += 1
+      setFadingB(true)
       setLoadingB(true)
       const newB = await loadFileByIndex(queueIndexRef.current + 1)
-      setLoadingB(false)
       if (newB) {
         setFileB(newB)
         if (!ratingsRef.current.has(newB.file_id)) {
@@ -300,13 +302,17 @@ export function SmashOrPass() {
           const hydrusVal = newB.ratings?.[ratingServiceKey]
           syncedRatingRef.current.set(newB.file_id, typeof hydrusVal === 'number' ? hydrusVal : 0)
         }
-        getFileUrl(newB.hash).then((u) => u && setUrlB(u)).catch(() => null)
+        getFileUrl(newB.hash).then((u) => {
+          if (u) setUrlB(u)
+          setLoadingB(false)
+          setFadingB(false)
+        }).catch(() => { setLoadingB(false); setFadingB(false) })
       }
     } else if (winner === 'right') {
       queueIndexRef.current += 1
+      setFadingA(true)
       setLoadingA(true)
       const newA = await loadFileByIndex(queueIndexRef.current + 1)
-      setLoadingA(false)
       if (newA) {
         setFileA(newA)
         if (!ratingsRef.current.has(newA.file_id)) {
@@ -316,7 +322,11 @@ export function SmashOrPass() {
           const hydrusVal = newA.ratings?.[ratingServiceKey]
           syncedRatingRef.current.set(newA.file_id, typeof hydrusVal === 'number' ? hydrusVal : 0)
         }
-        getFileUrl(newA.hash).then((u) => u && setUrlA(u)).catch(() => null)
+        getFileUrl(newA.hash).then((u) => {
+          if (u) setUrlA(u)
+          setLoadingA(false)
+          setFadingA(false)
+        }).catch(() => { setLoadingA(false); setFadingA(false) })
       }
     } else {
       queueIndexRef.current += 2
@@ -375,7 +385,7 @@ export function SmashOrPass() {
 
         {/* Left file */}
         <div
-          className={`flex-1 relative bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center ${votingOpen ? 'cursor-pointer' : ''}`}
+          className={`flex-1 relative bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center transition-opacity duration-200 ${fadingA ? 'opacity-30' : ''} ${votingOpen ? 'cursor-pointer' : ''}`}
           onClick={() => votingOpen && decide('left')}
         >
           {urlA && fileA?.mime?.startsWith('video/')
@@ -407,7 +417,7 @@ export function SmashOrPass() {
 
         {/* Right file */}
         <div
-          className={`flex-1 relative bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center ${votingOpen ? 'cursor-pointer' : ''}`}
+          className={`flex-1 relative bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center transition-opacity duration-200 ${fadingB ? 'opacity-30' : ''} ${votingOpen ? 'cursor-pointer' : ''}`}
           onClick={() => votingOpen && decide('right')}
         >
           {urlB && fileB?.mime?.startsWith('video/')
