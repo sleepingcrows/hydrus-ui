@@ -115,7 +115,7 @@ export function TagAnalyticsPanel() {
         </button>
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-1 overflow-y-auto max-h-[calc(100vh-200px)]">
         {displayTags.length === 0 && (
           <div className="text-gray-400 text-sm text-center py-8">
             Rate some files in Smash/Pass to see tag analytics.
