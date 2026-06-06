@@ -31,3 +31,21 @@ button:focus-visible {
 .elo-pulse {
   animation: elo-pulse 0.6s ease-out;
 }
+
+@keyframes elo-throb {
+  0%, 100% { opacity: 1; text-shadow: 0 0 4px rgba(132, 204, 22, 0.6); }
+  50% { opacity: 0.6; text-shadow: 0 0 12px rgba(132, 204, 22, 1); }
+}
+
+@keyframes elo-glow {
+  0%, 100% { text-shadow: 0 0 6px rgba(132, 204, 22, 0.8), 0 0 12px rgba(132, 204, 22, 0.5); }
+  50% { text-shadow: 0 0 12px rgba(132, 204, 22, 1), 0 0 24px rgba(132, 204, 22, 0.8); }
+}
+
+.elo-throb {
+  animation: elo-throb 1s ease-in-out infinite;
+}
+
+.elo-glow {
+  animation: elo-glow 1.5s ease-in-out infinite;
+}

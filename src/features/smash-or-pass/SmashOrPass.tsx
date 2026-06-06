@@ -43,6 +43,8 @@ export function SmashOrPass() {
   const [fadingB, setFadingB] = useState(false)
   const [pulseA, setPulseA] = useState(false)
   const [pulseB, setPulseB] = useState(false)
+  const [glowA, setGlowA] = useState(0)
+  const [glowB, setGlowB] = useState(0)
 
   const smashPassTags = useSettingsStore((s) => s.smashPassTags)
   const setSmashPassTags = useSettingsStore((s) => s.setSmashPassTags)
@@ -210,6 +212,8 @@ export function SmashOrPass() {
       setStats((s) => ({ ...s, wins: s.wins + 1, streak: s.streak + 1 }))
       setPulseA(true)
       setTimeout(() => setPulseA(false), 600)
+      const glowLevel = currentStreak >= 10 ? 3 : currentStreak >= 5 ? 2 : 1
+      setGlowA(glowLevel)
     } else if (winner === 'right') {
       const result = rate(ratingB, ratingA)
       newB = result.winner
@@ -218,11 +222,15 @@ export function SmashOrPass() {
       setStats((s) => ({ ...s, wins: s.wins + 1, streak: s.streak + 1 }))
       setPulseB(true)
       setTimeout(() => setPulseB(false), 600)
+      const glowLevel = currentStreak >= 10 ? 3 : currentStreak >= 5 ? 2 : 1
+      setGlowB(glowLevel)
     } else {
       newA = ratingA
       newB = ratingB
       currentStreak = 0
       setStats((s) => ({ ...s, draws: s.draws + 1, streak: 0 }))
+      setGlowA(0)
+      setGlowB(0)
     }
 
     ratingsRef.current.set(fileA.file_id, newA)
@@ -353,6 +361,8 @@ export function SmashOrPass() {
       setLoadingB(false)
       setFadingA(false)
       setFadingB(false)
+      setGlowA(0)
+      setGlowB(0)
       queueIndexRef.current = 0
       fillQueue().then(() => loadMatch())
     }
@@ -423,9 +433,10 @@ export function SmashOrPass() {
             {votingOpen && fileA && (() => {
               const s = syncedRatingRef.current.get(fileA.file_id)
               const rating = (s ?? 0).toString() + ' ELO'
+              const glowClass = glowA === 3 ? 'elo-glow' : glowA === 2 ? 'elo-throb' : pulseA ? 'elo-pulse' : ''
               return (
                 <div className="absolute bottom-2 left-2 flex flex-col items-start gap-0.5">
-                  <span className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${pulseA ? 'elo-pulse' : ''}`}>
+                  <span className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${glowClass}`}>
                     {rating}
                   </span>
                   <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded">
@@ -457,9 +468,10 @@ export function SmashOrPass() {
             {votingOpen && fileB && (() => {
               const s = syncedRatingRef.current.get(fileB.file_id)
               const rating = (s ?? 0).toString() + ' ELO'
+              const glowClass = glowB === 3 ? 'elo-glow' : glowB === 2 ? 'elo-throb' : pulseB ? 'elo-pulse' : ''
               return (
                 <div className="absolute bottom-2 right-2 flex flex-col items-end gap-0.5">
-                  <span className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${pulseB ? 'elo-pulse' : ''}`}>
+                  <span className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${glowClass}`}>
                     {rating}
                   </span>
                   <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded">
