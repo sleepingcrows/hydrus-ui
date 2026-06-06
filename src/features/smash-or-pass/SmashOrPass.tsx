@@ -305,7 +305,7 @@ export function SmashOrPass() {
         getFileUrl(newB.hash).then((u) => {
           if (u) setUrlB(u)
           setLoadingB(false)
-          setFadingB(false)
+          setTimeout(() => setFadingB(false), 150)
         }).catch(() => { setLoadingB(false); setFadingB(false) })
       }
     } else if (winner === 'right') {
@@ -325,7 +325,7 @@ export function SmashOrPass() {
         getFileUrl(newA.hash).then((u) => {
           if (u) setUrlA(u)
           setLoadingA(false)
-          setFadingA(false)
+          setTimeout(() => setFadingA(false), 150)
         }).catch(() => { setLoadingA(false); setFadingA(false) })
       }
     } else {
