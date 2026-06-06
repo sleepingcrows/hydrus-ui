@@ -35,7 +35,7 @@ export function SmashOrPass() {
   const [urlA, setUrlA] = useState<string | null>(null)
   const [urlB, setUrlB] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [stats, setStats] = useState({ wins: 0, draws: 0, streak: 0 })
+  const [stats, setStats] = useState({ wins: 0, draws: 0, streakA: 0, streakB: 0 })
   const [tagVersion, setTagVersion] = useState(0)
   const [loadingA, setLoadingA] = useState(false)
   const [loadingB, setLoadingB] = useState(false)
@@ -202,33 +202,35 @@ export function SmashOrPass() {
     let newA: TrueSkillRating
     let newB: TrueSkillRating
 
-    let currentStreak = stats.streak
+    const prevStreakA = stats.streakA
+    const prevStreakB = stats.streakB
 
     if (winner === 'left') {
       const result = rate(ratingA, ratingB)
       newA = result.winner
       newB = result.loser
-      currentStreak++
-      setStats((s) => ({ ...s, wins: s.wins + 1, streak: s.streak + 1 }))
+      const newStreakA = prevStreakA + 1
+      setStats((s) => ({ ...s, wins: s.wins + 1, streakA: newStreakA, streakB: 0 }))
       setPulseA(true)
       setTimeout(() => setPulseA(false), 600)
-      const glowLevel = currentStreak >= 10 ? 3 : currentStreak >= 5 ? 2 : 1
+      const glowLevel = newStreakA >= 10 ? 3 : newStreakA >= 5 ? 2 : 1
       setGlowA(glowLevel)
+      setGlowB(0)
     } else if (winner === 'right') {
       const result = rate(ratingB, ratingA)
       newB = result.winner
       newA = result.loser
-      currentStreak++
-      setStats((s) => ({ ...s, wins: s.wins + 1, streak: s.streak + 1 }))
+      const newStreakB = prevStreakB + 1
+      setStats((s) => ({ ...s, wins: s.wins + 1, streakA: 0, streakB: newStreakB }))
       setPulseB(true)
       setTimeout(() => setPulseB(false), 600)
-      const glowLevel = currentStreak >= 10 ? 3 : currentStreak >= 5 ? 2 : 1
+      const glowLevel = newStreakB >= 10 ? 3 : newStreakB >= 5 ? 2 : 1
       setGlowB(glowLevel)
+      setGlowA(0)
     } else {
       newA = ratingA
       newB = ratingB
-      currentStreak = 0
-      setStats((s) => ({ ...s, draws: s.draws + 1, streak: 0 }))
+      setStats((s) => ({ ...s, draws: s.draws + 1, streakA: 0, streakB: 0 }))
       setGlowA(0)
       setGlowB(0)
     }
@@ -242,8 +244,9 @@ export function SmashOrPass() {
 
       const winnerId = winner === 'left' ? fileA.file_id : fileB.file_id
       const loserId = winner === 'left' ? fileB.file_id : fileA.file_id
+      const winnerStreak = winner === 'left' ? prevStreakA : prevStreakB
 
-      const streakBonus = (currentStreak > 0 && currentStreak % 3 === 0) ? (Math.floor(Math.random() * 2) + 1) : 0
+      const streakBonus = (winnerStreak > 0 && winnerStreak % 3 === 0) ? (Math.floor(Math.random() * 2) + 1) : 0
       const winnerNew = (syncedRatingRef.current.get(winnerId) ?? 0) + BASE_INC + streakBonus
       const loserNew = Math.max(0, (syncedRatingRef.current.get(loserId) ?? 0) - LOSER_DEC)
 
@@ -403,7 +406,8 @@ export function SmashOrPass() {
       </div>
       <div className="flex justify-center gap-6 py-2 text-sm text-gray-500">
         <span>Rounds <b className="text-green-400">{stats.wins}</b></span>
-        {stats.streak > 0 && <span>Streak <b className={stats.streak % 3 === 0 ? 'text-orange-400' : 'text-gray-400'}>{stats.streak}</b></span>}
+        {stats.streakA > 0 && <span>A Streak <b className={stats.streakA >= 10 ? 'text-lime-400' : stats.streakA >= 5 ? 'text-orange-400' : 'text-gray-400'}>{stats.streakA}</b></span>}
+        {stats.streakB > 0 && <span>B Streak <b className={stats.streakB >= 10 ? 'text-lime-400' : stats.streakB >= 5 ? 'text-orange-400' : 'text-gray-400'}>{stats.streakB}</b></span>}
         <span>Draws <b className="text-yellow-400">{stats.draws}</b></span>
         <span className="text-gray-400">Queue: <b>{Math.max(0, fileIdsRef.current.length - queueIndexRef.current)}</b></span>
       </div>
