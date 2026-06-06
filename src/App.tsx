@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useApiStore } from './stores/api-store'
 import { useSettingsStore } from './stores/settings-store'
 import { useRatingServicesStore } from './stores/rating-services-store'
+import { SERVICE_TYPE } from './api/types'
 import { ConnectionSettings } from './features/settings/ConnectionSettings'
 import { SearchPage } from './features/search/SearchPage'
 import { SmashOrPass } from './features/smash-or-pass/SmashOrPass'
@@ -19,6 +20,26 @@ export default function App() {
   const settingsHydrate = useSettingsStore((s) => s.hydrate)
   const ratingServicesHydrate = useRatingServicesStore((s) => s.load)
   const [tab, setTab] = useState<Tab>('search')
+  const [favTags, setFavTags] = useState<string[]>([])
+
+  const configuredLikeKey = useSettingsStore((s) => s.likeServiceKey)
+  const allServices = useRatingServicesStore((s) => s.services)
+
+  useEffect(() => {
+    if (!configuredLikeKey) {
+      const autoService = allServices.find((s) => s.type === SERVICE_TYPE.LIKE_DISLIKE_RATING)
+      if (autoService) {
+        setFavTags([`system:rating for "${autoService.name}" is like`])
+      } else {
+        setFavTags(['system:rating for "Like-Dislike" is like'])
+      }
+    } else {
+      const svc = allServices.find((s) => s.service_key === configuredLikeKey)
+      if (svc) {
+        setFavTags([`system:rating for "${svc.name}" is like`])
+      }
+    }
+  }, [configuredLikeKey, allServices])
 
   useEffect(() => {
     hydrate()
@@ -74,7 +95,7 @@ export default function App() {
           {tab === 'search' && <SearchPage key="search" />}
           {tab === 'smash-pass' && <SmashOrPass />}
           {tab === 'leaderboard' && <SearchPage key="leaderboard" presetTags={['system:has count for skill']} title="Leaderboard" sortByRating displayLimit={500} />}
-          {tab === 'favorites' && <SearchPage key="favorites" presetTags={['system:rating for Like-Dislike is like']} title="Favorites" />}
+          {tab === 'favorites' && <SearchPage key="favorites" presetTags={favTags} title="Favorites" />}
           {tab === 'analytics' && <TagAnalyticsPanel />}
           {tab === 'settings' && <ConnectionSettings />}
         </main>
