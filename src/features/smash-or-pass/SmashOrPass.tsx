@@ -337,6 +337,10 @@ export function SmashOrPass() {
       }
     } else {
       roundRef.current++
+      setLoadingA(false)
+      setLoadingB(false)
+      setFadingA(false)
+      setFadingB(false)
       queueIndexRef.current += 2
       loadMatch()
     }
