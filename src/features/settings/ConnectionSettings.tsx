@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useApiStore } from '../../stores/api-store'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
 import { testConnection } from '../../api/client'
 import { NamespaceColorsConfig } from './NamespaceColorsConfig'
+import { SERVICE_TYPE } from '../../api/types'
 
 export function ConnectionSettings() {
   const { url, key, connected, setApiKey, disconnect } = useApiStore()
@@ -103,6 +104,27 @@ export function ConnectionSettings() {
         />
         Static shuffle (same order every session)
       </label>
+
+      <div className="mt-3">
+        <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Rating service for Smash/Pass ELO</label>
+        <select
+          className="w-full border dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono"
+          value={useSettingsStore((s) => s.ratingServiceKey)}
+          onChange={(e) => useSettingsStore.getState().setRatingServiceKey(e.target.value)}
+        >
+          <option value="">Auto-detect (first inc/dec)</option>
+          {useRatingServicesStore((s) => s.services)
+            .filter((svc) => [SERVICE_TYPE.INC_DEC_RATING, SERVICE_TYPE.NUMERICAL_RATING, SERVICE_TYPE.LIKE_DISLIKE_RATING].includes(svc.type as number))
+            .map((svc) => (
+              <option key={svc.service_key} value={svc.service_key}>
+                {svc.name} - {svc.service_key}
+              </option>
+            ))}
+        </select>
+        {useRatingServicesStore((s) => s.services).length === 0 && (
+          <span className="text-xs text-gray-400 mt-1 block">Connect to Hydrus to load services</span>
+        )}
+      </div>
 
       <hr className="border-gray-200 dark:border-gray-700" />
       <NamespaceColorsConfig />

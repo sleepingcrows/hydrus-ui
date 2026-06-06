@@ -58,10 +58,9 @@ export function SmashOrPass() {
   const fillingRef = useRef(false)
   const roundRef = useRef(0)
 
-  const ratingService = useRatingServicesStore((s) =>
-    s.services.find((rs) => rs.type === SERVICE_TYPE.INC_DEC_RATING) ?? null
-  )
-  const ratingServiceKey = ratingService?.service_key ?? null
+  const configuredKey = useSettingsStore((s) => s.ratingServiceKey)
+  const services = useRatingServicesStore((s) => s.services)
+  const ratingServiceKey = (configuredKey || services.find((rs) => rs.type === SERVICE_TYPE.INC_DEC_RATING)?.service_key) ?? null
   const isNumerical = false
 
   async function fillQueue(): Promise<void> {
