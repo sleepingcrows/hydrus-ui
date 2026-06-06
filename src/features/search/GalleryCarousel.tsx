@@ -197,7 +197,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
 
         {hasPrev && (
           <button
-            className="absolute left-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-white text-5xl leading-none px-2 py-4"
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white/70 hover:text-white text-4xl leading-none w-10 h-14 rounded-lg flex items-center justify-center transition-colors"
             onClick={(e) => { e.stopPropagation(); goPrev() }}
           >
             ‹
@@ -205,7 +205,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
         )}
         {hasNext && (
           <button
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-white text-5xl leading-none px-2 py-4"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white/70 hover:text-white text-4xl leading-none w-10 h-14 rounded-lg flex items-center justify-center transition-colors"
             onClick={(e) => { e.stopPropagation(); goNext() }}
           >
             ›
