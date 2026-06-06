@@ -22,9 +22,10 @@ button:focus-visible {
 }
 
 @keyframes elo-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(132, 204, 22, 0.7); }
+  0% { box-shadow: 0 0 0 0 rgba(132, 204, 22, 0.7); text-shadow: none; }
+  30% { text-shadow: 0 0 8px rgba(132, 204, 22, 1), 0 0 16px rgba(132, 204, 22, 0.8); }
   50% { box-shadow: 0 0 0 4px rgba(132, 204, 22, 0.4); }
-  100% { box-shadow: 0 0 0 0 rgba(132, 204, 22, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(132, 204, 22, 0); text-shadow: none; }
 }
 
 .elo-pulse {
