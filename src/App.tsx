@@ -29,14 +29,14 @@ export default function App() {
     if (!configuredLikeKey) {
       const autoService = allServices.find((s) => s.type === SERVICE_TYPE.LIKE_DISLIKE_RATING)
       if (autoService) {
-        setFavTags([`system:rating for "${autoService.name}" is like`])
+        setFavTags([`system:rating for ${autoService.name} is like`])
       } else {
         setFavTags(['system:rating for "Like-Dislike" is like'])
       }
     } else {
       const svc = allServices.find((s) => s.service_key === configuredLikeKey)
       if (svc) {
-        setFavTags([`system:rating for "${svc.name}" is like`])
+        setFavTags([`system:rating for ${svc.name} is like`])
       }
     }
   }, [configuredLikeKey, allServices])
