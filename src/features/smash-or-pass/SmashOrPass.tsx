@@ -385,7 +385,7 @@ export function SmashOrPass() {
 
         {/* Left file */}
         <div
-          className={`flex-1 relative bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center transition-opacity duration-200 ${fadingA ? 'opacity-30' : ''} ${votingOpen ? 'cursor-pointer' : ''}`}
+          className={`flex-1 relative bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center transition-opacity duration-200 ${fadingA ? 'opacity-10' : ''} ${votingOpen ? 'cursor-pointer' : ''}`}
           onClick={() => votingOpen && decide('left')}
         >
           {urlA && fileA?.mime?.startsWith('video/')
@@ -417,7 +417,7 @@ export function SmashOrPass() {
 
         {/* Right file */}
         <div
-          className={`flex-1 relative bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center transition-opacity duration-200 ${fadingB ? 'opacity-30' : ''} ${votingOpen ? 'cursor-pointer' : ''}`}
+          className={`flex-1 relative bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center transition-opacity duration-200 ${fadingB ? 'opacity-10' : ''} ${votingOpen ? 'cursor-pointer' : ''}`}
           onClick={() => votingOpen && decide('right')}
         >
           {urlB && fileB?.mime?.startsWith('video/')
