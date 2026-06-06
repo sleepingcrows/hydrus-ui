@@ -1,5 +1,7 @@
 # hydrus-ui
 
+Vibecoded. Here be dragons.
+
 Hydrus tag rating tool with TrueSkill-based tag analytics, Smash/Pass voting, and gallery browsing.
 
 - **Smash/Pass** — rate files pairwise, tracks per-tag TrueSkill ratings in IndexedDB, syncs inc/dec ratings to Hydrus API
