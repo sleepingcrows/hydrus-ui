@@ -284,8 +284,42 @@ export function SmashOrPass() {
     console.log('  ratingA:', newA.mu.toFixed(1), '±', newA.sigma.toFixed(2))
     console.log('  ratingB:', newB.mu.toFixed(1), '±', newB.sigma.toFixed(2))
 
-    queueIndexRef.current += 2
-    loadMatch()
+    if (winner === 'left') {
+      queueIndexRef.current += 1
+      setFileB(null)
+      setUrlB(null)
+      const newB = await loadFileByIndex(queueIndexRef.current + 1)
+      if (newB) {
+        setFileB(newB)
+        if (!ratingsRef.current.has(newB.file_id)) {
+          ratingsRef.current.set(newB.file_id, createRating())
+        }
+        if (ratingServiceKey) {
+          const hydrusVal = newB.ratings?.[ratingServiceKey]
+          syncedRatingRef.current.set(newB.file_id, typeof hydrusVal === 'number' ? hydrusVal : 0)
+        }
+        getFileUrl(newB.hash).then((u) => u && setUrlB(u)).catch(() => null)
+      }
+    } else if (winner === 'right') {
+      queueIndexRef.current += 1
+      setFileA(null)
+      setUrlA(null)
+      const newA = await loadFileByIndex(queueIndexRef.current + 1)
+      if (newA) {
+        setFileA(newA)
+        if (!ratingsRef.current.has(newA.file_id)) {
+          ratingsRef.current.set(newA.file_id, createRating())
+        }
+        if (ratingServiceKey) {
+          const hydrusVal = newA.ratings?.[ratingServiceKey]
+          syncedRatingRef.current.set(newA.file_id, typeof hydrusVal === 'number' ? hydrusVal : 0)
+        }
+        getFileUrl(newA.hash).then((u) => u && setUrlA(u)).catch(() => null)
+      }
+    } else {
+      queueIndexRef.current += 2
+      loadMatch()
+    }
   }
 
   function handleKeyDown(e: globalThis.KeyboardEvent) {
@@ -322,7 +356,7 @@ export function SmashOrPass() {
         <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
       </div>
       <div className="flex justify-center gap-6 py-2 text-sm text-gray-500">
-        <span>Wins <b className="text-green-400">{stats.wins}</b></span>
+        <span>Rounds <b className="text-green-400">{stats.wins}</b></span>
         <span>Draws <b className="text-yellow-400">{stats.draws}</b></span>
         <span className="text-gray-400">Queue: <b>{Math.max(0, fileIdsRef.current.length - queueIndexRef.current)}</b></span>
       </div>
