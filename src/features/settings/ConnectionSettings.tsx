@@ -114,7 +114,7 @@ export function ConnectionSettings() {
         >
           <option value="">Auto-detect (first inc/dec)</option>
           {useRatingServicesStore((s) => s.services)
-            .filter((svc) => [SERVICE_TYPE.INC_DEC_RATING, SERVICE_TYPE.NUMERICAL_RATING, SERVICE_TYPE.LIKE_DISLIKE_RATING].includes(svc.type as number))
+            .filter((svc) => [SERVICE_TYPE.INC_DEC_RATING].includes(svc.type as number))
             .map((svc) => (
               <option key={svc.service_key} value={svc.service_key}>
                 {svc.name} - {svc.service_key}
