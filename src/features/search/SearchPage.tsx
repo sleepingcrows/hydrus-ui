@@ -442,9 +442,9 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
               {(() => {
                 const f = files.get(id)
                 if (!f) return null
+                const configuredKey = useSettingsStore.getState().ratingServiceKey
                 const services = useRatingServicesStore.getState().services
-                const incService = services.find((s) => s.type === SERVICE_TYPE.INC_DEC_RATING)
-                const incKey = incService?.service_key
+                const incKey = configuredKey || services.find((s) => s.type === SERVICE_TYPE.INC_DEC_RATING)?.service_key
                 if (incKey) {
                   const elo = f.ratings?.[incKey]
                   if (elo != null && typeof elo === 'number') {

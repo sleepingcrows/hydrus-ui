@@ -158,9 +158,9 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
       <div className="flex items-center justify-between px-4 py-2" onClick={(e) => e.stopPropagation()}>
         <span className="text-white/70 text-sm">{index + 1} / {files.length}</span>
         {(() => {
-          const ratingService = useRatingServicesStore.getState().services
-            .find((s) => s.type === SERVICE_TYPE.INC_DEC_RATING)
-          const key = ratingService?.service_key
+          const configuredKey = useSettingsStore.getState().ratingServiceKey
+          const services = useRatingServicesStore.getState().services
+          const key = configuredKey || services.find((s) => s.type === SERVICE_TYPE.INC_DEC_RATING)?.service_key
           if (!key) return null
           const elo = file?.ratings?.[key]
           if (elo == null || typeof elo !== 'number') return null
