@@ -514,11 +514,21 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
               )}
             </div>
             {(() => {
-              const tagList = selectedFile.tags
+              const rawTags = selectedFile.tags
                 ? [...new Set(Object.values(selectedFile.tags).flatMap(
                     (entry) => entry.display_tags?.['0'] ?? []
                   ))]
                 : []
+              const tagList = rawTags.sort((a, b) => {
+                const colonA = a.indexOf(':')
+                const colonB = b.indexOf(':')
+                const nsA = colonA === -1 ? '' : a.slice(0, colonA)
+                const nsB = colonB === -1 ? '' : b.slice(0, colonB)
+                if (nsA !== nsB) return nsA.localeCompare(nsB)
+                const tagA = colonA === -1 ? a : a.slice(colonA + 1)
+                const tagB = colonB === -1 ? b : b.slice(colonB + 1)
+                return tagA.localeCompare(tagB)
+              })
               if (tagList.length === 0) return null
               return (
                 <>
