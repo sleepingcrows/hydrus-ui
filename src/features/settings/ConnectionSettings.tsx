@@ -145,6 +145,27 @@ export function ConnectionSettings() {
         </select>
       </div>
 
+      {connected && (
+        <div className="mt-4">
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
+            onClick={() => {
+              const tags = useSettingsStore.getState().smashPassTags
+              useSettingsStore.getState().rebuildRatingsCache(tags.length > 0 ? tags : ['system:everything'])
+            }}
+            disabled={useSettingsStore((s) => s.ratingsCacheBuildProgress !== null)}
+          >
+            {useSettingsStore((s) => {
+              if (s.ratingsCacheBuildProgress !== null) return `Rebuilding cache... ${s.ratingsCacheBuildProgress}%`
+              return 'Rebuild ratings cache'
+            })}
+          </button>
+          <p className="text-xs text-gray-400 mt-1">
+            Fetches ratings for all files matching your Smash/Pass tags. Used for ELO rankings.
+          </p>
+        </div>
+      )}
+
       <hr className="border-gray-200 dark:border-gray-700" />
       <GalleryLayoutSettings />
 

@@ -163,6 +163,12 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
       flushScheduledRef.current = false
       pendingThumbnailsRef.current.clear()
       ratingsCacheRef.current.clear()
+      const storedCache = useSettingsStore.getState().getRatingsCache()
+      if (storedCache) {
+        for (const [fid, ratings] of storedCache) {
+          ratingsCacheRef.current.set(fid, ratings)
+        }
+      }
       setThumbnails(new Map())
       setRevealedIds(new Set())
       setDimensionMap(new Map())
