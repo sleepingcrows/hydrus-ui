@@ -23,6 +23,25 @@ npm run dev
 
 Enter your Hydrus API access key in the Connection Settings screen on first load.
 
+## Hotkeys
+
+| Key | Context | Action |
+|---|---|---|
+| `a` / `ArrowLeft` | Smash/Pass | Choose left |
+| `d` / `ArrowRight` | Smash/Pass | Choose right |
+| `Space` / `s` | Smash/Pass | Draw |
+| `a` / `d` / `ArrowLeft` / `ArrowRight` / `j` / `k` | Gallery | Previous / next file |
+| `w` | Gallery | Toggle like on like/dislike service |
+| `Home` | Gallery | First file |
+| `End` | Gallery | Last file |
+| `i` | Gallery | Toggle file info panel |
+| `Escape` | Gallery / Global | Close gallery |
+| `ArrowRight` / `ArrowDown` | Search grid | Select next file |
+| `ArrowLeft` / `ArrowUp` | Search grid | Select previous file |
+| `Enter` | Search grid | Open selected file in gallery |
+
+All hotkeys are suppressed when typing in a text input (tag search bar).
+
 ## Stack
 
 React, TypeScript, Vite, Zustand, TanStack Query, Tailwind CSS.
