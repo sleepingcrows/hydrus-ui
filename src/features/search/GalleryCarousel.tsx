@@ -5,6 +5,7 @@ import { SERVICE_TYPE } from '../../api/types'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
 import { setRating } from '../../api/ratings'
+import { FileRenderer } from '../../components/FileRenderer'
 
 interface Props {
   files: FileMetadata[]
@@ -191,9 +192,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           <div className="text-red-400 text-sm">Failed to load file</div>
         )}
         {imageUrl && !loading && (
-          file?.mime?.startsWith('video/')
-            ? <video src={imageUrl} className="max-w-full max-h-full object-contain" controls autoPlay loop />
-            : <img src={imageUrl} alt="" className="max-w-full max-h-full object-contain" />
+          <FileRenderer url={imageUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain" />
         )}
 
         {hasPrev && (

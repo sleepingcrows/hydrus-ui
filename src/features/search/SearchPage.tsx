@@ -8,11 +8,8 @@ import { TagChip } from '../../components/TagChip'
 import { fetchServices } from '../../api/services'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
-import Masonry from 'masonry-layout'
-import imagesLoaded from 'imagesloaded'
-
 const PAGE_SIZE = 200
-const COL_WIDTH = 150
+const COL_WIDTH = 200
 const COL_GAP = 8
 
 function InboxIcon() {
@@ -53,6 +50,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
   const [files, setFiles] = useState<Map<number, FileMetadata>>(new Map())
   const [thumbnails, setThumbnails] = useState<Map<number, string>>(new Map())
   const [selectedIdx, setSelectedIdx] = useState<number>(-1)
+  const [showInfoPane, setShowInfoPane] = useState(false)
   const [galleryIndex, setGalleryIndex] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [sortType, setSortType] = useState<number>(FILE_SORT_TYPES.IMPORT_TIME)
@@ -73,8 +71,11 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
   const trashServiceKeysRef = useRef<Set<string>>(new Set())
   const filesRef = useRef<Map<number, FileMetadata>>(new Map())
   const loadingPageRef = useRef(false)
-  const masonryRef = useRef<Masonry | null>(null)
   const gridRef = useRef<HTMLDivElement | null>(null)
+  const [revealedIds, setRevealedIds] = useState<Set<number>>(new Set())
+  const [dimensionMap, setDimensionMap] = useState<Map<number, { width: number; height: number }>>(new Map())
+  const ratingsCacheRef = useRef<Map<number, Record<string, number | boolean>>>(new Map())
+  const numColsRef = useRef(1)
 
   tagsRef.current = tags
   sortTypeRef.current = sortType
@@ -128,7 +129,10 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
       }
       if (searchId !== searchIdRef.current) return
       const map = new Map(filesRef.current)
-      for (const f of meta) map.set(f.file_id, f)
+      for (const f of meta) {
+        map.set(f.file_id, f)
+        if (f.ratings) ratingsCacheRef.current.set(f.file_id, f.ratings)
+      }
       filesRef.current = map
       setFiles(map)
     } catch (e) {
@@ -157,7 +161,10 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
       cancelAnimationFrame(flushRafIdRef.current)
       flushScheduledRef.current = false
       pendingThumbnailsRef.current.clear()
+      ratingsCacheRef.current.clear()
       setThumbnails(new Map())
+      setRevealedIds(new Set())
+      setDimensionMap(new Map())
 
       // Set fileIds/hashes immediately so thumbnails start loading
       fileIdsRef.current = ids
@@ -190,11 +197,17 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
           const chunkIds = ids.slice(i, i + chunkSize).filter((_id, j) => !hs[i + j])
           if (chunkHashes.length > 0) {
             const meta = await fetchFileMetadata(chunkHashes)
-            for (const f of meta) allMeta.set(f.file_id, f)
+            for (const f of meta) {
+              allMeta.set(f.file_id, f)
+              if (f.ratings) ratingsCacheRef.current.set(f.file_id, f.ratings)
+            }
           }
           if (chunkIds.length > 0) {
             const meta = await fetchFileMetadataByIds(chunkIds)
-            for (const f of meta) allMeta.set(f.file_id, f)
+            for (const f of meta) {
+              allMeta.set(f.file_id, f)
+              if (f.ratings) ratingsCacheRef.current.set(f.file_id, f.ratings)
+            }
           }
           if (searchId !== searchIdRef.current) return
           sortByIds()
@@ -259,30 +272,6 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
     }
   }
 
-  const [thumbnailObserver] = useState(() => new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue
-        const id = Number(entry.target.getAttribute('data-id'))
-        if (!id || requestedThumbnailsRef.current.has(id)) continue
-        requestedThumbnailsRef.current.add(id)
-        const idx = fileIdsRef.current.indexOf(id)
-        const hash = hashesRef.current[idx]
-        if (!hash) continue
-        const sid = searchIdRef.current
-        getThumbnailUrl(hash)
-            .then((url) => {
-              if (searchIdRef.current !== sid) { URL.revokeObjectURL(url); return }
-              pendingThumbnailsRef.current.set(id, url)
-              scheduleFlush()
-            })
-            .catch((e) => console.warn('Thumbnail fetch failed for', id, e))
-      }
-    },
-    { rootMargin: '100px' }
-  ))
-  observerRef.current = thumbnailObserver
-
   const pendingThumbnailsRef = useRef(new Map<number, string>())
   const flushScheduledRef = useRef(false)
   const flushRafIdRef = useRef(0)
@@ -303,16 +292,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
   }
 
   useEffect(() => {
-    return () => thumbnailObserver.disconnect()
-  }, [thumbnailObserver])
-
-  useEffect(() => {
     if (galleryLayoutMode !== 'mosaic') {
-      const msnry = masonryRef.current
-      if (msnry?.destroy) {
-        msnry.destroy()
-        masonryRef.current = null
-      }
       return
     }
     const grid = gridRef.current
@@ -321,14 +301,82 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
     grid.style.position = 'relative'
     grid.style.width = '100%'
 
-    setTimeout(() => {
+    const updateColumns = () => {
       if (!gridRef.current) return
       const gridWidth = gridRef.current.offsetWidth
-      const cols = Math.max(1, Math.floor((gridWidth + COL_GAP) / (COL_WIDTH + COL_GAP)))
-      gridRef.current.style.columnCount = String(cols)
-      gridRef.current.style.columnGap = `${COL_GAP}px`
-    }, 0)
+      const numCols = Math.max(1, Math.ceil(gridWidth / (COL_WIDTH + COL_GAP)))
+      const totalGapWidth = (numCols - 1) * COL_GAP
+      const itemWidth = (gridWidth - totalGapWidth) / numCols
+      numColsRef.current = numCols
+      gridRef.current!.style.columnCount = String(numCols)
+      gridRef.current!.style.columnGap = `${COL_GAP}px`
+      for (const child of Array.from(gridRef.current!.children)) {
+        if (child.classList.contains('mosaic-item')) {
+          (child as HTMLElement).style.width = `${itemWidth}px`
+        }
+      }
+    }
+
+    requestAnimationFrame(() => {
+      updateColumns()
+      requestAnimationFrame(() => {
+        updateColumns()
+      })
+    })
   }, [galleryLayoutMode])
+
+  useEffect(() => {
+    if (galleryLayoutMode !== 'mosaic') return
+    const handleResize = () => {
+      if (!gridRef.current) return
+      const gridWidth = gridRef.current.offsetWidth
+      const numCols = Math.max(1, Math.ceil(gridWidth / (COL_WIDTH + COL_GAP)))
+      const totalGapWidth = (numCols - 1) * COL_GAP
+      const itemWidth = (gridWidth - totalGapWidth) / numCols
+      numColsRef.current = numCols
+      gridRef.current.style.columnCount = String(numCols)
+      for (const child of Array.from(gridRef.current.children)) {
+        if (child.classList.contains('mosaic-item')) {
+          (child as HTMLElement).style.width = `${itemWidth}px`
+        }
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [galleryLayoutMode])
+
+  useEffect(() => {
+    if (!scrollRef.current) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue
+          const id = Number(entry.target.getAttribute('data-id'))
+          if (!id || requestedThumbnailsRef.current.has(id)) continue
+          requestedThumbnailsRef.current.add(id)
+          const idx = fileIdsRef.current.indexOf(id)
+          const hash = hashesRef.current[idx]
+          if (!hash) continue
+          const sid = searchIdRef.current
+          getThumbnailUrl(hash)
+            .then((url) => {
+              if (searchIdRef.current !== sid) { URL.revokeObjectURL(url); return }
+              pendingThumbnailsRef.current.set(id, url)
+              scheduleFlush()
+            })
+            .catch((e) => console.warn('Thumbnail fetch failed for', id, e))
+        }
+      },
+      { root: scrollRef.current, rootMargin: '5000px 0px 5000px 0px' }
+    )
+    observerRef.current = observer
+    if (gridRef.current) {
+      for (const child of gridRef.current.children) {
+        if (child.hasAttribute('data-id')) observer.observe(child)
+      }
+    }
+    return () => observer.disconnect()
+  }, [])
 
   const thumbnailRef = useCallback((el: HTMLElement | null) => {
     if (el) observerRef.current?.observe(el)
@@ -371,6 +419,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
     if (meta.length === 0) return
     const map = new Map(filesRef.current)
     map.set(meta[0].file_id, meta[0])
+    if (meta[0].ratings) ratingsCacheRef.current.set(meta[0].file_id, meta[0].ratings)
     filesRef.current = map
     setFiles(map)
   }
@@ -393,6 +442,9 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
       e.preventDefault()
       setSelectedIdx((prev) => Math.max(prev - 1, -1))
+    } else if (e.key === 'i' && selectedIdx >= 0) {
+      e.preventDefault()
+      setShowInfoPane((prev) => !prev)
     }
   }
 
@@ -454,6 +506,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
           <div
             ref={gridRef}
             className={galleryLayoutMode === 'mosaic' ? 'mosaic-grid' : 'grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2 auto-rows-max'}
+            style={galleryLayoutMode === 'mosaic' ? { isolation: 'isolate' } : undefined}
           >
           {displayFileIds.map((id, i) => (
             <div
@@ -463,50 +516,82 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
               className={`bg-gray-100 dark:bg-gray-800 rounded overflow-hidden cursor-pointer border-2 mb-2 ${galleryLayoutMode === 'grid' ? 'aspect-square' : 'mosaic-item'} ${
                 i === selectedIdx ? 'border-blue-500' : 'border-transparent'
               } relative`}
-              onClick={() => setSelectedIdx(i)}
+              style={galleryLayoutMode === 'mosaic' && thumbnails.has(id) ? (() => {
+                const cached = dimensionMap.get(id)
+                if (cached) {
+                  const ratio = cached.height / cached.width
+                  return { aspectRatio: `${1} / ${ratio}` }
+                }
+                return {}
+              })() : undefined}
+              onClick={() => { setSelectedIdx(i); setShowInfoPane(false) }}
               onDoubleClick={() => setGalleryIndex(i)}
             >
               {(() => {
                 const f = files.get(id)
                 if (!f) return null
                 const trashKeys = trashServiceKeysRef.current
-                const isTrash = trashKeys.size > 0 && f.file_services
-                  && Object.keys(f.file_services).some(k => trashKeys.has(k))
-                if (isTrash) return <div className="absolute top-1 left-1 text-red-500 opacity-60"><TrashIcon /></div>
-                if (f.is_inbox) return <div className="absolute top-1 left-1 text-blue-400 opacity-60"><InboxIcon /></div>
-                return <div className="absolute top-1 left-1 text-green-500 opacity-60"><ArchiveIcon /></div>
-              })()}
-              {(() => {
-                const f = files.get(id)
-                if (!f) return null
-                const configuredKey = useSettingsStore.getState().ratingServiceKey
-                const services = useRatingServicesStore.getState().services
-                const incKey = configuredKey || services.find((s) => s.type === SERVICE_TYPE.INC_DEC_RATING)?.service_key
-                if (incKey) {
-                  const elo = f.ratings?.[incKey]
-                  if (elo != null && typeof elo === 'number') {
-                    return <div className="absolute bottom-1 left-1 bg-black/60 text-white text-[10px] leading-tight px-1 rounded">{elo} ELO</div>
-                  }
+                if (f.file_services && Object.keys(f.file_services).some(k => trashKeys.has(k))) {
+                  return <div className="absolute top-1 left-1 w-5 h-5 bg-gray-100/80 dark:bg-gray-800/80 rounded flex items-center justify-center text-red-500"><TrashIcon /></div>
                 }
+                if (f.is_inbox) return <div className="absolute top-1 left-1 w-5 h-5 bg-gray-100/80 dark:bg-gray-800/80 rounded flex items-center justify-center text-blue-400"><InboxIcon /></div>
+                if (f.is_inbox === false) return <div className="absolute top-1 left-1 w-5 h-5 bg-gray-100/80 dark:bg-gray-800/80 rounded flex items-center justify-center text-green-500"><ArchiveIcon /></div>
                 return null
               })()}
               {(() => {
-                const f = files.get(id)
-                if (!f) return null
+                const configuredKey = useSettingsStore.getState().ratingServiceKey
+                const services = useRatingServicesStore.getState().services
+                const incKey = configuredKey || services.find((s) => s.type === SERVICE_TYPE.INC_DEC_RATING)?.service_key
+                if (!incKey) return null
+                const cachedRatings = ratingsCacheRef.current.get(id)
+                const elo = cachedRatings?.[incKey]
+                if (elo == null || typeof elo !== 'number') return null
+                return <div className="absolute bottom-1 left-1 bg-black/60 text-white text-[10px] leading-tight px-1 rounded">{elo} ELO</div>
+              })()}
+              {(() => {
                 const configuredKey = useSettingsStore.getState().likeServiceKey
                 const services = useRatingServicesStore.getState().services
                 const likeKey = configuredKey || services.find((s) => s.type === SERVICE_TYPE.LIKE_DISLIKE_RATING)?.service_key
                 if (!likeKey) return null
-                const val = f.ratings?.[likeKey]
+                const cachedRatings = ratingsCacheRef.current.get(id)
+                const val = cachedRatings?.[likeKey]
                 if (val == null || typeof val !== 'boolean') return null
                 return (
                   <div className="absolute top-1 right-1 text-sm leading-none" style={{ color: val ? '#ef4444' : '#3b82f6' }}>
-                    {val ? '\u2764' : '\u2764'}
+                    {'\u2764'}
                   </div>
                 )
               })()}
+              {i === selectedIdx && (
+                <button
+                  className="absolute bottom-1 right-1 w-5 h-5 bg-gray-100/80 dark:bg-gray-800/80 rounded flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 z-10"
+                  onClick={(e) => { e.stopPropagation(); setShowInfoPane(true) }}
+                  title="File info (i)"
+                >
+                  <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 2a1 1 0 1 1 0 2 1 0 0 1 0-2zm1 4.5v3.5a.5.5 0 0 1-1 0V7.5a.5.5 0 0 1 1 0z"/></svg>
+                </button>
+              )}
               {thumbnails.has(id) ? (
-                <img src={thumbnails.get(id)} alt="" className="w-full h-full object-cover" />
+                <img
+                  src={thumbnails.get(id)}
+                  alt=""
+                  className={`w-full h-full object-cover transition-opacity duration-300 ${revealedIds.has(id) ? 'opacity-100' : 'opacity-0'}`}
+                  onLoad={(e) => {
+                    const img = e.target as HTMLImageElement
+                    setRevealedIds((prev) => {
+                      const next = new Set(prev)
+                      next.add(id)
+                      return next
+                    })
+                    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+                      setDimensionMap((prev) => {
+                        const next = new Map(prev)
+                        next.set(id, { width: img.naturalWidth, height: img.naturalHeight })
+                        return next
+                      })
+                    }
+                  }}
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-xs text-gray-400 animate-pulse bg-gray-200 dark:bg-gray-700 rounded">{id}</div>
               )}
@@ -537,9 +622,12 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
         </div>
         </div>
 
-        {selectedFile && (
-          <div className="w-80 border-l dark:border-gray-700 overflow-y-auto p-3 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-            <h3 className="font-bold text-sm mb-2">File Info</h3>
+        {selectedFile && showInfoPane && (
+          <div className="fixed right-0 top-0 bottom-0 w-80 border-l dark:border-gray-700 overflow-y-auto p-3 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 z-50">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-bold text-sm">File Info</h3>
+              <button onClick={() => { setShowInfoPane(false); setSelectedIdx(-1) }} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-lg leading-none">&times;</button>
+            </div>
             <div className="space-y-1 text-xs">
               <div><span className="text-gray-500">ID:</span> {selectedFile.file_id}</div>
               <div><span className="text-gray-500">Hash:</span> <code className="break-all">{selectedFile.hash.slice(0, 16)}...</code></div>

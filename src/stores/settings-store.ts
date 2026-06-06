@@ -4,6 +4,9 @@ const SMASH_PASS_STATIC_KEY = 'hydrus-smashpass-static'
 const SMASH_PASS_TAGS_KEY = 'hydrus-smashpass-tags'
 const RATING_SERVICE_KEY = 'hydrus-rating-service-key'
 const LIKE_SERVICE_KEY = 'hydrus-like-service-key'
+const GALLERY_LAYOUT_KEY = 'hydrus-gallery-layout'
+
+type GalleryLayoutMode = 'grid' | 'mosaic'
 
 interface SettingsState {
   darkMode: boolean
@@ -11,11 +14,13 @@ interface SettingsState {
   smashPassTags: string[]
   ratingServiceKey: string
   likeServiceKey: string
+  galleryLayoutMode: GalleryLayoutMode
   toggleDark: () => void
   toggleSmashPassStatic: () => void
   setSmashPassTags: (tags: string[]) => void
   setRatingServiceKey: (key: string) => void
   setLikeServiceKey: (key: string) => void
+  setGalleryLayoutMode: (mode: GalleryLayoutMode) => void
   hydrate: () => void
 }
 
@@ -25,6 +30,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   smashPassTags: [],
   ratingServiceKey: '',
   likeServiceKey: '',
+  galleryLayoutMode: 'grid',
   toggleDark: () => {
     const next = !get().darkMode
     document.documentElement.classList.toggle('dark', next)
@@ -48,6 +54,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     localStorage.setItem(LIKE_SERVICE_KEY, key)
     set({ likeServiceKey: key })
   },
+  setGalleryLayoutMode: (mode) => {
+    localStorage.setItem(GALLERY_LAYOUT_KEY, mode)
+    set({ galleryLayoutMode: mode })
+  },
   hydrate: () => {
     const dark = localStorage.getItem('hydrus-dark-mode') === 'true'
     if (dark) document.documentElement.classList.add('dark')
@@ -56,6 +66,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const smashPassTags: string[] = tagsRaw ? (() => { try { return JSON.parse(tagsRaw) } catch { return [] } })() : []
     const ratingSvcKey = localStorage.getItem(RATING_SERVICE_KEY) || ''
     const likeSvcKey = localStorage.getItem(LIKE_SERVICE_KEY) || ''
-    set({ darkMode: dark, smashPassStaticMode: staticMode, smashPassTags, ratingServiceKey: ratingSvcKey, likeServiceKey: likeSvcKey })
+    const galleryLayout = (localStorage.getItem(GALLERY_LAYOUT_KEY) as GalleryLayoutMode) || 'grid'
+    set({ darkMode: dark, smashPassStaticMode: staticMode, smashPassTags, ratingServiceKey: ratingSvcKey, likeServiceKey: likeSvcKey, galleryLayoutMode: galleryLayout })
   },
 }))

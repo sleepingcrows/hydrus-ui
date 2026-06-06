@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { useApiStore } from '../../stores/api-store'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
 import { testConnection } from '../../api/client'
 import { NamespaceColorsConfig } from './NamespaceColorsConfig'
+import { GalleryLayoutSettings } from './GalleryLayoutSettings'
 import { SERVICE_TYPE } from '../../api/types'
 
 export function ConnectionSettings() {
@@ -114,7 +115,7 @@ export function ConnectionSettings() {
         >
           <option value="">Auto-detect (first inc/dec)</option>
           {useRatingServicesStore((s) => s.services)
-            .filter((svc) => [SERVICE_TYPE.INC_DEC_RATING].includes(svc.type as number))
+            .filter((svc) => svc.type === SERVICE_TYPE.INC_DEC_RATING)
             .map((svc) => (
               <option key={svc.service_key} value={svc.service_key}>
                 {svc.name} - {svc.service_key}
@@ -135,7 +136,7 @@ export function ConnectionSettings() {
         >
           <option value="">Auto-detect (first like/dislike)</option>
           {useRatingServicesStore((s) => s.services)
-            .filter((svc) => [SERVICE_TYPE.LIKE_DISLIKE_RATING].includes(svc.type as number))
+            .filter((svc) => svc.type === SERVICE_TYPE.LIKE_DISLIKE_RATING)
             .map((svc) => (
               <option key={svc.service_key} value={svc.service_key}>
                 {svc.name} - {svc.service_key}
@@ -143,6 +144,9 @@ export function ConnectionSettings() {
             ))}
         </select>
       </div>
+
+      <hr className="border-gray-200 dark:border-gray-700" />
+      <GalleryLayoutSettings />
 
       <hr className="border-gray-200 dark:border-gray-700" />
       <NamespaceColorsConfig />

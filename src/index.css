@@ -47,9 +47,12 @@ button:focus-visible {
 }
 
 .mosaic-item {
-  /*width: 150px;*/
   break-inside: avoid;
   margin-bottom: 8px;
+  box-sizing: border-box;
+  display: flow-root;
+  position: relative;
+  transform: translateZ(0);
 }
 
 .elo-glow {

@@ -25,6 +25,12 @@ export function TagAnalyticsPanel() {
   const [sortBy, setSortBy] = useState<'ratio' | 'count' | 'rating' | 'weight'>('weight')
   const [mode, setMode] = useState<'stats' | 'prefs'>('prefs')
 
+  const handleModeChange = (newMode: 'stats' | 'prefs') => {
+    setMode(newMode)
+    if (newMode === 'stats' && sortBy === 'weight') setSortBy('ratio')
+    if (newMode === 'prefs' && (sortBy === 'ratio')) setSortBy('weight')
+  }
+
   useEffect(() => {
     loadStats()
   }, [minAppearances])
@@ -43,6 +49,7 @@ export function TagAnalyticsPanel() {
   const sortedStats = [...tagStats].sort((a, b) => {
     if (sortBy === 'count') return b.count - a.count
     if (sortBy === 'rating') return b.current_rating - a.current_rating
+    if (sortBy === 'weight') return b.current_rating - a.current_rating
     return b.ratio - a.ratio
   })
 
@@ -97,13 +104,13 @@ export function TagAnalyticsPanel() {
         />
         <button
           className={`text-xs px-2 py-1 rounded ${mode === 'prefs' ? 'bg-blue-100 dark:bg-blue-900' : ''}`}
-          onClick={() => setMode('prefs')}
+          onClick={() => handleModeChange('prefs')}
         >
           Alignment
         </button>
         <button
           className={`text-xs px-2 py-1 rounded ${mode === 'stats' ? 'bg-blue-100 dark:bg-blue-900' : ''}`}
-          onClick={() => setMode('stats')}
+          onClick={() => handleModeChange('stats')}
         >
           Ratio
         </button>

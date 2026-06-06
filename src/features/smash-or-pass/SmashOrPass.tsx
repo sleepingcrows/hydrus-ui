@@ -8,6 +8,7 @@ import { rate, createRating, type TrueSkillRating } from './trueskill'
 import { insertTagRatingRecords, getAllFileRatings, upsertFileRating, clearAllRatings } from './tag-history'
 import { SERVICE_TYPE, FILE_SORT_TYPES } from '../../api/types'
 import { TagSearch } from '../search/TagSearch'
+import { FileRenderer } from '../../components/FileRenderer'
 
 const FILE_LIMIT = 200
 const REFILL_THRESHOLD = FILE_LIMIT * 0.2
@@ -41,19 +42,21 @@ export function SmashOrPass() {
   const [loadingB, setLoadingB] = useState(false)
   const [fadingA, setFadingA] = useState(false)
   const [fadingB, setFadingB] = useState(false)
-  const [pulseA, setPulseA] = useState(false)
-  const [pulseB, setPulseB] = useState(false)
+  const [pulseAKey, setPulseAKey] = useState(0)
+  const [pulseBKey, setPulseBKey] = useState(0)
   const [glowA, setGlowA] = useState(0)
   const [glowB, setGlowB] = useState(0)
 
   const smashPassTags = useSettingsStore((s) => s.smashPassTags)
   const setSmashPassTags = useSettingsStore((s) => s.setSmashPassTags)
 
+  const [syncedRatings, setSyncedRatings] = useState<Map<number, number>>(new Map())
+  const [queueRemaining, setQueueRemaining] = useState(0)
+
   const fileIdsRef = useRef<number[]>([])
   const hashesRef = useRef<string[]>([])
   const queueIndexRef = useRef(0)
   const ratingsRef = useRef<Map<number, TrueSkillRating>>(new Map())
-  const syncedRatingRef = useRef<Map<number, number>>(new Map())
   const loadingRef = useRef(false)
   const fillingRef = useRef(false)
   const roundRef = useRef(0)
@@ -84,6 +87,7 @@ export function SmashOrPass() {
       const staticMode = useSettingsStore.getState().smashPassStaticMode
       fileIdsRef.current = staticMode ? ids : fisherYatesShuffle(ids)
       hashesRef.current = staticMode ? hashes : fisherYatesShuffle(hashes)
+      setQueueRemaining(fileIdsRef.current.length)
     } catch (e) {
       console.error('Failed to fill queue:', e)
     } finally {
@@ -141,10 +145,16 @@ export function SmashOrPass() {
       }
 
       if (ratingServiceKey) {
+        const updates = new Map<number, number>()
         for (const f of [a, b]) {
           const hydrusVal = f.ratings?.[ratingServiceKey]
-          syncedRatingRef.current.set(f.file_id, typeof hydrusVal === 'number' ? hydrusVal : 0)
+          updates.set(f.file_id, typeof hydrusVal === 'number' ? hydrusVal : 0)
         }
+        setSyncedRatings((prev) => {
+          const next = new Map(prev)
+          for (const [k, v] of updates) next.set(k, v)
+          return next
+        })
       }
 
       const [ruA, ruB] = await Promise.all([
@@ -172,12 +182,14 @@ export function SmashOrPass() {
       }
       try {
         const ratings = await getAllFileRatings()
+        const syncedInit = new Map<number, number>()
         for (const r of ratings) {
           ratingsRef.current.set(r.file_id, { mu: r.mu, sigma: r.sigma })
           if (r.synced_rating !== undefined) {
-            syncedRatingRef.current.set(r.file_id, r.synced_rating)
+            syncedInit.set(r.file_id, r.synced_rating)
           }
         }
+        setSyncedRatings(syncedInit)
       } catch (e) {
         console.warn('Could not load saved ratings (starting fresh):', e)
       }
@@ -189,11 +201,7 @@ export function SmashOrPass() {
   }, [])
 
   useEffect(() => {
-    if (smashPassTags.length > 0) setTagVersion((v) => v + 1)
-  }, [smashPassTags.join(',')])
-
-  useEffect(() => {
-    syncedRatingRef.current.clear()
+    setSyncedRatings(new Map())
   }, [configuredKey])
 
   async function decide(winner: 'left' | 'right' | 'draw') {
@@ -214,8 +222,7 @@ export function SmashOrPass() {
       newB = result.loser
       const newStreakA = prevStreakA + 1
       setStats((s) => ({ ...s, wins: s.wins + 1, streakA: newStreakA, streakB: 0 }))
-      setPulseA(true)
-      setTimeout(() => setPulseA(false), 600)
+      setPulseAKey((k) => k + 1)
       const glowLevel = newStreakA >= 10 ? 3 : newStreakA >= 5 ? 2 : 1
       setGlowA(glowLevel)
       setGlowB(0)
@@ -225,8 +232,7 @@ export function SmashOrPass() {
       newA = result.loser
       const newStreakB = prevStreakB + 1
       setStats((s) => ({ ...s, wins: s.wins + 1, streakA: 0, streakB: newStreakB }))
-      setPulseB(true)
-      setTimeout(() => setPulseB(false), 600)
+      setPulseBKey((k) => k + 1)
       const glowLevel = newStreakB >= 10 ? 3 : newStreakB >= 5 ? 2 : 1
       setGlowB(glowLevel)
       setGlowA(0)
@@ -250,16 +256,20 @@ export function SmashOrPass() {
       const winnerStreak = winner === 'left' ? prevStreakA : prevStreakB
 
       const streakBonus = (winnerStreak > 0 && winnerStreak % 3 === 0) ? (Math.floor(Math.random() * 2) + 1) : 0
-      const winnerNew = (syncedRatingRef.current.get(winnerId) ?? 0) + BASE_INC + streakBonus
-      const loserNew = Math.max(0, (syncedRatingRef.current.get(loserId) ?? 0) - LOSER_DEC)
+      const winnerNew = (syncedRatings.get(winnerId) ?? 0) + BASE_INC + streakBonus
+      const loserNew = Math.max(0, (syncedRatings.get(loserId) ?? 0) - LOSER_DEC)
 
       try {
         await Promise.all([
           setRating({ file_id: winnerId, rating_service_key: ratingServiceKey, rating: winnerNew }),
           setRating({ file_id: loserId, rating_service_key: ratingServiceKey, rating: loserNew }),
         ])
-        syncedRatingRef.current.set(winnerId, winnerNew)
-        syncedRatingRef.current.set(loserId, loserNew)
+        setSyncedRatings((prev) => {
+          const next = new Map(prev)
+          next.set(winnerId, winnerNew)
+          next.set(loserId, loserNew)
+          return next
+        })
       } catch (e) {
         console.error('Failed to set ratings:', e)
       }
@@ -269,8 +279,8 @@ export function SmashOrPass() {
 
     try {
       await Promise.all([
-        upsertFileRating({ file_id: fileA.file_id, file_hash: fileA.hash, mu: newA.mu, sigma: newA.sigma, synced_rating: syncedRatingRef.current.get(fileA.file_id), timestamp: persistTs }),
-        upsertFileRating({ file_id: fileB.file_id, file_hash: fileB.hash, mu: newB.mu, sigma: newB.sigma, synced_rating: syncedRatingRef.current.get(fileB.file_id), timestamp: persistTs }),
+        upsertFileRating({ file_id: fileA.file_id, file_hash: fileA.hash, mu: newA.mu, sigma: newA.sigma, synced_rating: syncedRatings.get(fileA.file_id), timestamp: persistTs }),
+        upsertFileRating({ file_id: fileB.file_id, file_hash: fileB.hash, mu: newB.mu, sigma: newB.sigma, synced_rating: syncedRatings.get(fileB.file_id), timestamp: persistTs }),
       ])
     } catch (e) {
       console.error('Failed to persist file ratings:', e)
@@ -319,6 +329,7 @@ export function SmashOrPass() {
 
     if (winner === 'left') {
       queueIndexRef.current += 1
+      setQueueRemaining(Math.max(0, fileIdsRef.current.length - queueIndexRef.current))
       setFadingB(true)
       setLoadingB(true)
       const newB = await loadFileByIndex(queueIndexRef.current + 1)
@@ -330,7 +341,11 @@ export function SmashOrPass() {
         }
         if (ratingServiceKey) {
           const hydrusVal = newB.ratings?.[ratingServiceKey]
-          syncedRatingRef.current.set(newB.file_id, typeof hydrusVal === 'number' ? hydrusVal : 0)
+          setSyncedRatings((prev) => {
+            const next = new Map(prev)
+            next.set(newB.file_id, typeof hydrusVal === 'number' ? hydrusVal : 0)
+            return next
+          })
         }
         getFileUrl(newB.hash).then((u) => {
           if (roundRef.current !== thisRound) return
@@ -341,6 +356,7 @@ export function SmashOrPass() {
       }
     } else if (winner === 'right') {
       queueIndexRef.current += 1
+      setQueueRemaining(Math.max(0, fileIdsRef.current.length - queueIndexRef.current))
       setFadingA(true)
       setLoadingA(true)
       const newA = await loadFileByIndex(queueIndexRef.current + 1)
@@ -352,7 +368,11 @@ export function SmashOrPass() {
         }
         if (ratingServiceKey) {
           const hydrusVal = newA.ratings?.[ratingServiceKey]
-          syncedRatingRef.current.set(newA.file_id, typeof hydrusVal === 'number' ? hydrusVal : 0)
+          setSyncedRatings((prev) => {
+            const next = new Map(prev)
+            next.set(newA.file_id, typeof hydrusVal === 'number' ? hydrusVal : 0)
+            return next
+          })
         }
         getFileUrl(newA.hash).then((u) => {
           if (roundRef.current !== thisRound) return
@@ -370,6 +390,7 @@ export function SmashOrPass() {
       setGlowA(0)
       setGlowB(0)
       queueIndexRef.current = 0
+      setQueueRemaining(fileIdsRef.current.length)
       fillQueue().then(() => loadMatch())
     }
   }
@@ -396,6 +417,7 @@ export function SmashOrPass() {
     setUrlB(null)
     fillQueue().then(() => {
       queueIndexRef.current = 0
+      setQueueRemaining(fileIdsRef.current.length)
       loadMatch()
     })
   }, [tagVersion])
@@ -412,7 +434,7 @@ export function SmashOrPass() {
         {stats.streakA > 0 && <span>A Streak <b className={stats.streakA >= 10 ? 'text-lime-400' : stats.streakA >= 5 ? 'text-orange-400' : 'text-gray-400'}>{stats.streakA}</b></span>}
         {stats.streakB > 0 && <span>B Streak <b className={stats.streakB >= 10 ? 'text-lime-400' : stats.streakB >= 5 ? 'text-orange-400' : 'text-gray-400'}>{stats.streakB}</b></span>}
         <span>Draws <b className="text-yellow-400">{stats.draws}</b></span>
-        <span className="text-gray-400">Queue: <b>{Math.max(0, fileIdsRef.current.length - queueIndexRef.current)}</b></span>
+        <span className="text-gray-400">Queue: <b>{queueRemaining}</b></span>
       </div>
 
       <div className="flex-1 flex gap-2 p-2 min-h-0">
@@ -431,19 +453,17 @@ export function SmashOrPass() {
             className={`absolute inset-0 bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center transition-opacity duration-200 ${fadingA ? 'opacity-10' : ''} ${votingOpen ? 'cursor-pointer' : ''}`}
             onClick={() => votingOpen && decide('left')}
           >
-            {urlA && fileA?.mime?.startsWith('video/')
-              ? <video src={urlA} className="w-full h-full object-contain" controls autoPlay loop />
-              : urlA
-                ? <img src={urlA} alt="" className="w-full h-full object-contain" />
-                : null
+            {urlA
+              ? <FileRenderer url={urlA} mime={fileA?.mime ?? 'image/jpeg'} className="w-full h-full object-contain" />
+              : null
             }
             {votingOpen && fileA && (() => {
-              const s = syncedRatingRef.current.get(fileA.file_id)
+              const s = syncedRatings.get(fileA.file_id)
               const rating = (s ?? 0).toString() + ' ELO'
-              const glowClass = glowA === 3 ? 'elo-glow' : glowA === 2 ? 'elo-throb' : pulseA ? 'elo-pulse' : ''
+              const baseGlow = glowA === 3 ? 'elo-glow' : glowA === 2 ? 'elo-throb' : ''
               return (
                 <div className="absolute bottom-2 left-2 flex flex-col items-start gap-0.5">
-                  <span className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${glowClass}`}>
+                  <span key={`elo-a-${pulseAKey}`} className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${baseGlow} ${pulseAKey > 0 ? 'elo-pulse' : ''}`}>
                     {rating}
                   </span>
                   <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded">
@@ -466,19 +486,17 @@ export function SmashOrPass() {
             className={`absolute inset-0 bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center transition-opacity duration-200 ${fadingB ? 'opacity-10' : ''} ${votingOpen ? 'cursor-pointer' : ''}`}
             onClick={() => votingOpen && decide('right')}
           >
-            {urlB && fileB?.mime?.startsWith('video/')
-              ? <video src={urlB} className="w-full h-full object-contain" controls autoPlay loop />
-              : urlB
-                ? <img src={urlB} alt="" className="w-full h-full object-contain" />
-                : null
+            {urlB
+              ? <FileRenderer url={urlB} mime={fileB?.mime ?? 'image/jpeg'} className="w-full h-full object-contain" />
+              : null
             }
             {votingOpen && fileB && (() => {
-              const s = syncedRatingRef.current.get(fileB.file_id)
+              const s = syncedRatings.get(fileB.file_id)
               const rating = (s ?? 0).toString() + ' ELO'
-              const glowClass = glowB === 3 ? 'elo-glow' : glowB === 2 ? 'elo-throb' : pulseB ? 'elo-pulse' : ''
+              const baseGlow = glowB === 3 ? 'elo-glow' : glowB === 2 ? 'elo-throb' : ''
               return (
                 <div className="absolute bottom-2 right-2 flex flex-col items-end gap-0.5">
-                  <span className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${glowClass}`}>
+                  <span key={`elo-b-${pulseBKey}`} className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${baseGlow} ${pulseBKey > 0 ? 'elo-pulse' : ''}`}>
                     {rating}
                   </span>
                   <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded">
