@@ -568,7 +568,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
                   onClick={(e) => { e.stopPropagation(); setShowInfoPane(true) }}
                   title="File info (i)"
                 >
-                  <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 2a1 1 0 1 1 0 2 1 0 0 1 0-2zm1 4.5v3.5a.5.5 0 0 1-1 0V7.5a.5.5 0 0 1 1 0z"/></svg>
+                  <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="currentColor"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/><rect x="7.25" y="6.5" width="1.5" height="1.5" rx="0.5"/><rect x="7.25" y="9" width="1.5" height="3.5" rx="0.5"/></svg>
                 </button>
               )}
               {thumbnails.has(id) ? (

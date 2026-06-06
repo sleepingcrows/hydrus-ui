@@ -48,7 +48,12 @@ function SwfPlayer({ url, className }: { url: string; className?: string }) {
       if (!w.RufflePlayer) w.RufflePlayer = { config: {} }
       w.RufflePlayer.config = w.RufflePlayer.config ?? {}
       w.RufflePlayer.config.publicPath = '/'
-      await import('@ruffle-rs/ruffle')
+      try {
+        await import('@ruffle-rs/ruffle')
+      } catch (err) {
+        console.error('Failed to load Ruffle:', err)
+        return
+      }
       if (cancelled) return
       await new Promise<void>(r => setTimeout(r, 0))
       if (cancelled) return
