@@ -37,6 +37,8 @@ export function SmashOrPass() {
   const [loading, setLoading] = useState(false)
   const [stats, setStats] = useState({ wins: 0, draws: 0 })
   const [tagVersion, setTagVersion] = useState(0)
+  const [loadingA, setLoadingA] = useState(false)
+  const [loadingB, setLoadingB] = useState(false)
 
   const smashPassTags = useSettingsStore((s) => s.smashPassTags)
   const setSmashPassTags = useSettingsStore((s) => s.setSmashPassTags)
@@ -286,9 +288,9 @@ export function SmashOrPass() {
 
     if (winner === 'left') {
       queueIndexRef.current += 1
-      setFileB(null)
-      setUrlB(null)
+      setLoadingB(true)
       const newB = await loadFileByIndex(queueIndexRef.current + 1)
+      setLoadingB(false)
       if (newB) {
         setFileB(newB)
         if (!ratingsRef.current.has(newB.file_id)) {
@@ -302,9 +304,9 @@ export function SmashOrPass() {
       }
     } else if (winner === 'right') {
       queueIndexRef.current += 1
-      setFileA(null)
-      setUrlA(null)
+      setLoadingA(true)
       const newA = await loadFileByIndex(queueIndexRef.current + 1)
+      setLoadingA(false)
       if (newA) {
         setFileA(newA)
         if (!ratingsRef.current.has(newA.file_id)) {
@@ -362,11 +364,6 @@ export function SmashOrPass() {
       </div>
 
       <div className="flex-1 flex gap-2 p-2 min-h-0">
-        {loading && (
-          <div className="flex-1 flex items-center justify-center text-gray-400">
-            Loading...
-          </div>
-        )}
         {!loading && (!fileA || !fileB) && (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-4">
             <p className="text-lg">No more files!</p>
@@ -401,6 +398,11 @@ export function SmashOrPass() {
               </div>
             )
           })()}
+          {loadingA && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
+              <span className="bg-gray-800 text-gray-300 px-3 py-1.5 rounded text-xs">Loading...</span>
+            </div>
+          )}
         </div>
 
         {/* Right file */}
@@ -428,6 +430,11 @@ export function SmashOrPass() {
               </div>
             )
           })()}
+          {loadingB && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
+              <span className="bg-gray-800 text-gray-300 px-3 py-1.5 rounded text-xs">Loading...</span>
+            </div>
+          )}
         </div>
       </div>
 
