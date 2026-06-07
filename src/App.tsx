@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useApiStore } from './stores/api-store'
 import { useSettingsStore } from './stores/settings-store'
@@ -8,6 +8,7 @@ import { ConnectionSettings } from './features/settings/ConnectionSettings'
 import { SearchPage } from './features/search/SearchPage'
 import { SmashOrPass } from './features/smash-or-pass/SmashOrPass'
 import { TagAnalyticsPanel } from './features/smash-or-pass/TagAnalyticsPanel'
+import { EloGraph } from './features/smash-or-pass/EloGraph'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -20,6 +21,9 @@ export default function App() {
   const settingsHydrate = useSettingsStore((s) => s.hydrate)
   const ratingServicesHydrate = useRatingServicesStore((s) => s.load)
   const [tab, setTab] = useState<Tab>('search')
+  const [analyticsView, setAnalyticsView] = useState<'tag-preferences' | 'elo-graph'>('tag-preferences')
+  const [analyticsOpen, setAnalyticsOpen] = useState(false)
+  const analyticsTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
   const [favTags, setFavTags] = useState<string[]>([])
 
   const configuredLikeKey = useSettingsStore((s) => s.likeServiceKey)
@@ -71,19 +75,59 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <div className="h-screen flex flex-col bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
         <header className="flex items-center gap-1 px-2 py-1 border-b dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              className={`px-3 py-1 text-sm rounded ${
-                tab === t.id
-                  ? 'bg-blue-600 text-white'
-                  : 'hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-              onClick={() => setTab(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
+          {tabs.map((t) =>
+            t.id === 'analytics' ? (
+              <div
+                key="analytics"
+                className="relative"
+                onMouseEnter={() => { clearTimeout(analyticsTimeoutRef.current); setAnalyticsOpen(true) }}
+                onMouseLeave={() => { analyticsTimeoutRef.current = setTimeout(() => setAnalyticsOpen(false), 200) }}
+              >
+                <button
+                  className={`px-3 py-1 text-sm rounded ${
+                    tab === 'analytics'
+                      ? 'bg-blue-600 text-white'
+                      : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                  onClick={() => setTab('analytics')}
+                >
+                  Analytics
+                </button>
+                {analyticsOpen && (
+                  <div className="absolute top-full left-0 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow-lg z-50 min-w-[160px] text-gray-900 dark:text-gray-100">
+                    <button
+                      className={`block w-full text-left px-3 py-1.5 text-sm ${
+                        analyticsView === 'tag-preferences' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      onClick={() => { setTab('analytics'); setAnalyticsView('tag-preferences'); setAnalyticsOpen(false) }}
+                    >
+                      Tag Preferences
+                    </button>
+                    <button
+                      className={`block w-full text-left px-3 py-1.5 text-sm ${
+                        analyticsView === 'elo-graph' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      onClick={() => { setTab('analytics'); setAnalyticsView('elo-graph'); setAnalyticsOpen(false) }}
+                    >
+                      ELO Distribution
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                key={t.id}
+                className={`px-3 py-1 text-sm rounded ${
+                  tab === t.id
+                    ? 'bg-blue-600 text-white'
+                    : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+                onClick={() => setTab(t.id)}
+              >
+                {t.label}
+              </button>
+            )
+          )}
           <button
             className="ml-auto text-xs text-gray-400 hover:text-red-500"
             onClick={() => useApiStore.getState().disconnect()}
@@ -96,7 +140,8 @@ export default function App() {
           {tab === 'smash-pass' && <SmashOrPass />}
           {tab === 'leaderboard' && <SearchPage key="leaderboard" presetTags={['system:has count for skill']} title="Leaderboard" sortByRating displayLimit={500} />}
           {tab === 'favorites' && <SearchPage key="favorites" presetTags={favTags} title="Favorites" />}
-          {tab === 'analytics' && <TagAnalyticsPanel />}
+          {tab === 'analytics' && analyticsView === 'tag-preferences' && <TagAnalyticsPanel />}
+          {tab === 'analytics' && analyticsView === 'elo-graph' && <EloGraph />}
           {tab === 'settings' && <ConnectionSettings />}
         </main>
       </div>

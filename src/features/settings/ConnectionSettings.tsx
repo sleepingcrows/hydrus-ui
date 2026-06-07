@@ -161,7 +161,7 @@ export function ConnectionSettings() {
             })}
           </button>
           <p className="text-xs text-gray-400 mt-1">
-            Fetches ratings for all files matching your Smash/Pass tags. Used for ELO rankings.
+            Fetches ratings for the first 10,000 files matching your tags. Additional files are cached as you browse.
           </p>
         </div>
       )}

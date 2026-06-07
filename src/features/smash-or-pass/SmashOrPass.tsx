@@ -284,6 +284,10 @@ export function SmashOrPass() {
           next.set(loserId, loserNew)
           return next
         })
+        const cacheUpdates: [number, Record<string, number | boolean>][] = []
+        cacheUpdates.push([winnerId, { ...((fileA.file_id === winnerId ? fileA : fileB).ratings ?? {}), [ratingServiceKey]: winnerNew }])
+        cacheUpdates.push([loserId, { ...((fileA.file_id === loserId ? fileA : fileB).ratings ?? {}), [ratingServiceKey]: loserNew }])
+        useSettingsStore.getState().addToRatingsCache(cacheUpdates)
       } catch (e) {
         console.error('Failed to set ratings:', e)
       }

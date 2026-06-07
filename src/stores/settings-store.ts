@@ -27,6 +27,7 @@ interface SettingsState {
   hydrate: () => void
   rebuildRatingsCache: (tags: string[]) => Promise<void>
   getRatingsCache: () => Map<number, Record<string, number | boolean>> | null
+  addToRatingsCache: (entries: Iterable<[number, Record<string, number | boolean>]>) => void
 }
 
 function loadRatingsCacheFromStorage(): Map<number, Record<string, number | boolean>> | null {
@@ -121,4 +122,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
   },
   getRatingsCache: () => loadRatingsCacheFromStorage(),
+  addToRatingsCache: (entries) => {
+    const cache = loadRatingsCacheFromStorage() ?? new Map<number, Record<string, number | boolean>>()
+    for (const [id, ratings] of entries) {
+      cache.set(id, ratings)
+    }
+    saveRatingsCacheToStorage(cache)
+  },
 }))

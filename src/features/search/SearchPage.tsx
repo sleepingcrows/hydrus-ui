@@ -130,12 +130,17 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
       }
       if (searchId !== searchIdRef.current) return
       const map = new Map(filesRef.current)
+      const cacheUpdates: [number, Record<string, number | boolean>][] = []
       for (const f of meta) {
         map.set(f.file_id, f)
-        if (f.ratings) ratingsCacheRef.current.set(f.file_id, f.ratings)
+        if (f.ratings) {
+          ratingsCacheRef.current.set(f.file_id, f.ratings)
+          cacheUpdates.push([f.file_id, f.ratings])
+        }
       }
       filesRef.current = map
       setFiles(map)
+      if (cacheUpdates.length > 0) useSettingsStore.getState().addToRatingsCache(cacheUpdates)
     } catch (e) {
       if (searchId === searchIdRef.current) console.error('Failed to load page metadata:', e)
     }
@@ -207,20 +212,22 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
         for (let i = 0; i < ids.length; i += chunkSize) {
           const chunkHashes = hs.slice(i, i + chunkSize).filter(Boolean)
           const chunkIds = ids.slice(i, i + chunkSize).filter((_id, j) => !hs[i + j])
+          const cacheUpdates: [number, Record<string, number | boolean>][] = []
           if (chunkHashes.length > 0) {
             const meta = await fetchFileMetadata(chunkHashes)
             for (const f of meta) {
               allMeta.set(f.file_id, f)
-              if (f.ratings) ratingsCacheRef.current.set(f.file_id, f.ratings)
+              if (f.ratings) { ratingsCacheRef.current.set(f.file_id, f.ratings); cacheUpdates.push([f.file_id, f.ratings]) }
             }
           }
           if (chunkIds.length > 0) {
             const meta = await fetchFileMetadataByIds(chunkIds)
             for (const f of meta) {
               allMeta.set(f.file_id, f)
-              if (f.ratings) ratingsCacheRef.current.set(f.file_id, f.ratings)
+              if (f.ratings) { ratingsCacheRef.current.set(f.file_id, f.ratings); cacheUpdates.push([f.file_id, f.ratings]) }
             }
           }
+          if (cacheUpdates.length > 0) useSettingsStore.getState().addToRatingsCache(cacheUpdates)
           if (searchId !== searchIdRef.current) return
           sortByIds()
         }
@@ -430,7 +437,10 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
     if (meta.length === 0) return
     const map = new Map(filesRef.current)
     map.set(meta[0].file_id, meta[0])
-    if (meta[0].ratings) ratingsCacheRef.current.set(meta[0].file_id, meta[0].ratings)
+    if (meta[0].ratings) {
+      ratingsCacheRef.current.set(meta[0].file_id, meta[0].ratings)
+      useSettingsStore.getState().addToRatingsCache([[meta[0].file_id, meta[0].ratings]])
+    }
     filesRef.current = map
     setFiles(map)
   }
