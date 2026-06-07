@@ -51,17 +51,17 @@ All hotkeys are suppressed when typing in a text input (tag search bar).
 
 ## Stack
 
-| Library | Version |
-|---|---|
-| React | 19 |
-| TypeScript | 6 |
-| Vite | 8 |
-| Zustand | 5 |
-| TanStack React Query | 5 |
-| Tailwind CSS | 4 |
-| Recharts | 3 |
-| Zod | 4 |
-| idb | 8 |
-| pdfjs-dist | — |
-| ag-psd | — |
-| Ruffle (SWF) | — |
+| Library | Version | Purpose |
+|---|---|---|
+| React | 19 | UI component model |
+| TypeScript | 6 | Type safety across codebase |
+| Vite | 8 | Fast dev server + HMR, production bundling |
+| Zustand | 5 | Lightweight global state (settings, ratings cache) |
+| TanStack React Query | 5 | Server state caching + dedup for Hydrus API calls |
+| Tailwind CSS | 4 | Utility-first styling, dark mode |
+| Recharts | 3 | ELO distribution bar chart |
+| Zod | 4 | Runtime validation of Hydrus API responses |
+| idb | 8 | IndexedDB wrapper for TrueSkill tag history |
+| pdfjs-dist | — | PDF rendering in gallery carousel |
+| ag-psd | — | PSD file rendering in gallery carousel |
+| Ruffle (SWF) | — | Flash/SWF playback in gallery carousel |
