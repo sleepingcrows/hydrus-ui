@@ -51,4 +51,17 @@ All hotkeys are suppressed when typing in a text input (tag search bar).
 
 ## Stack
 
-React 19, TypeScript 6, Vite 8, Zustand 5, TanStack React Query 5, Tailwind CSS 4, Recharts 3, Zod 4, idb 8, pdfjs-dist, ag-psd, Ruffle (SWF player).
+| Library | Version |
+|---|---|
+| React | 19 |
+| TypeScript | 6 |
+| Vite | 8 |
+| Zustand | 5 |
+| TanStack React Query | 5 |
+| Tailwind CSS | 4 |
+| Recharts | 3 |
+| Zod | 4 |
+| idb | 8 |
+| pdfjs-dist | — |
+| ag-psd | — |
+| Ruffle (SWF) | — |
