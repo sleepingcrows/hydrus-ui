@@ -4,13 +4,16 @@
 
 Vibecoded. Here be dragons.
 
-Hydrus tag rating tool with TrueSkill-based tag analytics, Smash/Pass voting, and gallery browsing.
+Hydrus Network web UI — tag rating, TrueSkill analytics, gallery browsing, and ELO distribution visualization.
 
-- **Smash/Pass** — rate files pairwise, tracks per-tag TrueSkill ratings in IndexedDB, syncs inc/dec ratings to Hydrus API
-- **Analytics** — tag-level TrueSkill leaderboard with mu/sigma display
-- **Search** — full Hydrus search with thumbnail grid, gallery carousel, inc/dec ELO overlay
+- **Smash/Pass** — pairwise file voting with TrueSkill scoring, syncs inc/dec ratings to Hydrus API
+- **Search** — full Hydrus tag search with thumbnail grid/mosaic layout, gallery carousel, inc/dec ELO & like overlays
 - **Leaderboard** — top 500 files by inc/dec rating, sorted client-side
 - **Favorites** — files liked on a like/dislike service
+- **Analytics** — hover-dropdown with two views:
+  - *Tag Preferences* — per-tag TrueSkill alignment (mu change) with sort/filter/min-appearances
+  - *ELO Distribution* — bar chart of ELO rating vs submission count, dual source (localStorage cache or Hydrus leaderboard search), linear/log Y-axis toggle
+- **Settings** — connection config, rating service selection, gallery layout mode, ratings cache rebuild, namespace colors
 
 ## Setup
 
@@ -48,4 +51,4 @@ All hotkeys are suppressed when typing in a text input (tag search bar).
 
 ## Stack
 
-React, TypeScript, Vite, Zustand, TanStack Query, Tailwind CSS.
+React 19, TypeScript 6, Vite 8, Zustand 5, TanStack React Query 5, Tailwind CSS 4, Recharts 3, Zod 4, idb 8, pdfjs-dist, ag-psd, Ruffle (SWF player).
