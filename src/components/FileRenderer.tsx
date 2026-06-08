@@ -20,6 +20,10 @@ function isPsd(mime: string): boolean {
   return mime === 'image/vnd.adobe.photoshop' || mime === 'application/x-photoshop' || mime === 'image/psd'
 }
 
+function isAvi(mime: string): boolean {
+  return mime === 'video/x-msvideo' || mime === 'video/avi'
+}
+
 function isAudio(mime: string): boolean {
   return mime.startsWith('audio/')
 }
@@ -207,7 +211,26 @@ function InteractiveMedia({ children, className }: { children: React.ReactNode; 
   )
 }
 
+function UnsupportedFile({ url, mime, className }: { url: string; mime: string; className?: string }) {
+  return (
+    <div className={`flex flex-col items-center justify-center gap-3 text-sm text-white/50 ${className ?? ''}`}>
+      <span>Unsupported file type: {mime}</span>
+      <a
+        href={url}
+        download
+        className="px-3 py-1.5 bg-white/10 rounded hover:bg-white/20 transition-colors text-white/70 text-xs"
+      >
+        Download file
+      </a>
+    </div>
+  )
+}
+
 export function FileRenderer({ url, mime, className }: FileRendererProps) {
+  if (isAvi(mime)) {
+    return <UnsupportedFile url={url} mime={mime} className={className} />
+  }
+
   if (isVideo(mime)) {
     return (
       <InteractiveMedia>
@@ -252,9 +275,5 @@ export function FileRenderer({ url, mime, className }: FileRendererProps) {
     return <img src={url} alt="" className={className} />
   }
 
-  return (
-    <div className={`flex items-center justify-center text-sm text-white/50 ${className ?? ''}`}>
-      Unsupported file type: {mime}
-    </div>
-  )
+  return <UnsupportedFile url={url} mime={mime} className={className} />
 }
