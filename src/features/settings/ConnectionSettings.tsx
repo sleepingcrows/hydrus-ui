@@ -114,6 +114,15 @@ export function ConnectionSettings() {
         />
         TERMINATED mode
       </label>
+      <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <input
+          type="checkbox"
+          checked={useSettingsStore((s) => s.smashPassDualMode)}
+          onChange={() => useSettingsStore.getState().toggleSmashPassDualMode()}
+          className="rounded"
+        />
+        Dual queue mode (A vs B tag sets)
+      </label>
 
       <div className="mt-3">
         <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Rating service for Smash/Pass ELO</label>

@@ -49,14 +49,27 @@ export function SmashOrPass() {
 
   const smashPassTags = useSettingsStore((s) => s.smashPassTags)
   const setSmashPassTags = useSettingsStore((s) => s.setSmashPassTags)
+  const smashPassTagsB = useSettingsStore((s) => s.smashPassTagsB)
+  const setSmashPassTagsB = useSettingsStore((s) => s.setSmashPassTagsB)
+  const smashPassDualMode = useSettingsStore((s) => s.smashPassDualMode)
 
   const [syncedRatings, setSyncedRatings] = useState<Map<number, number>>(new Map())
   const [queueRemaining, setQueueRemaining] = useState(0)
+  const [queueRemainingA, setQueueRemainingA] = useState(0)
+  const [queueRemainingB, setQueueRemainingB] = useState(0)
   const [eloRanks, setEloRanks] = useState<Map<number, number>>(new Map())
 
   const fileIdsRef = useRef<number[]>([])
   const hashesRef = useRef<string[]>([])
   const queueIndexRef = useRef(0)
+  const fileIdsRefA = useRef<number[]>([])
+  const hashesRefA = useRef<string[]>([])
+  const queueIndexRefA = useRef(0)
+  const fillingRefA = useRef(false)
+  const fileIdsRefB = useRef<number[]>([])
+  const hashesRefB = useRef<string[]>([])
+  const queueIndexRefB = useRef(0)
+  const fillingRefB = useRef(false)
   const ratingsRef = useRef<Map<number, TrueSkillRating>>(new Map())
   const loadingRef = useRef(false)
   const fillingRef = useRef(false)
@@ -96,13 +109,57 @@ export function SmashOrPass() {
     }
   }
 
-  async function loadFileByIndex(index: number): Promise<FileMetadata | null> {
-    const ids = fileIdsRef.current
-    const hashes = hashesRef.current
-    if (index >= ids.length && index >= hashes.length) return null
+  async function fillQueueA(): Promise<void> {
+    if (fillingRefA.current) return
+    fillingRefA.current = true
+    try {
+      const custom = useSettingsStore.getState().smashPassTags
+      const tags = custom.length > 0 ? custom : ['system:everything']
+      const result = await searchFiles({
+        tags,
+        file_sort_type: FILE_SORT_TYPES.RANDOM,
+        file_sort_asc: false,
+        return_hashes: true,
+        file_limit: FILE_LIMIT,
+      })
+      fileIdsRefA.current = fisherYatesShuffle(result.file_ids || [])
+      hashesRefA.current = fisherYatesShuffle(result.hashes || [])
+      setQueueRemainingA(fileIdsRefA.current.length)
+    } catch (e) {
+      console.error('Failed to fill queue A:', e)
+    } finally {
+      fillingRefA.current = false
+    }
+  }
+
+  async function fillQueueB(): Promise<void> {
+    if (fillingRefB.current) return
+    fillingRefB.current = true
+    try {
+      const custom = useSettingsStore.getState().smashPassTagsB
+      const tags = custom.length > 0 ? custom : ['system:everything']
+      const result = await searchFiles({
+        tags,
+        file_sort_type: FILE_SORT_TYPES.RANDOM,
+        file_sort_asc: false,
+        return_hashes: true,
+        file_limit: FILE_LIMIT,
+      })
+      fileIdsRefB.current = fisherYatesShuffle(result.file_ids || [])
+      hashesRefB.current = fisherYatesShuffle(result.hashes || [])
+      setQueueRemainingB(fileIdsRefB.current.length)
+    } catch (e) {
+      console.error('Failed to fill queue B:', e)
+    } finally {
+      fillingRefB.current = false
+    }
+  }
+
+  async function loadFileByIndex(index: number, fileIds: number[], hashes: string[]): Promise<FileMetadata | null> {
+    if (index >= fileIds.length && index >= hashes.length) return null
 
     const hash = index < hashes.length ? hashes[index] : undefined
-    const fileId = index < ids.length ? ids[index] : undefined
+    const fileId = index < fileIds.length ? fileIds[index] : undefined
     if (!hash && fileId == null) return null
 
     const files = hash
@@ -113,80 +170,116 @@ export function SmashOrPass() {
     return files.length > 0 ? files[0] : null
   }
 
+  async function findNextSupported(index: number, fileIds: number[], hashes: string[], skipHash?: string): Promise<{ file: FileMetadata | null; index: number }> {
+    while (index < fileIds.length) {
+      const file = await loadFileByIndex(index, fileIds, hashes)
+      if (!file) break
+      if (isUnsupportedMime(file.mime) || (skipHash && file.hash === skipHash)) {
+        index++
+        continue
+      }
+      return { file, index }
+    }
+    return { file: null, index }
+  }
+
   async function loadMatch(): Promise<void> {
     if (loadingRef.current) return
     loadingRef.current = true
     setLoading(true)
     try {
-      const remaining = fileIdsRef.current.length - queueIndexRef.current
-      if (remaining <= REFILL_THRESHOLD) {
-        await fillQueue()
-        queueIndexRef.current = 0
-      }
-
-      let a: FileMetadata | null = null
-      while (queueIndexRef.current < fileIdsRef.current.length) {
-        a = await loadFileByIndex(queueIndexRef.current)
-        if (!a) break
-        if (isUnsupportedMime(a.mime)) {
-          queueIndexRef.current++
-          continue
+      if (smashPassDualMode) {
+        const remainA = fileIdsRefA.current.length - queueIndexRefA.current
+        if (remainA <= REFILL_THRESHOLD) {
+          await fillQueueA()
+          queueIndexRefA.current = 0
         }
-        break
-      }
+        const remainB = fileIdsRefB.current.length - queueIndexRefB.current
+        if (remainB <= REFILL_THRESHOLD) {
+          await fillQueueB()
+          queueIndexRefB.current = 0
+        }
 
-      let b: FileMetadata | null = null
-      if (a) {
-        let bIndex = queueIndexRef.current + 1
-        while (bIndex < fileIdsRef.current.length) {
-          b = await loadFileByIndex(bIndex)
-          if (!b) break
-          if (isUnsupportedMime(b.mime) || b.hash === a.hash) {
-            bIndex++
-            b = null
-            continue
+        const foundA = await findNextSupported(queueIndexRefA.current, fileIdsRefA.current, hashesRefA.current)
+        queueIndexRefA.current = foundA.index
+        const a = foundA.file
+
+        const foundB = await findNextSupported(queueIndexRefB.current, fileIdsRefB.current, hashesRefB.current, a?.hash)
+        const b = foundB.file
+
+        if (!a || !b) {
+          setFileA(null); setFileB(null); setUrlA(null); setUrlB(null)
+          return
+        }
+
+        setFileA(a)
+        setFileB(b)
+
+        if (!ratingsRef.current.has(a.file_id)) ratingsRef.current.set(a.file_id, createRating())
+        if (!ratingsRef.current.has(b.file_id)) ratingsRef.current.set(b.file_id, createRating())
+
+        if (ratingServiceKey) {
+          const updates = new Map<number, number>()
+          for (const f of [a, b]) {
+            const v = f.ratings?.[ratingServiceKey]
+            updates.set(f.file_id, typeof v === 'number' ? v : 0)
           }
-          break
+          setSyncedRatings((prev) => { const n = new Map(prev); for (const [k, v] of updates) n.set(k, v); return n })
         }
-      }
 
-      if (!a || !b) {
-        setFileA(null)
-        setFileB(null)
-        setUrlA(null)
-        setUrlB(null)
-        return
-      }
-
-      setFileA(a)
-      setFileB(b)
-
-      if (!ratingsRef.current.has(a.file_id)) {
-        ratingsRef.current.set(a.file_id, createRating())
-      }
-      if (!ratingsRef.current.has(b.file_id)) {
-        ratingsRef.current.set(b.file_id, createRating())
-      }
-
-      if (ratingServiceKey) {
-        const updates = new Map<number, number>()
-        for (const f of [a, b]) {
-          const hydrusVal = f.ratings?.[ratingServiceKey]
-          updates.set(f.file_id, typeof hydrusVal === 'number' ? hydrusVal : 0)
+        const [ruA, ruB] = await Promise.all([
+          getFileUrl(a.hash).catch(() => null),
+          getFileUrl(b.hash).catch(() => null),
+        ])
+        setUrlA(ruA)
+        setUrlB(ruB)
+      } else {
+        const remaining = fileIdsRef.current.length - queueIndexRef.current
+        if (remaining <= REFILL_THRESHOLD) {
+          await fillQueue()
+          queueIndexRef.current = 0
         }
-        setSyncedRatings((prev) => {
-          const next = new Map(prev)
-          for (const [k, v] of updates) next.set(k, v)
-          return next
-        })
-      }
 
-      const [ruA, ruB] = await Promise.all([
-        getFileUrl(a.hash).catch(() => null),
-        getFileUrl(b.hash).catch(() => null),
-      ])
-      setUrlA(ruA)
-      setUrlB(ruB)
+        const foundA = await findNextSupported(queueIndexRef.current, fileIdsRef.current, hashesRef.current)
+        queueIndexRef.current = foundA.index
+        const a = foundA.file
+
+        let b: FileMetadata | null = null
+        if (a) {
+          const foundB = await findNextSupported(queueIndexRef.current + 1, fileIdsRef.current, hashesRef.current, a.hash)
+          b = foundB.file
+        }
+
+        if (!a || !b) {
+          setFileA(null)
+          setFileB(null)
+          setUrlA(null)
+          setUrlB(null)
+          return
+        }
+
+        setFileA(a)
+        setFileB(b)
+
+        if (!ratingsRef.current.has(a.file_id)) ratingsRef.current.set(a.file_id, createRating())
+        if (!ratingsRef.current.has(b.file_id)) ratingsRef.current.set(b.file_id, createRating())
+
+        if (ratingServiceKey) {
+          const updates = new Map<number, number>()
+          for (const f of [a, b]) {
+            const v = f.ratings?.[ratingServiceKey]
+            updates.set(f.file_id, typeof v === 'number' ? v : 0)
+          }
+          setSyncedRatings((prev) => { const n = new Map(prev); for (const [k, v] of updates) n.set(k, v); return n })
+        }
+
+        const [ruA, ruB] = await Promise.all([
+          getFileUrl(a.hash).catch(() => null),
+          getFileUrl(b.hash).catch(() => null),
+        ])
+        setUrlA(ruA)
+        setUrlB(ruB)
+      }
     } finally {
       loadingRef.current = false
       setLoading(false)
@@ -368,19 +461,80 @@ export function SmashOrPass() {
 
     const thisRound = ++roundRef.current
 
-    if (winner === 'left') {
+    if (smashPassDualMode) {
+      if (winner === 'left') {
+        setFadingB(true)
+        setLoadingB(true)
+        const found = await findNextSupported(queueIndexRefB.current, fileIdsRefB.current, hashesRefB.current, fileA.hash)
+        queueIndexRefB.current = found.index
+        const newB = found.file
+        queueIndexRefB.current++
+        setQueueRemainingB(Math.max(0, fileIdsRefB.current.length - queueIndexRefB.current))
+        if (roundRef.current !== thisRound) return
+        if (newB) {
+          setFileB(newB)
+          if (!ratingsRef.current.has(newB.file_id)) ratingsRef.current.set(newB.file_id, createRating())
+          if (ratingServiceKey) {
+            const v = newB.ratings?.[ratingServiceKey]
+            setSyncedRatings((prev) => { const n = new Map(prev); n.set(newB.file_id, typeof v === 'number' ? v : 0); return n })
+          }
+          getFileUrl(newB.hash).then((u) => {
+            if (roundRef.current !== thisRound) return
+            if (u) setUrlB(u)
+            const delay = useSettingsStore.getState().terminatedMode ? 750 : 0
+            setTimeout(() => {
+              setLoadingB(false)
+              setTimeout(() => { if (roundRef.current === thisRound) setFadingB(false) }, 150)
+            }, delay)
+          }).catch(() => { if (roundRef.current !== thisRound) return; setLoadingB(false); setFadingB(false) })
+        } else {
+          setLoadingB(false); setFadingB(false)
+        }
+      } else if (winner === 'right') {
+        setFadingA(true)
+        setLoadingA(true)
+        const found = await findNextSupported(queueIndexRefA.current, fileIdsRefA.current, hashesRefA.current, fileB.hash)
+        queueIndexRefA.current = found.index
+        const newA = found.file
+        queueIndexRefA.current++
+        setQueueRemainingA(Math.max(0, fileIdsRefA.current.length - queueIndexRefA.current))
+        if (roundRef.current !== thisRound) return
+        if (newA) {
+          setFileA(newA)
+          if (!ratingsRef.current.has(newA.file_id)) ratingsRef.current.set(newA.file_id, createRating())
+          if (ratingServiceKey) {
+            const v = newA.ratings?.[ratingServiceKey]
+            setSyncedRatings((prev) => { const n = new Map(prev); n.set(newA.file_id, typeof v === 'number' ? v : 0); return n })
+          }
+          getFileUrl(newA.hash).then((u) => {
+            if (roundRef.current !== thisRound) return
+            if (u) setUrlA(u)
+            const delay = useSettingsStore.getState().terminatedMode ? 750 : 0
+            setTimeout(() => {
+              setLoadingA(false)
+              setTimeout(() => { if (roundRef.current === thisRound) setFadingA(false) }, 150)
+            }, delay)
+          }).catch(() => { if (roundRef.current !== thisRound) return; setLoadingA(false); setFadingA(false) })
+        } else {
+          setLoadingA(false); setFadingA(false)
+        }
+      } else {
+        roundRef.current++
+        setLoadingA(false); setLoadingB(false)
+        setFadingA(false); setFadingB(false)
+        setGlowA(0); setGlowB(0)
+        queueIndexRefA.current = 0; queueIndexRefB.current = 0
+        setQueueRemainingA(fileIdsRefA.current.length); setQueueRemainingB(fileIdsRefB.current.length)
+        await Promise.all([fillQueueA(), fillQueueB()])
+        loadMatch()
+      }
+    } else if (winner === 'left') {
       queueIndexRef.current += 1
       setQueueRemaining(Math.max(0, fileIdsRef.current.length - queueIndexRef.current))
       setFadingB(true)
       setLoadingB(true)
-      let bIndex = queueIndexRef.current + 1
-      let newB: FileMetadata | null = null
-      while (bIndex < fileIdsRef.current.length) {
-        newB = await loadFileByIndex(bIndex)
-        if (!newB) break
-        if (isUnsupportedMime(newB.mime) || newB.hash === fileA.hash) { bIndex++; newB = null; continue }
-        break
-      }
+      const found = await findNextSupported(queueIndexRef.current + 1, fileIdsRef.current, hashesRef.current, fileA.hash)
+      const newB = found.file
       if (roundRef.current !== thisRound) return
       if (newB) {
         setFileB(newB)
@@ -412,14 +566,8 @@ export function SmashOrPass() {
       setQueueRemaining(Math.max(0, fileIdsRef.current.length - queueIndexRef.current))
       setFadingA(true)
       setLoadingA(true)
-      let aIndex = queueIndexRef.current + 1
-      let newA: FileMetadata | null = null
-      while (aIndex < fileIdsRef.current.length) {
-        newA = await loadFileByIndex(aIndex)
-        if (!newA) break
-        if (isUnsupportedMime(newA.mime) || newA.hash === fileB.hash) { aIndex++; newA = null; continue }
-        break
-      }
+      const found = await findNextSupported(queueIndexRef.current + 1, fileIdsRef.current, hashesRef.current, fileB.hash)
+      const newA = found.file
       if (roundRef.current !== thisRound) return
       if (newA) {
         setFileA(newA)
@@ -480,26 +628,58 @@ export function SmashOrPass() {
     setFileB(null)
     setUrlA(null)
     setUrlB(null)
-    fillQueue().then(() => {
-      queueIndexRef.current = 0
-      setQueueRemaining(fileIdsRef.current.length)
-      loadMatch()
-    })
+    if (smashPassDualMode) {
+      Promise.all([fillQueueA(), fillQueueB()]).then(() => {
+        queueIndexRefA.current = 0; queueIndexRefB.current = 0
+        setQueueRemainingA(fileIdsRefA.current.length); setQueueRemainingB(fileIdsRefB.current.length)
+        loadMatch()
+      })
+    } else {
+      fillQueue().then(() => {
+        queueIndexRef.current = 0
+        setQueueRemaining(fileIdsRef.current.length)
+        loadMatch()
+      })
+    }
   }, [tagVersion])
 
   const votingOpen = !loading && fileA && fileB && urlA && urlB
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-2 pt-1">
-        <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
+      <div className="px-2 pt-1 space-y-1">
+        {smashPassDualMode ? (
+          <>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 font-mono w-4">A</span>
+              <div className="flex-1">
+                <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 font-mono w-4">B</span>
+              <div className="flex-1">
+                <TagSearch tags={smashPassTagsB} onTagsChange={(t) => { setSmashPassTagsB(t); setTagVersion((v) => v + 1) }} />
+              </div>
+            </div>
+          </>
+        ) : (
+          <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
+        )}
       </div>
       <div className="flex justify-center gap-6 py-2 text-sm text-gray-500">
         <span>Rounds <b className="text-green-400">{stats.wins}</b></span>
         {stats.streakA > 0 && <span>A Streak <b className={stats.streakA >= 10 ? 'text-lime-400' : stats.streakA >= 5 ? 'text-orange-400' : 'text-gray-400'}>{stats.streakA}</b></span>}
         {stats.streakB > 0 && <span>B Streak <b className={stats.streakB >= 10 ? 'text-lime-400' : stats.streakB >= 5 ? 'text-orange-400' : 'text-gray-400'}>{stats.streakB}</b></span>}
         <span>Draws <b className="text-yellow-400">{stats.draws}</b></span>
-        <span className="text-gray-400">Queue: <b>{queueRemaining}</b></span>
+        {smashPassDualMode ? (
+          <>
+            <span className="text-gray-400">Q-A: <b>{queueRemainingA}</b></span>
+            <span className="text-gray-400">Q-B: <b>{queueRemainingB}</b></span>
+          </>
+        ) : (
+          <span className="text-gray-400">Queue: <b>{queueRemaining}</b></span>
+        )}
       </div>
 
       <div className="flex-1 flex gap-2 p-2 min-h-0">
