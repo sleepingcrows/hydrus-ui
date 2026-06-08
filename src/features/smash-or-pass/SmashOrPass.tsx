@@ -8,7 +8,7 @@ import { rate, createRating, type TrueSkillRating } from './trueskill'
 import { insertTagRatingRecords, getAllFileRatings, upsertFileRating, clearAllRatings } from './tag-history'
 import { SERVICE_TYPE, FILE_SORT_TYPES } from '../../api/types'
 import { TagSearch } from '../search/TagSearch'
-import { FileRenderer } from '../../components/FileRenderer'
+import { FileRenderer, isUnsupportedMime } from '../../components/FileRenderer'
 
 const FILE_LIMIT = 200
 const REFILL_THRESHOLD = FILE_LIMIT * 0.2
@@ -124,8 +124,31 @@ export function SmashOrPass() {
         queueIndexRef.current = 0
       }
 
-      const a = await loadFileByIndex(queueIndexRef.current)
-      const b = await loadFileByIndex(queueIndexRef.current + 1)
+      let a: FileMetadata | null = null
+      while (queueIndexRef.current < fileIdsRef.current.length) {
+        a = await loadFileByIndex(queueIndexRef.current)
+        if (!a) break
+        if (isUnsupportedMime(a.mime)) {
+          queueIndexRef.current++
+          continue
+        }
+        break
+      }
+
+      let b: FileMetadata | null = null
+      if (a) {
+        let bIndex = queueIndexRef.current + 1
+        while (bIndex < fileIdsRef.current.length) {
+          b = await loadFileByIndex(bIndex)
+          if (!b) break
+          if (isUnsupportedMime(b.mime) || b.hash === a.hash) {
+            bIndex++
+            b = null
+            continue
+          }
+          break
+        }
+      }
 
       if (!a || !b) {
         setFileA(null)
@@ -350,7 +373,14 @@ export function SmashOrPass() {
       setQueueRemaining(Math.max(0, fileIdsRef.current.length - queueIndexRef.current))
       setFadingB(true)
       setLoadingB(true)
-      const newB = await loadFileByIndex(queueIndexRef.current + 1)
+      let bIndex = queueIndexRef.current + 1
+      let newB: FileMetadata | null = null
+      while (bIndex < fileIdsRef.current.length) {
+        newB = await loadFileByIndex(bIndex)
+        if (!newB) break
+        if (isUnsupportedMime(newB.mime) || newB.hash === fileA.hash) { bIndex++; newB = null; continue }
+        break
+      }
       if (roundRef.current !== thisRound) return
       if (newB) {
         setFileB(newB)
@@ -368,16 +398,28 @@ export function SmashOrPass() {
         getFileUrl(newB.hash).then((u) => {
           if (roundRef.current !== thisRound) return
           if (u) setUrlB(u)
-          setLoadingB(false)
-          setTimeout(() => { if (roundRef.current === thisRound) setFadingB(false) }, 150)
+          const delay = useSettingsStore.getState().terminatedMode ? 750 : 0
+          setTimeout(() => {
+            setLoadingB(false)
+            setTimeout(() => { if (roundRef.current === thisRound) setFadingB(false) }, 150)
+          }, delay)
         }).catch(() => { if (roundRef.current !== thisRound) return; setLoadingB(false); setFadingB(false) })
+      } else {
+        setLoadingB(false); setFadingB(false)
       }
     } else if (winner === 'right') {
       queueIndexRef.current += 1
       setQueueRemaining(Math.max(0, fileIdsRef.current.length - queueIndexRef.current))
       setFadingA(true)
       setLoadingA(true)
-      const newA = await loadFileByIndex(queueIndexRef.current + 1)
+      let aIndex = queueIndexRef.current + 1
+      let newA: FileMetadata | null = null
+      while (aIndex < fileIdsRef.current.length) {
+        newA = await loadFileByIndex(aIndex)
+        if (!newA) break
+        if (isUnsupportedMime(newA.mime) || newA.hash === fileB.hash) { aIndex++; newA = null; continue }
+        break
+      }
       if (roundRef.current !== thisRound) return
       if (newA) {
         setFileA(newA)
@@ -395,9 +437,14 @@ export function SmashOrPass() {
         getFileUrl(newA.hash).then((u) => {
           if (roundRef.current !== thisRound) return
           if (u) setUrlA(u)
-          setLoadingA(false)
-          setTimeout(() => { if (roundRef.current === thisRound) setFadingA(false) }, 150)
+          const delay = useSettingsStore.getState().terminatedMode ? 750 : 0
+          setTimeout(() => {
+            setLoadingA(false)
+            setTimeout(() => { if (roundRef.current === thisRound) setFadingA(false) }, 150)
+          }, delay)
         }).catch(() => { if (roundRef.current !== thisRound) return; setLoadingA(false); setFadingA(false) })
+      } else {
+        setLoadingA(false); setFadingA(false)
       }
     } else {
       roundRef.current++
@@ -502,10 +549,18 @@ export function SmashOrPass() {
               )
             })()}
           </div>
-          {loadingA && (
-            <div className="absolute inset-0 flex items-center justify-center z-20">
-              <span className="bg-gray-800 text-gray-300 px-3 py-1.5 rounded text-xs">Loading...</span>
+          {useSettingsStore((s) => s.terminatedMode) && loadingA ? (
+            <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+              <div className="w-full bg-red-700 py-2 text-center">
+                <span className="text-white font-bold text-lg tracking-wider">TERMINATED</span>
+              </div>
             </div>
+          ) : (
+            loadingA && (
+              <div className="absolute inset-0 flex items-center justify-center z-20">
+                <span className="bg-gray-800 text-gray-300 px-3 py-1.5 rounded text-xs">Loading...</span>
+              </div>
+            )
           )}
         </div>
 
@@ -546,10 +601,18 @@ export function SmashOrPass() {
               )
             })()}
           </div>
-          {loadingB && (
-            <div className="absolute inset-0 flex items-center justify-center z-20">
-              <span className="bg-gray-800 text-gray-300 px-3 py-1.5 rounded text-xs">Loading...</span>
+          {useSettingsStore((s) => s.terminatedMode) && loadingB ? (
+            <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+              <div className="w-full bg-red-700 py-2 text-center">
+                <span className="text-white font-bold text-lg tracking-wider">TERMINATED</span>
+              </div>
             </div>
+          ) : (
+            loadingB && (
+              <div className="absolute inset-0 flex items-center justify-center z-20">
+                <span className="bg-gray-800 text-gray-300 px-3 py-1.5 rounded text-xs">Loading...</span>
+              </div>
+            )
           )}
         </div>
       </div>

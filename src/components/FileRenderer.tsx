@@ -40,6 +40,11 @@ function isText(mime: string): boolean {
   return mime.startsWith('text/') || mime === 'application/json' || mime === 'application/xml' || mime === 'application/javascript'
 }
 
+export function isUnsupportedMime(mime: string): boolean {
+  return isAvi(mime)
+    || (!isVideo(mime) && !isSwf(mime) && !isPdf(mime) && !isPsd(mime) && !isAudio(mime) && !isText(mime) && !isImage(mime))
+}
+
 function SwfPlayer({ url, className }: { url: string; className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const playerRef = useRef<any>(null)
@@ -233,8 +238,8 @@ export function FileRenderer({ url, mime, className }: FileRendererProps) {
 
   if (isVideo(mime)) {
     return (
-      <InteractiveMedia>
-        <video src={url} controls autoPlay loop />
+      <InteractiveMedia className={className}>
+        <video src={url} controls autoPlay loop className="w-full h-full object-contain" />
       </InteractiveMedia>
     )
   }

@@ -7,12 +7,14 @@ const RATING_SERVICE_KEY = 'hydrus-rating-service-key'
 const LIKE_SERVICE_KEY = 'hydrus-like-service-key'
 const GALLERY_LAYOUT_KEY = 'hydrus-gallery-layout'
 const RATINGS_CACHE_KEY = 'hydrus-ratings-cache'
+const TERMINATED_MODE_KEY = 'hydrus-terminated-mode'
 
 type GalleryLayoutMode = 'grid' | 'mosaic'
 
 interface SettingsState {
   darkMode: boolean
   smashPassStaticMode: boolean
+  terminatedMode: boolean
   smashPassTags: string[]
   ratingServiceKey: string
   likeServiceKey: string
@@ -20,6 +22,7 @@ interface SettingsState {
   ratingsCacheBuildProgress: number | null
   toggleDark: () => void
   toggleSmashPassStatic: () => void
+  toggleTerminatedMode: () => void
   setSmashPassTags: (tags: string[]) => void
   setRatingServiceKey: (key: string) => void
   setLikeServiceKey: (key: string) => void
@@ -52,6 +55,7 @@ function saveRatingsCacheToStorage(cache: Map<number, Record<string, number | bo
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   darkMode: false,
   smashPassStaticMode: false,
+  terminatedMode: false,
   smashPassTags: [],
   ratingServiceKey: '',
   likeServiceKey: '',
@@ -67,6 +71,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const next = !get().smashPassStaticMode
     localStorage.setItem(SMASH_PASS_STATIC_KEY, String(next))
     set({ smashPassStaticMode: next })
+  },
+  toggleTerminatedMode: () => {
+    const next = !get().terminatedMode
+    localStorage.setItem(TERMINATED_MODE_KEY, String(next))
+    set({ terminatedMode: next })
   },
   setSmashPassTags: (tags) => {
     localStorage.setItem(SMASH_PASS_TAGS_KEY, JSON.stringify(tags))
@@ -88,12 +97,13 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const dark = localStorage.getItem('hydrus-dark-mode') === 'true'
     if (dark) document.documentElement.classList.add('dark')
     const staticMode = localStorage.getItem(SMASH_PASS_STATIC_KEY) === 'true'
+    const termMode = localStorage.getItem(TERMINATED_MODE_KEY) === 'true'
     const tagsRaw = localStorage.getItem(SMASH_PASS_TAGS_KEY)
     const smashPassTags: string[] = tagsRaw ? (() => { try { return JSON.parse(tagsRaw) } catch { return [] } })() : []
     const ratingSvcKey = localStorage.getItem(RATING_SERVICE_KEY) || ''
     const likeSvcKey = localStorage.getItem(LIKE_SERVICE_KEY) || ''
     const galleryLayout = (localStorage.getItem(GALLERY_LAYOUT_KEY) as GalleryLayoutMode) || 'grid'
-    set({ darkMode: dark, smashPassStaticMode: staticMode, smashPassTags, ratingServiceKey: ratingSvcKey, likeServiceKey: likeSvcKey, galleryLayoutMode: galleryLayout })
+    set({ darkMode: dark, smashPassStaticMode: staticMode, terminatedMode: termMode, smashPassTags, ratingServiceKey: ratingSvcKey, likeServiceKey: likeSvcKey, galleryLayoutMode: galleryLayout })
   },
   rebuildRatingsCache: async (tags: string[]) => {
     set({ ratingsCacheBuildProgress: 0 })

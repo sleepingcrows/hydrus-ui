@@ -105,6 +105,15 @@ export function ConnectionSettings() {
         />
         Static shuffle (same order every session)
       </label>
+      <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <input
+          type="checkbox"
+          checked={useSettingsStore((s) => s.terminatedMode)}
+          onChange={() => useSettingsStore.getState().toggleTerminatedMode()}
+          className="rounded"
+        />
+        TERMINATED mode
+      </label>
 
       <div className="mt-3">
         <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Rating service for Smash/Pass ELO</label>
