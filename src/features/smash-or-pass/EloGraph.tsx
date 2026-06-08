@@ -98,6 +98,7 @@ export function EloGraph() {
   }, [incDecKey])
 
   const maxCount = Math.max(1, ...data.map((d) => d.count))
+  const chartHeight = Math.max(300, Math.min(600, data.length * 20 + 100))
 
   return (
     <div className="p-4 max-w-4xl mx-auto space-y-4">
@@ -149,8 +150,8 @@ export function EloGraph() {
       )}
 
       {data.length > 0 && !loading && (
-        <div className="w-full" style={{ height: Math.max(300, Math.min(600, data.length * 20 + 100)) }}>
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="w-full" style={{ height: chartHeight }}>
+          <ResponsiveContainer width="100%" height={chartHeight}>
               <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
               <CartesianGrid strokeDasharray="2 5" stroke={darkMode ? '#374151' : '#d1d5db'} strokeWidth={0.5} />
               <XAxis
