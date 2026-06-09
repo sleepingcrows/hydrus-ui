@@ -5,6 +5,7 @@ import { addTags, cleanTags } from '../../api/tags'
 import { getFileUrl, fetchFileMetadata } from '../../api/search'
 import { TagChip } from '../../components/TagChip'
 import type { FileMetadata } from '../../api/types'
+import { SERVICE_TYPE } from '../../api/types'
 
 interface TagEditorProps {
   file: FileMetadata
@@ -29,7 +30,7 @@ function extractServiceTags(file: FileMetadata, serviceKey: string): string[] {
   return [...seen]
 }
 
-function getApplicableServices(file: FileMetadata, available: { service_key: string; name: string }[]): { service_key: string; name: string }[] {
+function getApplicableServices(file: FileMetadata, available: { service_key: string; name: string; type: number }[]): { service_key: string; name: string; type: number }[] {
   const fileServiceKeys = file.tags ? Object.keys(file.tags) : []
   const matched = available.filter((s) => fileServiceKeys.includes(s.service_key))
   const unmatched = available.filter((s) => !fileServiceKeys.includes(s.service_key))
@@ -45,7 +46,7 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
   const [selectedServiceKey, setSelectedServiceKey] = useState<string>('')
   const [workingTags, setWorkingTags] = useState<string[]>([])
   const [originalTags, setOriginalTags] = useState<string[]>([])
-  const [services, setServices] = useState<{ service_key: string; name: string }[]>([])
+  const [services, setServices] = useState<{ service_key: string; name: string; type: number }[]>([])
   const { results, loading: searchLoading } = useTagSearch(input)
   const inputRef = useRef<HTMLInputElement>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
@@ -145,14 +146,19 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
 
   async function handleSave() {
     if (!selectedServiceKey) return
+    const svc = services.find((s) => s.service_key === selectedServiceKey)
+    if (!svc) return
+    const isLocal = svc.type === SERVICE_TYPE.LOCAL_TAGS
+    const addCode = isLocal ? 0 : 2
+    const delCode = isLocal ? 1 : 4
     setSaving(true)
     setError(null)
     try {
       const added = workingTags.filter((t) => !originalTags.includes(t))
       const removed = originalTags.filter((t) => !workingTags.includes(t))
       const actions: Record<number, string[]> = {}
-      if (added.length > 0) actions[0] = await cleanTags(added)
-      if (removed.length > 0) actions[1] = await cleanTags(removed)
+      if (added.length > 0) actions[addCode] = await cleanTags(added)
+      if (removed.length > 0) actions[delCode] = await cleanTags(removed)
       if (Object.keys(actions).length === 0) {
         setSaving(false)
         onClose()
