@@ -1,13 +1,17 @@
 import { api } from './client'
 
-export interface TagAction {
-  tag: string
-  action: 'add' | 'delete' | 'pend' | 'petition' | 'rescind_pend' | 'rescind_petition'
-}
+export const HYDRUS_TAG_ACTIONS = {
+  ADD: 0,
+  DELETE: 1,
+  PEND: 2,
+  PETITION: 3,
+  RESCIND_PEND: 4,
+  RESCIND_PETITION: 5,
+} as const
 
 export async function addTags(
   identifier: { hash: string } | { file_id: number },
-  service_key_to_actions_to_tags: Record<string, Record<string, string[]>>,
+  service_key_to_actions_to_tags: Record<string, Record<number, string[]>>,
 ) {
   return api.post<unknown>('/add_tags/add_tags', {
     ...identifier,

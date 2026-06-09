@@ -118,9 +118,9 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
     try {
       const added = workingTags.filter((t) => !originalTags.includes(t))
       const removed = originalTags.filter((t) => !workingTags.includes(t))
-      const actions: Record<string, string[]> = {}
-      if (added.length > 0) actions.add = await cleanTags(added)
-      if (removed.length > 0) actions.delete = removed
+      const actions: Record<number, string[]> = {}
+      if (added.length > 0) actions[0] = await cleanTags(added)
+      if (removed.length > 0) actions[1] = removed
       if (Object.keys(actions).length === 0) {
         setSaving(false)
         onClose()
