@@ -57,6 +57,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
   const [sortType, setSortType] = useState<number>(FILE_SORT_TYPES.IMPORT_TIME)
   const [sortAsc, setSortAsc] = useState(false)
   const [page, setPage] = useState(0)
+  const [searchOpen, setSearchOpen] = useState(true)
 
   const galleryLayoutMode = useSettingsStore((s) => s.galleryLayoutMode)
 
@@ -488,34 +489,68 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
         ) : (
           <>
             {isMobile ? (
-              <div className="w-full space-y-2">
-                <TagSearch tags={tags} onTagsChange={handleTagsChange} onSubmit={doSearch} />
-                <div className="flex gap-2 items-center">
-                  <select
-                    className="text-sm border rounded px-2 py-1 min-h-[44px] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-600"
-                    value={sortType}
-                    onChange={(e) => setSortType(Number(e.target.value))}
-                  >
-                    <option value={FILE_SORT_TYPES.IMPORT_TIME}>Import Time</option>
-                    <option value={FILE_SORT_TYPES.FILE_SIZE}>File Size</option>
-                    <option value={FILE_SORT_TYPES.DURATION}>Duration</option>
-                    <option value={FILE_SORT_TYPES.NUMBER_OF_PIXELS}>Pixels</option>
-                    <option value={FILE_SORT_TYPES.RANDOM}>Random</option>
-                  </select>
+              <div className="w-full">
+                <div className="flex items-center gap-2">
                   <button
-                    className="text-sm px-2 py-1 min-h-[44px] min-w-[44px] border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600"
-                    title={sortAsc ? 'Newest first' : 'Oldest first'}
+                    className="min-h-[44px] min-w-[44px] p-2 rounded text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 transition-colors"
+                    onClick={() => setSearchOpen((v) => !v)}
+                    aria-label={searchOpen ? 'Collapse search' : 'Expand search'}
                   >
-                    {sortAsc ? '\u2191' : '\u2193'}
+                    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="M21 21l-4.35-4.35" />
+                    </svg>
                   </button>
-                  <button
-                    className="px-3 py-1 min-h-[44px] bg-blue-600 text-white rounded text-sm disabled:opacity-50 hover:bg-blue-700 active:bg-blue-800"
-                    onClick={doSearch}
-                    disabled={loading || tags.length === 0}
-                  >
-                    {loading ? '...' : 'Search'}
-                  </button>
-                  <span className="text-xs text-gray-500">{fileIds.length} files</span>
+                  {!searchOpen && (
+                    <button
+                      className="flex-1 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 truncate min-h-[44px]"
+                      onClick={() => setSearchOpen(true)}
+                    >
+                      <span className="truncate">{tags.length > 0 ? tags.join(', ') : 'Search tags...'}</span>
+                      <span className="text-xs text-gray-400 ml-auto">{fileIds.length} files</span>
+                    </button>
+                  )}
+                  {!searchOpen && (
+                    <button
+                      className="min-h-[44px] px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-50 hover:bg-blue-700 active:bg-blue-800"
+                      onClick={doSearch}
+                      disabled={loading || tags.length === 0}
+                    >
+                      {loading ? '...' : 'Search'}
+                    </button>
+                  )}
+                </div>
+                <div className={`overflow-hidden transition-all duration-200 ${searchOpen ? 'max-h-[300px]' : 'max-h-0'}`}>
+                  <div className="pt-2 space-y-2">
+                    <TagSearch tags={tags} onTagsChange={handleTagsChange} onSubmit={doSearch} />
+                    <div className="flex gap-2 items-center">
+                      <select
+                        className="text-sm border rounded px-2 py-1 min-h-[44px] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-600"
+                        value={sortType}
+                        onChange={(e) => setSortType(Number(e.target.value))}
+                      >
+                        <option value={FILE_SORT_TYPES.IMPORT_TIME}>Import Time</option>
+                        <option value={FILE_SORT_TYPES.FILE_SIZE}>File Size</option>
+                        <option value={FILE_SORT_TYPES.DURATION}>Duration</option>
+                        <option value={FILE_SORT_TYPES.NUMBER_OF_PIXELS}>Pixels</option>
+                        <option value={FILE_SORT_TYPES.RANDOM}>Random</option>
+                      </select>
+                      <button
+                        className="text-sm px-2 py-1 min-h-[44px] min-w-[44px] border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600"
+                        title={sortAsc ? 'Newest first' : 'Oldest first'}
+                      >
+                        {sortAsc ? '\u2191' : '\u2193'}
+                      </button>
+                      <button
+                        className="px-3 py-1 min-h-[44px] bg-blue-600 text-white rounded text-sm disabled:opacity-50 hover:bg-blue-700 active:bg-blue-800"
+                        onClick={doSearch}
+                        disabled={loading || tags.length === 0}
+                      >
+                        {loading ? '...' : 'Search'}
+                      </button>
+                      <span className="text-xs text-gray-500">{fileIds.length} files</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
