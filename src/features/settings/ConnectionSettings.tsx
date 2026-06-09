@@ -58,6 +58,8 @@ export function ConnectionSettings() {
           className="w-full border dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           placeholder="http://127.0.0.1:45869"
           autoComplete="off"
+          autoCapitalize="off"
+          inputMode="url"
         />
       </div>
       <div>
@@ -70,6 +72,7 @@ export function ConnectionSettings() {
           className="w-full border dark:border-gray-600 rounded px-2 py-1 text-sm font-mono bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           placeholder="64-character hex key"
           autoComplete="off"
+          autoCapitalize="off"
         />
       </div>
       {error && <div className="text-red-500 text-sm">{error}</div>}
@@ -129,49 +132,49 @@ export function ConnectionSettings() {
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2">
           <label className="flex items-center justify-between">
             <span className="text-gray-500 dark:text-gray-400">Base inc</span>
-            <input type="number" min={0} max={999}
+            <input type="number" min={0} max={999} inputMode="numeric"
               value={useSettingsStore((s) => s.ratingBaseInc)}
               onChange={(e) => useSettingsStore.getState().setRatingBaseInc(Number(e.target.value))}
               className="w-16 border dark:border-gray-600 rounded px-1 py-0.5 text-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-right" />
           </label>
           <label className="flex items-center justify-between">
             <span className="text-gray-500 dark:text-gray-400">Loser dec</span>
-            <input type="number" min={0} max={999}
+            <input type="number" min={0} max={999} inputMode="numeric"
               value={useSettingsStore((s) => s.ratingLoserDec)}
               onChange={(e) => useSettingsStore.getState().setRatingLoserDec(Number(e.target.value))}
               className="w-16 border dark:border-gray-600 rounded px-1 py-0.5 text-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-right" />
           </label>
           <label className="flex items-center justify-between">
             <span className="text-gray-500 dark:text-gray-400">Streak threshold</span>
-            <input type="number" min={1} max={999}
+            <input type="number" min={1} max={999} inputMode="numeric"
               value={useSettingsStore((s) => s.ratingStreakThreshold)}
               onChange={(e) => useSettingsStore.getState().setRatingStreakThreshold(Number(e.target.value))}
               className="w-16 border dark:border-gray-600 rounded px-1 py-0.5 text-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-right" />
           </label>
           <label className="flex items-center justify-between">
             <span className="text-gray-500 dark:text-gray-400">Streak bonus</span>
-            <input type="number" min={0} max={999}
+            <input type="number" min={0} max={999} inputMode="numeric"
               value={useSettingsStore((s) => s.ratingStreakBonus)}
               onChange={(e) => useSettingsStore.getState().setRatingStreakBonus(Number(e.target.value))}
               className="w-16 border dark:border-gray-600 rounded px-1 py-0.5 text-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-right" />
           </label>
           <label className="flex items-center justify-between">
             <span className="text-gray-500 dark:text-gray-400">Underdog threshold</span>
-            <input type="number" min={0} max={9999}
+            <input type="number" min={0} max={9999} inputMode="numeric"
               value={useSettingsStore((s) => s.underdogThreshold)}
               onChange={(e) => useSettingsStore.getState().setUnderdogThreshold(Number(e.target.value))}
               className="w-16 border dark:border-gray-600 rounded px-1 py-0.5 text-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-right" />
           </label>
           <label className="flex items-center justify-between">
             <span className="text-gray-500 dark:text-gray-400">Underdog min gap</span>
-            <input type="number" min={0} max={9999}
+            <input type="number" min={0} max={9999} inputMode="numeric"
               value={useSettingsStore((s) => s.underdogMinGap)}
               onChange={(e) => useSettingsStore.getState().setUnderdogMinGap(Number(e.target.value))}
               className="w-16 border dark:border-gray-600 rounded px-1 py-0.5 text-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-right" />
           </label>
           <label className="flex items-center justify-between">
             <span className="text-gray-500 dark:text-gray-400">Underdog boost %</span>
-            <input type="number" min={0} max={100}
+            <input type="number" min={0} max={100} inputMode="numeric"
               value={useSettingsStore((s) => s.underdogBoostPct)}
               onChange={(e) => useSettingsStore.getState().setUnderdogBoostPct(Number(e.target.value))}
               className="w-16 border dark:border-gray-600 rounded px-1 py-0.5 text-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-right" />

@@ -4,6 +4,7 @@ import { setRating } from '../../api/ratings'
 import type { FileMetadata } from '../../api/types'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
+import { useMobile } from '../../hooks/use-mobile'
 import { rate, createRating, type TrueSkillRating } from './trueskill'
 import { insertTagRatingRecords, getAllFileRatings, upsertFileRating, clearAllRatings } from './tag-history'
 import { SERVICE_TYPE, FILE_SORT_TYPES } from '../../api/types'
@@ -79,6 +80,7 @@ export function SmashOrPass() {
   const services = useRatingServicesStore((s) => s.services)
   const ratingServiceKey = (configuredKey || services.find((rs) => rs.type === SERVICE_TYPE.INC_DEC_RATING)?.service_key) ?? null
   const isNumerical = false
+  const isMobile = useMobile()
 
   async function fillQueue(): Promise<void> {
     if (fillingRef.current) return
@@ -677,7 +679,7 @@ export function SmashOrPass() {
           <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
         )}
       </div>
-      <div className="flex justify-center gap-6 py-2 text-sm text-gray-500">
+      <div className={`flex justify-center ${isMobile ? 'gap-2 text-[10px]' : 'gap-6'} py-2 text-sm text-gray-500 flex-wrap`}>
         <span>Rounds <b className="text-green-400">{stats.wins}</b></span>
         {stats.streakA > 0 && <span>A Streak <b className={stats.streakA >= 10 ? 'text-lime-400' : stats.streakA >= 5 ? 'text-orange-400' : 'text-gray-400'}>{stats.streakA}</b></span>}
         {stats.streakB > 0 && <span>B Streak <b className={stats.streakB >= 10 ? 'text-lime-400' : stats.streakB >= 5 ? 'text-orange-400' : 'text-gray-400'}>{stats.streakB}</b></span>}
@@ -692,7 +694,7 @@ export function SmashOrPass() {
         )}
       </div>
 
-      <div className="flex-1 flex gap-2 p-2 min-h-0">
+      <div className={`flex-1 flex ${isMobile ? 'flex-col' : 'flex-row'} gap-2 p-2 min-h-0`}>
         {!loading && (!fileA || !fileB) && (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-4">
             <p className="text-lg">No more files!</p>
@@ -808,10 +810,10 @@ export function SmashOrPass() {
       </div>
 
       {votingOpen && (
-        <div className="flex justify-center gap-4 py-2 text-xs text-gray-500">
-          <span className="text-green-400">← / A</span> choose left
-          <span className="text-yellow-400">Space / S</span> draw
-          <span className="text-green-400">→ / D</span> choose right
+        <div className={`flex justify-center ${isMobile ? 'gap-2 text-[10px]' : 'gap-4'} py-2 text-xs text-gray-500 flex-wrap`}>
+          <span className="text-green-400">{isMobile ? 'Tap top' : '← / A'}</span> {isMobile ? 'choose left' : 'choose left'}
+          <span className="text-yellow-400">{isMobile ? 'Tap center' : 'Space / S'}</span> draw
+          <span className="text-green-400">{isMobile ? 'Tap bottom' : '→ / D'}</span> {isMobile ? 'choose right' : 'choose right'}
         </div>
       )}
     </div>

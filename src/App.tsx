@@ -4,6 +4,7 @@ import { useApiStore } from './stores/api-store'
 import { useSettingsStore } from './stores/settings-store'
 import { useRatingServicesStore } from './stores/rating-services-store'
 import { SERVICE_TYPE } from './api/types'
+import { useMobile } from './hooks/use-mobile'
 import { ConnectionSettings } from './features/settings/ConnectionSettings'
 import { SearchPage } from './features/search/SearchPage'
 import { SmashOrPass } from './features/smash-or-pass/SmashOrPass'
@@ -25,6 +26,7 @@ export default function App() {
   const [analyticsOpen, setAnalyticsOpen] = useState(false)
   const analyticsTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
   const [favTags, setFavTags] = useState<string[]>([])
+  const isMobile = useMobile()
 
   const configuredLikeKey = useSettingsStore((s) => s.likeServiceKey)
   const allServices = useRatingServicesStore((s) => s.services)
@@ -74,29 +76,29 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="h-screen flex flex-col bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-        <header className="flex items-center gap-1 px-2 py-1 border-b dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+        <header className="flex items-center gap-1 px-2 py-1 overflow-x-auto border-b dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
           {tabs.map((t) =>
             t.id === 'analytics' ? (
               <div
                 key="analytics"
-                className="relative"
-                onMouseEnter={() => { clearTimeout(analyticsTimeoutRef.current); setAnalyticsOpen(true) }}
-                onMouseLeave={() => { analyticsTimeoutRef.current = setTimeout(() => setAnalyticsOpen(false), 200) }}
+                className="relative flex-shrink-0"
+                onMouseEnter={() => { if (!isMobile) { clearTimeout(analyticsTimeoutRef.current); setAnalyticsOpen(true) }}}
+                onMouseLeave={() => { if (!isMobile) { analyticsTimeoutRef.current = setTimeout(() => setAnalyticsOpen(false), 200) }}}
               >
                 <button
-                  className={`px-3 py-1 text-sm rounded ${
+                  className={`px-3 py-1 text-sm rounded whitespace-nowrap ${
                     tab === 'analytics'
                       ? 'bg-blue-600 text-white'
                       : 'hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
-                  onClick={() => setTab('analytics')}
+                  onClick={() => { if (isMobile) { setAnalyticsOpen(!analyticsOpen) } else { setTab('analytics') }}}
                 >
                   Analytics
                 </button>
                 {analyticsOpen && (
                   <div className="absolute top-full left-0 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow-lg z-50 min-w-[160px] text-gray-900 dark:text-gray-100">
                     <button
-                      className={`block w-full text-left px-3 py-1.5 text-sm ${
+                      className={`block w-full text-left px-3 py-1.5 text-sm whitespace-nowrap ${
                         analyticsView === 'tag-preferences' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                       }`}
                       onClick={() => { setTab('analytics'); setAnalyticsView('tag-preferences'); setAnalyticsOpen(false) }}
@@ -104,7 +106,7 @@ export default function App() {
                       Tag Preferences
                     </button>
                     <button
-                      className={`block w-full text-left px-3 py-1.5 text-sm ${
+                      className={`block w-full text-left px-3 py-1.5 text-sm whitespace-nowrap ${
                         analyticsView === 'elo-graph' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                       }`}
                       onClick={() => { setTab('analytics'); setAnalyticsView('elo-graph'); setAnalyticsOpen(false) }}
@@ -117,7 +119,7 @@ export default function App() {
             ) : (
               <button
                 key={t.id}
-                className={`px-3 py-1 text-sm rounded ${
+                className={`px-3 py-1 text-sm rounded whitespace-nowrap flex-shrink-0 ${
                   tab === t.id
                     ? 'bg-blue-600 text-white'
                     : 'hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -129,7 +131,7 @@ export default function App() {
             )
           )}
           <button
-            className="ml-auto text-xs text-gray-400 hover:text-red-500"
+            className="ml-auto text-xs text-gray-400 hover:text-red-500 flex-shrink-0"
             onClick={() => useApiStore.getState().disconnect()}
           >
             Disconnect

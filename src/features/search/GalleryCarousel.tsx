@@ -143,6 +143,8 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
     return () => window.removeEventListener('keydown', handleKey)
   }, [onClose])
 
+  const touchStartXRef = useRef(0)
+
   function goNext() {
     if (index < files.length - 1) {
       setIndex((prev) => prev + 1)
@@ -155,8 +157,18 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   goNextRef.current = goNext
   goPrevRef.current = goPrev
 
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartXRef.current = e.touches[0].clientX }
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - touchStartXRef.current
+    if (dx > 50) goPrev()
+    else if (dx < -50) goNext()
+  }
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex flex-col" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-black/90 flex flex-col" onClick={onClose}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      style={{ touchAction: 'pan-y' }}>
       <div className="flex items-center justify-between px-4 py-2" onClick={(e) => e.stopPropagation()}>
         <span className="text-white/70 text-sm">{index + 1} / {files.length}</span>
         {(() => {

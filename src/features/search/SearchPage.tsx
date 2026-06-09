@@ -8,6 +8,7 @@ import { TagChip } from '../../components/TagChip'
 import { fetchServices } from '../../api/services'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
+import { useMobile } from '../../hooks/use-mobile'
 const PAGE_SIZE = 200
 const COL_WIDTH = 200
 const COL_GAP = 8
@@ -77,6 +78,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
   const [dimensionMap, setDimensionMap] = useState<Map<number, { width: number; height: number }>>(new Map())
   const ratingsCacheRef = useRef<Map<number, Record<string, number | boolean>>>(new Map())
   const numColsRef = useRef(1)
+  const isMobile = useMobile()
 
   tagsRef.current = tags
   sortTypeRef.current = sortType
@@ -657,7 +659,7 @@ const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' 
         </div>
 
         {selectedFile && showInfoPane && (
-          <div className="fixed right-0 top-0 bottom-0 w-80 border-l dark:border-gray-700 overflow-y-auto p-3 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 z-50">
+          <div className={`fixed right-0 ${isMobile ? 'left-0' : ''} top-0 bottom-0 ${isMobile ? 'w-full' : 'w-80'} border-l dark:border-gray-700 overflow-y-auto p-3 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 z-50`}>
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-bold text-sm">File Info</h3>
               <button onClick={() => { setShowInfoPane(false); setSelectedIdx(-1) }} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-lg leading-none">&times;</button>

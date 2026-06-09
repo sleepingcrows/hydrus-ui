@@ -33,6 +33,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+button, select, summary, [role="button"] {
+  touch-action: manipulation;
+}
+
 input:focus-visible,
 button:focus-visible {
   outline: 2px solid #3b82f6;
