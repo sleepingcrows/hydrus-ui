@@ -291,7 +291,6 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
 
   useEffect(() => {
     resetZoom()
-    setPanelVisible(true)
   }, [file?.hash])
 
   return (
