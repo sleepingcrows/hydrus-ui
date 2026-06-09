@@ -36,6 +36,14 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   hasMoreRef.current = hasMore
   onRatingChangeRef.current = onRatingChange
 
+  const urlCacheRef = useRef<Map<string, string>>(new Map())
+  const prefetchingRef = useRef<Set<string>>(new Set())
+  const slideTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const initDoneRef = useRef(false)
+  const [slideOutUrl, setSlideOutUrl] = useState<string | null>(null)
+  const [slideDir, setSlideDir] = useState<1 | -1 | null>(null)
+  const [sliding, setSliding] = useState(false)
+
   const file = files[index]
   const hashRef = useRef(file?.hash)
   hashRef.current = file?.hash
@@ -65,38 +73,76 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
     }
   }, [index, files.length])
 
-  useEffect(() => {
-    if (!file) return
-    let cancelled = false
+  function cachedFetch(hash: string): Promise<string> {
+    const cached = urlCacheRef.current.get(hash)
+    if (cached) return Promise.resolve(cached)
+    if (prefetchingRef.current.has(hash)) {
+      return new Promise((resolve) => {
+        const check = setInterval(() => {
+          const c = urlCacheRef.current.get(hash)
+          if (c) { clearInterval(check); resolve(c) }
+        }, 30)
+      })
+    }
+    prefetchingRef.current.add(hash)
+    return getFileUrl(hash).then((url) => {
+      urlCacheRef.current.set(hash, url)
+      return url
+    })
+  }
 
-    setLoading(true)
+  function prefetchNeighbors(idx: number) {
+    for (const offset of [-2, -1, 1, 2]) {
+      const i = idx + offset
+      if (i < 0 || i >= files.length) continue
+      const f = files[i]
+      if (!f || urlCacheRef.current.has(f.hash) || prefetchingRef.current.has(f.hash)) continue
+      prefetchingRef.current.add(f.hash)
+      getFileUrl(f.hash).then((url) => urlCacheRef.current.set(f.hash, url)).catch(() => {})
+    }
+  }
+
+  async function loadImage(idx: number, outgoing: string | null, dir: 1 | -1 | null) {
+    const f = files[idx]
+    if (!f) return
     setError(false)
-    setImageUrl(null)
+    setLoading(!outgoing)
+    try {
+      const url = await cachedFetch(f.hash)
+      if (outgoing) {
+        setSlideOutUrl(outgoing)
+        setSlideDir(dir)
+      }
+      setImageUrl(url)
+      if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current)
+      prevUrlRef.current = url
+      setLoading(false)
+      prefetchNeighbors(idx)
+      if (outgoing) {
+        requestAnimationFrame(() => requestAnimationFrame(() => setSliding(true)))
+        clearTimeout(slideTimerRef.current)
+        slideTimerRef.current = setTimeout(() => {
+          setSlideOutUrl(null)
+          setSlideDir(null)
+          setSliding(false)
+        }, 300)
+      }
+    } catch {
+      setError(true)
+      setLoading(false)
+    }
+  }
 
-    getFileUrl(file.hash)
-      .then((url) => {
-        if (cancelled) {
-          URL.revokeObjectURL(url)
-          return
-        }
-        if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current)
-        prevUrlRef.current = url
-        setImageUrl(url)
-        setLoading(false)
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setError(true)
-          setLoading(false)
-        }
-      })
-
-    return () => { cancelled = true }
-  }, [file?.hash])
+  useEffect(() => {
+    if (initDoneRef.current) return
+    initDoneRef.current = true
+    loadImage(initialIndex, null, null)
+  }, [])
 
   useEffect(() => {
     return () => {
       if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current)
+      for (const url of urlCacheRef.current.values()) URL.revokeObjectURL(url)
     }
   }, [])
 
@@ -173,14 +219,26 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   }
 
   function goNext() {
+    if (slideTimerRef.current) return
     if (index < files.length - 1) {
-      setIndex((prev) => prev + 1)
+      const nextIdx = index + 1
+      loadImage(nextIdx, imageUrl, 1)
+      setIndex(nextIdx)
+      resetZoom()
     } else if (hasMoreRef.current && !loadingMoreRef.current) {
       loadingMoreRef.current = true
       onRequestMoreRef.current?.()
     }
   }
-  function goPrev() { setIndex((prev) => Math.max(prev - 1, 0)) }
+  function goPrev() {
+    if (slideTimerRef.current) return
+    if (index > 0) {
+      const prevIdx = index - 1
+      loadImage(prevIdx, imageUrl, -1)
+      setIndex(prevIdx)
+      resetZoom()
+    }
+  }
   goNextRef.current = goNext
   goPrevRef.current = goPrev
 
@@ -256,6 +314,8 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
         if (zoomRef.current.scale <= 1) {
           if (Math.abs(dy) > Math.abs(dx) && dy < -50 && carouselFloatingPanel) {
             setPanelVisible((v) => !v)
+          } else if (Math.abs(dy) > Math.abs(dx) && dy > 50) {
+            onClose()
           } else if (Math.abs(dx) >= Math.abs(dy) && Math.abs(dx) > 50) {
             if (dx > 50) goPrev()
             else goNext()
@@ -328,8 +388,8 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
         className="flex-1 flex items-center justify-center relative min-h-0 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {loading && !error && (
-          <svg className="animate-spin h-8 w-8 text-white/40" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        {loading && !imageUrl && !slideOutUrl && (
+          <svg className="animate-spin h-8 w-8 text-white/40 absolute z-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
@@ -337,15 +397,33 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
         {error && (
           <div className="text-red-400 text-sm">Failed to load file</div>
         )}
-        {imageUrl && !loading && (
-          <div
-            ref={imageContainerRef}
-            className="w-full h-full flex items-center justify-center"
-            style={{ willChange: 'transform' }}
-          >
-            <FileRenderer url={imageUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain" />
-          </div>
-        )}
+        <div className="absolute inset-0 overflow-hidden">
+          {slideOutUrl && (
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{
+                transform: sliding ? `translateX(${slideDir === 1 ? '-100%' : '100%'})` : 'translateX(0)',
+                transition: sliding ? 'transform 0.3s ease' : 'none',
+              }}
+            >
+              <FileRenderer url={slideOutUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain" />
+            </div>
+          )}
+          {imageUrl && (
+            <div
+              className={`absolute inset-0 flex items-center justify-center ${!slideOutUrl ? '' : ''}`}
+              style={{
+                transform: sliding ? 'translateX(0)' : slideDir ? `translateX(${slideDir === 1 ? '100%' : '-100%'})` : 'translateX(0)',
+                transition: sliding ? 'transform 0.3s ease' : 'none',
+                willChange: 'transform',
+              }}
+            >
+              <div ref={imageContainerRef} className="w-full h-full flex items-center justify-center" style={{ willChange: 'transform' }}>
+                <FileRenderer url={imageUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain" />
+              </div>
+            </div>
+          )}
+        </div>
 
         {!carouselFloatingPanel && hasPrev && (
           <button
