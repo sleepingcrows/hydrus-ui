@@ -40,6 +40,7 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
   const [input, setInput] = useState('')
   const [focusedIdx, setFocusedIdx] = useState(-1)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [fileUrl, setFileUrl] = useState<string | null>(null)
   const [selectedServiceKey, setSelectedServiceKey] = useState<string>('')
   const [workingTags, setWorkingTags] = useState<string[]>([])
@@ -90,6 +91,7 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
 
   function handleServiceChange(serviceKey: string) {
     setSelectedServiceKey(serviceKey)
+    setError(null)
     const tags = extractServiceTags(file, serviceKey)
     setWorkingTags(tags)
     setOriginalTags(tags)
@@ -126,7 +128,8 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
       await addTags(file.hash, { [selectedServiceKey]: actions })
       onSaved()
       onClose()
-    } catch {
+    } catch (e) {
+      setError(String(e))
       setSaving(false)
     }
   }
@@ -243,6 +246,11 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
             )}
           </div>
 
+          {error && (
+            <div className="text-red-500 text-xs bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded px-2 py-1.5">
+              {error}
+            </div>
+          )}
           <div className="flex gap-2 pt-1">
             <button
               className="flex-1 px-3 py-2 bg-blue-600 text-white rounded text-sm font-medium disabled:opacity-50 hover:bg-blue-700 active:bg-blue-800 min-h-[44px]"

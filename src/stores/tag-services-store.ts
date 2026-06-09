@@ -13,7 +13,6 @@ interface TagServicesState {
 const TAG_SERVICE_TYPES = new Set([
   SERVICE_TYPE.TAG_REPO,
   SERVICE_TYPE.LOCAL_TAGS,
-  SERVICE_TYPE.ALL_KNOWN_TAGS,
 ])
 
 export const useTagServicesStore = create<TagServicesState>((set) => ({
