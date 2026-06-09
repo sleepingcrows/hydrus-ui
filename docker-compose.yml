@@ -1,6 +1,7 @@
 services:
   hydrus-ui:
     build: .
+    pull_policy: build
     container_name: hydrus-ui
     ports:
       - "${PORT:-8080}:80"
