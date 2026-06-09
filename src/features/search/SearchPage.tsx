@@ -462,11 +462,13 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
     const updated = { ...file }
     updated.tags = { ...file.tags }
     const existing = updated.tags[serviceKey]
+    const storageCtxKeys = Object.keys(existing?.storage_tags ?? { '0': [] })
+    const displayCtxKeys = Object.keys(existing?.display_tags ?? { '0': [] })
     updated.tags[serviceKey] = {
       name: existing?.name ?? '',
       type: existing?.type ?? 0,
-      storage_tags: { '0': [...tags] },
-      display_tags: { '0': [...tags] },
+      storage_tags: Object.fromEntries(storageCtxKeys.map((k) => [k, [...tags]])),
+      display_tags: Object.fromEntries(displayCtxKeys.map((k) => [k, [...tags]])),
     }
     const map = new Map(filesRef.current)
     map.set(file.file_id, updated)
