@@ -115,7 +115,6 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
         setSlideDir(dir)
       }
       setImageUrl(url)
-      if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current)
       prevUrlRef.current = url
       setLoading(false)
       prefetchNeighbors(idx)
