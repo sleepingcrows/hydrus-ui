@@ -1,0 +1,25 @@
+{
+  "name": "hydrus-ui",
+  "short_name": "hydrus-ui",
+  "description": "Web client for Hydrus Network",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#863bff",
+  "orientation": "any",
+  "categories": ["productivity", "multimedia"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
