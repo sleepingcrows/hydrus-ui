@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, type KeyboardEvent } from 'react'
 import { useTagSearch } from '../../hooks/use-tag-search'
 import { useTagServicesStore } from '../../stores/tag-services-store'
 import { addTags, cleanTags } from '../../api/tags'
-import { getFileUrl } from '../../api/search'
+import { getFileUrl, fetchFileMetadata } from '../../api/search'
 import { TagChip } from '../../components/TagChip'
 import type { FileMetadata } from '../../api/types'
 
@@ -49,6 +49,7 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
   const { results, loading: searchLoading } = useTagSearch(input)
   const inputRef = useRef<HTMLInputElement>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
+  const pristineRef = useRef(true)
   const displayed = results.slice(0, 100)
 
   useEffect(() => {
@@ -80,6 +81,18 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
   }, [services, selectedServiceKey, file])
 
   useEffect(() => {
+    if (!selectedServiceKey) return
+    let cancelled = false
+    fetchFileMetadata([file.hash]).then((meta) => {
+      if (cancelled || meta.length === 0) return
+      const fresh = extractServiceTags(meta[0], selectedServiceKey)
+      setOriginalTags(fresh)
+      if (pristineRef.current) setWorkingTags(fresh)
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [file.hash, selectedServiceKey])
+
+  useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (sheetRef.current && !sheetRef.current.contains(e.target as Node)) {
         onClose()
@@ -91,6 +104,7 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
 
   function handleServiceChange(serviceKey: string) {
     setSelectedServiceKey(serviceKey)
+    pristineRef.current = false
     setError(null)
     const tags = extractServiceTags(file, serviceKey)
     setWorkingTags(tags)
@@ -99,6 +113,7 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
   }
 
   function addTag(tag: string) {
+    pristineRef.current = false
     if (!workingTags.includes(tag)) {
       setWorkingTags([...workingTags, tag])
     }
@@ -108,6 +123,7 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
   }
 
   function removeTag(tag: string) {
+    pristineRef.current = false
     setWorkingTags(workingTags.filter((t) => t !== tag))
   }
 
