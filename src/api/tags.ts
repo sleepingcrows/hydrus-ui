@@ -6,11 +6,11 @@ export interface TagAction {
 }
 
 export async function addTags(
-  hash: string,
+  identifier: { hash: string } | { file_id: number },
   service_key_to_actions_to_tags: Record<string, Record<string, string[]>>,
 ) {
   return api.post<unknown>('/add_tags/add_tags', {
-    hash,
+    ...identifier,
     service_keys_to_actions_to_tags: service_key_to_actions_to_tags,
   })
 }

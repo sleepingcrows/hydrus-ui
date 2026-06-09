@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, type KeyboardEvent } from 'react'
 import { useTagSearch } from '../../hooks/use-tag-search'
 import { useTagServicesStore } from '../../stores/tag-services-store'
-import { addTags } from '../../api/tags'
+import { addTags, cleanTags } from '../../api/tags'
 import { getFileUrl } from '../../api/search'
 import { TagChip } from '../../components/TagChip'
 import type { FileMetadata } from '../../api/types'
@@ -114,18 +114,20 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
   async function handleSave() {
     if (!selectedServiceKey) return
     setSaving(true)
+    setError(null)
     try {
       const added = workingTags.filter((t) => !originalTags.includes(t))
       const removed = originalTags.filter((t) => !workingTags.includes(t))
       const actions: Record<string, string[]> = {}
-      if (added.length > 0) actions.add = added
+      if (added.length > 0) actions.add = await cleanTags(added)
       if (removed.length > 0) actions.delete = removed
       if (Object.keys(actions).length === 0) {
         setSaving(false)
         onClose()
         return
       }
-      await addTags(file.hash, { [selectedServiceKey]: actions })
+      const identifier = file.hash ? { hash: file.hash } : { file_id: file.file_id }
+      await addTags(identifier, { [selectedServiceKey]: actions })
       onSaved()
       onClose()
     } catch (e) {
@@ -201,7 +203,7 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
                 <span className="text-xs text-gray-400 py-1">No tags — add some below</span>
               )}
               {workingTags.map((tag) => (
-                <TagChip key={tag} tag={tag} onRemove={() => removeTag(tag)} />
+                <TagChip key={tag} tag={tag} onRemove={() => removeTag(tag)} size="sm" />
               ))}
             </div>
           </div>

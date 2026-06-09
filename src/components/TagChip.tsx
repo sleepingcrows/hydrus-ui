@@ -9,7 +9,7 @@ interface TagChipProps {
 
 const SIZE_CLASSES = {
   sm: 'px-1.5 py-0.5 text-xs',
-  md: 'px-2 py-0.5 text-sm',
+  md: 'min-h-[44px] px-2 py-0.5 text-sm',
 }
 
 const COLOR_MAP: Record<TagColor, string> = {
@@ -30,7 +30,7 @@ export function TagChip({ tag, onRemove, size = 'md' }: TagChipProps) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full cursor-pointer min-h-[44px] ${SIZE_CLASSES[size]} ${COLOR_MAP[colorName]}`}
+      className={`inline-flex items-center gap-1 rounded-full cursor-pointer ${SIZE_CLASSES[size]} ${COLOR_MAP[colorName]}`}
       onClick={onRemove}
       title={onRemove ? 'Click to remove' : tag}
     >
