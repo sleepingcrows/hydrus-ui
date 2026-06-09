@@ -94,6 +94,15 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
     return () => { cancelled = true }
   }, [file.hash])
 
+  function refreshTags() {
+    pristineRef.current = true
+    fetchFileMetadata([file.hash]).then((meta) => {
+      if (meta.length === 0) return
+      freshMetaRef.current = meta[0]
+      applyTagsFromMeta(meta[0], selectedServiceKey)
+    }).catch(() => {})
+  }
+
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (sheetRef.current && !sheetRef.current.contains(e.target as Node)) {
@@ -206,7 +215,15 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
 
         <div className="p-4 space-y-3">
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Tag service</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs text-gray-500 dark:text-gray-400">Tag service</label>
+              <button
+                className="text-xs text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 active:text-blue-800 min-h-[44px] px-2"
+                onClick={refreshTags}
+              >
+                Refresh
+              </button>
+            </div>
             <select
               value={selectedServiceKey}
               onChange={(e) => handleServiceChange(e.target.value)}
