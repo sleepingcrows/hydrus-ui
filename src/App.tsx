@@ -138,19 +138,45 @@ export default function App() {
                   </button>
                 </div>
                 <nav className="p-2 space-y-1">
-                  {tabs.map((t) => (
-                    <button
-                      key={t.id}
-                      className={`w-full text-left min-h-[44px] px-3 py-2 text-sm rounded ${
-                        tab === t.id
-                          ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-medium'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700'
-                      }`}
-                      onClick={() => { setTab(t.id); setMenuOpen(false) }}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
+                  {tabs.map((t) =>
+                    t.id === 'analytics' ? (
+                      <div key="analytics" className="space-y-0.5">
+                        <div className="px-3 py-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Analytics</div>
+                        <button
+                          className={`w-full text-left min-h-[44px] px-3 py-2 text-sm rounded ${
+                            tab === 'analytics' && analyticsView === 'tag-preferences'
+                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-medium'
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700'
+                          }`}
+                          onClick={() => { setTab('analytics'); setAnalyticsView('tag-preferences'); setMenuOpen(false) }}
+                        >
+                          Tag Preferences
+                        </button>
+                        <button
+                          className={`w-full text-left min-h-[44px] px-3 py-2 text-sm rounded ${
+                            tab === 'analytics' && analyticsView === 'elo-graph'
+                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-medium'
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700'
+                          }`}
+                          onClick={() => { setTab('analytics'); setAnalyticsView('elo-graph'); setMenuOpen(false) }}
+                        >
+                          ELO Distribution
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        key={t.id}
+                        className={`w-full text-left min-h-[44px] px-3 py-2 text-sm rounded ${
+                          tab === t.id
+                            ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-medium'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700'
+                        }`}
+                        onClick={() => { setTab(t.id); setMenuOpen(false) }}
+                      >
+                        {t.label}
+                      </button>
+                    )
+                  )}
                 </nav>
               </div>
             </>
