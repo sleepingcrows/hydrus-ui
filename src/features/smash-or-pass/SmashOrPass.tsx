@@ -170,11 +170,11 @@ export function SmashOrPass() {
     return files.length > 0 ? files[0] : null
   }
 
-  async function findNextSupported(index: number, fileIds: number[], hashes: string[], skipHash?: string): Promise<{ file: FileMetadata | null; index: number }> {
+  async function findNextSupported(index: number, fileIds: number[], hashes: string[], skipHashes?: string[]): Promise<{ file: FileMetadata | null; index: number }> {
     while (index < fileIds.length) {
       const file = await loadFileByIndex(index, fileIds, hashes)
       if (!file) break
-      if (isUnsupportedMime(file.mime) || (skipHash && file.hash === skipHash)) {
+      if (isUnsupportedMime(file.mime) || (skipHashes && skipHashes.includes(file.hash))) {
         index++
         continue
       }
@@ -204,7 +204,7 @@ export function SmashOrPass() {
         queueIndexRefA.current = foundA.index
         const a = foundA.file
 
-        const foundB = await findNextSupported(queueIndexRefB.current, fileIdsRefB.current, hashesRefB.current, a?.hash)
+        const foundB = await findNextSupported(queueIndexRefB.current, fileIdsRefB.current, hashesRefB.current, a ? [a.hash] : undefined)
         const b = foundB.file
 
         if (!a || !b) {
@@ -246,7 +246,7 @@ export function SmashOrPass() {
 
         let b: FileMetadata | null = null
         if (a) {
-          const foundB = await findNextSupported(queueIndexRef.current + 1, fileIdsRef.current, hashesRef.current, a.hash)
+          const foundB = await findNextSupported(queueIndexRef.current + 1, fileIdsRef.current, hashesRef.current, [a.hash])
           b = foundB.file
         }
 
@@ -476,10 +476,9 @@ export function SmashOrPass() {
         setFadingB(true)
         setLoadingB(true)
         queueIndexRefB.current++
-        const found = await findNextSupported(queueIndexRefB.current, fileIdsRefB.current, hashesRefB.current, fileA.hash)
+        const found = await findNextSupported(queueIndexRefB.current, fileIdsRefB.current, hashesRefB.current, [fileB.hash, fileA.hash])
         queueIndexRefB.current = found.index
         const newB = found.file
-        queueIndexRefB.current++
         setQueueRemainingB(Math.max(0, fileIdsRefB.current.length - queueIndexRefB.current))
         if (roundRef.current !== thisRound) return
         if (newB) {
@@ -505,10 +504,9 @@ export function SmashOrPass() {
         setFadingA(true)
         setLoadingA(true)
         queueIndexRefA.current++
-        const found = await findNextSupported(queueIndexRefA.current, fileIdsRefA.current, hashesRefA.current, fileB.hash)
+        const found = await findNextSupported(queueIndexRefA.current, fileIdsRefA.current, hashesRefA.current, [fileA.hash, fileB.hash])
         queueIndexRefA.current = found.index
         const newA = found.file
-        queueIndexRefA.current++
         setQueueRemainingA(Math.max(0, fileIdsRefA.current.length - queueIndexRefA.current))
         if (roundRef.current !== thisRound) return
         if (newA) {
@@ -545,7 +543,7 @@ export function SmashOrPass() {
       setQueueRemaining(Math.max(0, fileIdsRef.current.length - queueIndexRef.current))
       setFadingB(true)
       setLoadingB(true)
-      const found = await findNextSupported(queueIndexRef.current + 1, fileIdsRef.current, hashesRef.current, fileA.hash)
+      const found = await findNextSupported(queueIndexRef.current + 1, fileIdsRef.current, hashesRef.current, [fileB.hash, fileA.hash])
       const newB = found.file
       if (roundRef.current !== thisRound) return
       if (newB) {
@@ -578,7 +576,7 @@ export function SmashOrPass() {
       setQueueRemaining(Math.max(0, fileIdsRef.current.length - queueIndexRef.current))
       setFadingA(true)
       setLoadingA(true)
-      const found = await findNextSupported(queueIndexRef.current + 1, fileIdsRef.current, hashesRef.current, fileB.hash)
+      const found = await findNextSupported(queueIndexRef.current + 1, fileIdsRef.current, hashesRef.current, [fileA.hash, fileB.hash])
       const newA = found.file
       if (roundRef.current !== thisRound) return
       if (newA) {

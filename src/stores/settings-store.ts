@@ -63,6 +63,11 @@ interface SettingsState {
   addToRatingsCache: (entries: Iterable<[number, Record<string, number | boolean>]>) => void
 }
 
+function loadStr(key: string, fallback: string): string { try { return localStorage.getItem(key) ?? fallback } catch { return fallback } }
+function loadNum(key: string, fallback: number): number { try { return Number(localStorage.getItem(key)) || fallback } catch { return fallback } }
+function loadBool(key: string): boolean { try { return localStorage.getItem(key) === 'true' } catch { return false } }
+function loadJson<T>(key: string, fallback: T): T { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fallback } catch { return fallback } }
+
 function loadRatingsCacheFromStorage(): Map<number, Record<string, number | boolean>> | null {
   const raw = localStorage.getItem(RATINGS_CACHE_KEY)
   if (!raw) return null
@@ -83,23 +88,23 @@ function saveRatingsCacheToStorage(cache: Map<number, Record<string, number | bo
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
-  darkMode: false,
-  smashPassStaticMode: false,
-  terminatedMode: false,
-  smashPassTags: [],
-  smashPassTagsB: [],
-  smashPassDualMode: false,
-  searchHistory: [],
-  ratingBaseInc: 5,
-  ratingLoserDec: 2,
-  ratingStreakThreshold: 3,
-  ratingStreakBonus: 1,
-  underdogThreshold: 5,
-  underdogMinGap: 20,
-  underdogBoostPct: 75,
-  ratingServiceKey: '',
-  likeServiceKey: '',
-  galleryLayoutMode: 'grid',
+  darkMode: loadBool('hydrus-dark-mode'),
+  smashPassStaticMode: loadBool('hydrus-smashpass-static'),
+  terminatedMode: loadBool('hydrus-terminated-mode'),
+  smashPassTags: loadJson<string[]>('hydrus-smashpass-tags', []),
+  smashPassTagsB: loadJson<string[]>('hydrus-smashpass-tags-b', []),
+  smashPassDualMode: loadBool('hydrus-smashpass-dual'),
+  searchHistory: loadJson<string[][]>('hydrus-search-history', []),
+  ratingBaseInc: loadNum('hydrus-rating-base-inc', 5),
+  ratingLoserDec: loadNum('hydrus-rating-loser-dec', 2),
+  ratingStreakThreshold: loadNum('hydrus-rating-streak-threshold', 3),
+  ratingStreakBonus: loadNum('hydrus-rating-streak-bonus', 1),
+  underdogThreshold: loadNum('hydrus-rating-underdog-threshold', 5),
+  underdogMinGap: loadNum('hydrus-rating-underdog-min-gap', 20),
+  underdogBoostPct: loadNum('hydrus-rating-underdog-boost-pct', 75),
+  ratingServiceKey: loadStr('hydrus-rating-service-key', ''),
+  likeServiceKey: loadStr('hydrus-like-service-key', ''),
+  galleryLayoutMode: (loadStr('hydrus-gallery-layout', 'grid') as GalleryLayoutMode),
   ratingsCacheBuildProgress: null,
   toggleDark: () => {
     const next = !get().darkMode
@@ -159,28 +164,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ galleryLayoutMode: mode })
   },
   hydrate: () => {
-    const dark = localStorage.getItem('hydrus-dark-mode') === 'true'
-    if (dark) document.documentElement.classList.add('dark')
-    const staticMode = localStorage.getItem(SMASH_PASS_STATIC_KEY) === 'true'
-    const termMode = localStorage.getItem(TERMINATED_MODE_KEY) === 'true'
-    const tagsRaw = localStorage.getItem(SMASH_PASS_TAGS_KEY)
-    const smashPassTags: string[] = tagsRaw ? (() => { try { return JSON.parse(tagsRaw) } catch { return [] } })() : []
-    const tagsBRaw = localStorage.getItem(SMASH_PASS_TAGS_B_KEY)
-    const smashPassTagsB: string[] = tagsBRaw ? (() => { try { return JSON.parse(tagsBRaw) } catch { return [] } })() : []
-    const dualMode = localStorage.getItem(SMASH_PASS_DUAL_KEY) === 'true'
-    const searchHistoryRaw = localStorage.getItem(SEARCH_HISTORY_KEY)
-    const searchHistory: string[][] = searchHistoryRaw ? (() => { try { return JSON.parse(searchHistoryRaw) } catch { return [] } })() : []
-    const ratingSvcKey = localStorage.getItem(RATING_SERVICE_KEY) || ''
-    const likeSvcKey = localStorage.getItem(LIKE_SERVICE_KEY) || ''
-    const galleryLayout = (localStorage.getItem(GALLERY_LAYOUT_KEY) as GalleryLayoutMode) || 'grid'
-    const ratingBaseInc = Number(localStorage.getItem(RATING_BASE_INC_KEY)) || 5
-    const ratingLoserDec = Number(localStorage.getItem(RATING_LOSER_DEC_KEY)) || 2
-    const ratingStreakThreshold = Number(localStorage.getItem(RATING_STREAK_THRESHOLD_KEY)) || 3
-    const ratingStreakBonus = Number(localStorage.getItem(RATING_STREAK_BONUS_KEY)) || 1
-    const underdogThreshold = Number(localStorage.getItem(RATING_UNDERDOG_THRESHOLD_KEY)) || 5
-    const underdogMinGap = Number(localStorage.getItem(RATING_UNDERDOG_MIN_GAP_KEY)) || 20
-    const underdogBoostPct = Number(localStorage.getItem(RATING_UNDERDOG_BOOST_PCT_KEY)) || 75
-    set({ darkMode: dark, smashPassStaticMode: staticMode, terminatedMode: termMode, smashPassTags, smashPassTagsB, smashPassDualMode: dualMode, searchHistory, ratingServiceKey: ratingSvcKey, likeServiceKey: likeSvcKey, galleryLayoutMode: galleryLayout, ratingBaseInc, ratingLoserDec, ratingStreakThreshold, ratingStreakBonus, underdogThreshold, underdogMinGap, underdogBoostPct })
+    if (loadBool('hydrus-dark-mode')) document.documentElement.classList.add('dark')
   },
   rebuildRatingsCache: async (tags: string[]) => {
     set({ ratingsCacheBuildProgress: 0 })
