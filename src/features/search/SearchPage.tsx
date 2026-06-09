@@ -451,6 +451,24 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
     setFiles(map)
   }
 
+  function handleTagsSaved(fileId: number, serviceKey: string, tags: string[]) {
+    const file = filesRef.current.get(fileId)
+    if (!file) return
+    const updated = { ...file }
+    updated.tags = { ...file.tags }
+    const existing = updated.tags[serviceKey]
+    updated.tags[serviceKey] = {
+      name: existing?.name ?? '',
+      type: existing?.type ?? 0,
+      storage_tags: { '0': [...tags] },
+      display_tags: { '0': [...tags] },
+    }
+    const map = new Map(filesRef.current)
+    map.set(fileId, updated)
+    filesRef.current = map
+    setFiles(map)
+  }
+
   const selectedFile = selectedIdx >= 0 && selectedIdx < displayFileIds.length
     ? files.get(displayFileIds[selectedIdx]) ?? null
     : null
@@ -773,6 +791,7 @@ const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' 
           hasMore={page < totalPages - 1}
           onRequestMore={loadMore}
           onRatingChange={handleRatingChange}
+          onTagsSaved={handleTagsSaved}
           sortByRating={sortByRating}
         />
       )}

@@ -9,7 +9,7 @@ import type { FileMetadata } from '../../api/types'
 interface TagEditorProps {
   file: FileMetadata
   onClose: () => void
-  onSaved: () => Promise<void> | void
+  onSaved: (serviceKey: string, tags: string[]) => Promise<void> | void
 }
 
 function extractServiceTags(file: FileMetadata, serviceKey: string): string[] {
@@ -128,7 +128,7 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
       }
       const identifier = file.hash ? { hash: file.hash } : { file_id: file.file_id }
       await addTags(identifier, { [selectedServiceKey]: actions })
-      await onSaved()
+      await onSaved(selectedServiceKey, workingTags)
       onClose()
     } catch (e) {
       setError(String(e))
