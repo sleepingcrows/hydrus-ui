@@ -42,9 +42,11 @@ interface SearchPageProps {
   title?: string
   sortByRating?: boolean
   displayLimit?: number
+  searchOpen?: boolean
+  onSearchToggle?: () => void
 }
 
-export function SearchPage({ presetTags, title, sortByRating, displayLimit }: SearchPageProps = {}) {
+export function SearchPage({ presetTags, title, sortByRating, displayLimit, searchOpen: extSearchOpen, onSearchToggle }: SearchPageProps = {}) {
   const [tags, setTags] = useState<string[]>(presetTags ?? [])
   const [fileIds, setFileIds] = useState<number[]>([])
   const [hashes, setHashes] = useState<string[]>([])
@@ -57,7 +59,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
   const [sortType, setSortType] = useState<number>(FILE_SORT_TYPES.IMPORT_TIME)
   const [sortAsc, setSortAsc] = useState(false)
   const [page, setPage] = useState(0)
-  const [searchOpen, setSearchOpen] = useState(true)
+  const searchOpen = extSearchOpen !== undefined ? extSearchOpen : false
 
   const galleryLayoutMode = useSettingsStore((s) => s.galleryLayoutMode)
 
@@ -491,21 +493,15 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
             {isMobile ? (
               <div className="w-full">
                 <div className="flex items-center gap-2">
-                  <button
-                    className="min-h-[44px] min-w-[44px] p-2 rounded text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 transition-colors"
-                    onClick={() => setSearchOpen((v) => !v)}
-                    aria-label={searchOpen ? 'Collapse search' : 'Expand search'}
-                  >
-                    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="11" cy="11" r="8" />
-                      <path d="M21 21l-4.35-4.35" />
-                    </svg>
-                  </button>
                   {!searchOpen && (
                     <button
                       className="flex-1 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 truncate min-h-[44px]"
-                      onClick={() => setSearchOpen(true)}
+                      onClick={onSearchToggle}
                     >
+                      <svg viewBox="0 0 24 24" className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="M21 21l-4.35-4.35" />
+                      </svg>
                       <span className="truncate">{tags.length > 0 ? tags.join(', ') : 'Search tags...'}</span>
                       <span className="text-xs text-gray-400 ml-auto">{fileIds.length} files</span>
                     </button>

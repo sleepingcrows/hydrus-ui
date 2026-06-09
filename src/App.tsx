@@ -28,6 +28,7 @@ export default function App() {
   const analyticsTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
   const [favTags, setFavTags] = useState<string[]>([])
   const { isMobile } = useMobile()
+  const [searchOpen, setSearchOpen] = useState(false)
 
   const configuredLikeKey = useSettingsStore((s) => s.likeServiceKey)
   const allServices = useRatingServicesStore((s) => s.services)
@@ -87,6 +88,18 @@ export default function App() {
               >
                 ☰
               </button>
+              {tab === 'search' && (
+                <button
+                  className="min-h-[44px] min-w-[44px] p-2 rounded text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600 transition-colors"
+                  onClick={() => setSearchOpen((v) => !v)}
+                  aria-label={searchOpen ? 'Collapse search' : 'Expand search'}
+                >
+                  <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="M21 21l-4.35-4.35" />
+                  </svg>
+                </button>
+              )}
               <span className="flex-1 text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">
                 {tab === 'analytics'
                   ? `Analytics – ${analyticsView === 'tag-preferences' ? 'Tag Preferences' : 'ELO Distribution'}`
@@ -188,7 +201,7 @@ export default function App() {
           )}
         </header>
         <main className="flex-1 overflow-hidden">
-          {tab === 'search' && <SearchPage key="search" />}
+          {tab === 'search' && <SearchPage key="search" searchOpen={searchOpen} onSearchToggle={() => setSearchOpen((v) => !v)} />}
           {tab === 'smash-pass' && <SmashOrPass />}
           {tab === 'leaderboard' && <SearchPage key="leaderboard" presetTags={['system:has count for skill']} title="Leaderboard" sortByRating displayLimit={500} />}
           {tab === 'favorites' && <SearchPage key="favorites" presetTags={favTags} title="Favorites" />}
