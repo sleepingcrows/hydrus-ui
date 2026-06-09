@@ -404,31 +404,34 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           <div className="text-red-400 text-sm">Failed to load file</div>
         )}
         <div className="absolute inset-0 overflow-hidden">
-          {slideOutUrl && (
-            <div
-              className="absolute inset-0 flex items-center justify-center"
-              style={{
-                transform: sliding ? `translateX(${slideDir === 1 ? '-100%' : '100%'})` : 'translateX(0)',
-                transition: sliding ? 'transform 0.3s ease' : 'none',
-              }}
-            >
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{
+              transform: sliding ? `translate3d(${slideDir === 1 ? '-100%' : '100%'}, 0, 0)` : 'translate3d(0, 0, 0)',
+              transition: sliding ? 'transform 0.3s ease' : 'none',
+              backfaceVisibility: 'hidden',
+              zIndex: slideOutUrl ? 1 : 0,
+            }}
+          >
+            {slideOutUrl ? (
               <FileRenderer url={slideOutUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain" />
-            </div>
-          )}
-          {imageUrl && (
-            <div
-              className={`absolute inset-0 flex items-center justify-center ${!slideOutUrl ? '' : ''}`}
-              style={{
-                transform: sliding ? 'translateX(0)' : slideDir ? `translateX(${slideDir === 1 ? '100%' : '-100%'})` : 'translateX(0)',
-                transition: sliding ? 'transform 0.3s ease' : 'none',
-                willChange: 'transform',
-              }}
-            >
+            ) : <div />}
+          </div>
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{
+              transform: sliding ? 'translate3d(0, 0, 0)' : slideDir ? `translate3d(${slideDir === 1 ? '100%' : '-100%'}, 0, 0)` : 'translate3d(0, 0, 0)',
+              transition: sliding ? 'transform 0.3s ease' : 'none',
+              backfaceVisibility: 'hidden',
+              zIndex: 2,
+            }}
+          >
+            {imageUrl ? (
               <div ref={imageContainerRef} className="w-full h-full flex items-center justify-center" style={{ willChange: 'transform' }}>
                 <FileRenderer url={imageUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain" />
               </div>
-            </div>
-          )}
+            ) : <div />}
+          </div>
         </div>
 
         {!carouselFloatingPanel && hasPrev && (
