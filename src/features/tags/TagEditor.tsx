@@ -120,7 +120,7 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
       const removed = originalTags.filter((t) => !workingTags.includes(t))
       const actions: Record<number, string[]> = {}
       if (added.length > 0) actions[0] = await cleanTags(added)
-      if (removed.length > 0) actions[1] = removed
+      if (removed.length > 0) actions[1] = await cleanTags(removed)
       if (Object.keys(actions).length === 0) {
         setSaving(false)
         onClose()
@@ -128,7 +128,8 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
       }
       const identifier = file.hash ? { hash: file.hash } : { file_id: file.file_id }
       await addTags(identifier, { [selectedServiceKey]: actions })
-      await onSaved(selectedServiceKey, workingTags)
+      const cleanedAll = await cleanTags(workingTags)
+      await onSaved(selectedServiceKey, cleanedAll)
       onClose()
     } catch (e) {
       setError(String(e))
