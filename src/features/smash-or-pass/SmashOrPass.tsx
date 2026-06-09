@@ -31,7 +31,7 @@ function fisherYatesShuffle<T>(arr: T[]): T[] {
   return a
 }
 
-export function SmashOrPass() {
+export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { smashSearchOpen?: boolean; onSmashSearchToggle?: () => void }) {
   const [fileA, setFileA] = useState<FileMetadata | null>(null)
   const [fileB, setFileB] = useState<FileMetadata | null>(null)
   const [urlA, setUrlA] = useState<string | null>(null)
@@ -663,26 +663,51 @@ export function SmashOrPass() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-2 pt-1 space-y-1">
-        {smashPassDualMode ? (
-          <>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 font-mono w-4">A</span>
-              <div className="flex-1">
-                <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
+      {isMobile ? (
+        <div className={`overflow-hidden transition-all duration-200 ${smashSearchOpen ? 'max-h-[200px]' : 'max-h-0'}`}>
+          <div className="px-2 pt-1 space-y-1">
+            {smashPassDualMode ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 font-mono w-4">A</span>
+                  <div className="flex-1">
+                    <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 font-mono w-4">B</span>
+                  <div className="flex-1">
+                    <TagSearch tags={smashPassTagsB} onTagsChange={(t) => { setSmashPassTagsB(t); setTagVersion((v) => v + 1) }} />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="px-2 pt-1 space-y-1">
+          {smashPassDualMode ? (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 font-mono w-4">A</span>
+                <div className="flex-1">
+                  <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 font-mono w-4">B</span>
-              <div className="flex-1">
-                <TagSearch tags={smashPassTagsB} onTagsChange={(t) => { setSmashPassTagsB(t); setTagVersion((v) => v + 1) }} />
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 font-mono w-4">B</span>
+                <div className="flex-1">
+                  <TagSearch tags={smashPassTagsB} onTagsChange={(t) => { setSmashPassTagsB(t); setTagVersion((v) => v + 1) }} />
+                </div>
               </div>
-            </div>
-          </>
-        ) : (
-          <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
-        )}
-      </div>
+            </>
+          ) : (
+            <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
+          )}
+        </div>
+      )}
       <div className={`flex justify-center ${isMobile ? 'gap-2 text-[10px]' : 'gap-6'} py-2 text-sm text-gray-500 flex-wrap`}>
         <span>Rounds <b className="text-green-400">{stats.wins}</b></span>
         {stats.streakA > 0 && <span>A Streak <b className={stats.streakA >= 10 ? 'text-lime-400' : stats.streakA >= 5 ? 'text-orange-400' : 'text-gray-400'}>{stats.streakA}</b></span>}
