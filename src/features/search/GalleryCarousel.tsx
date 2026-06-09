@@ -227,7 +227,11 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
     if (index < files.length - 1) {
       navigatingRef.current = true
       const nextIdx = index + 1
-      loadImage(nextIdx, imageUrl, 1)
+      if (isMobile) {
+        loadImage(nextIdx, imageUrl, 1)
+      } else {
+        loadImage(nextIdx, null, null)
+      }
       setIndex(nextIdx)
       resetZoom()
     } else if (hasMoreRef.current && !loadingMoreRef.current) {
@@ -240,7 +244,11 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
     if (index > 0) {
       navigatingRef.current = true
       const prevIdx = index - 1
-      loadImage(prevIdx, imageUrl, -1)
+      if (isMobile) {
+        loadImage(prevIdx, imageUrl, -1)
+      } else {
+        loadImage(prevIdx, null, null)
+      }
       setIndex(prevIdx)
       resetZoom()
     }
@@ -403,6 +411,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
         {error && (
           <div className="text-red-400 text-sm">Failed to load file</div>
         )}
+        {isMobile ? (
         <div className="absolute inset-0 overflow-hidden">
           <div
             className="absolute inset-0 flex items-center justify-center"
@@ -435,6 +444,15 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
             ) : <div />}
           </div>
         </div>
+        ) : (
+        <div className="absolute inset-0 flex items-center justify-center">
+          {imageUrl ? (
+            <div ref={imageContainerRef} className="w-full h-full flex items-center justify-center" style={{ willChange: 'transform' }}>
+              <FileRenderer url={imageUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain" />
+            </div>
+          ) : <div />}
+        </div>
+        )}
 
         {!carouselFloatingPanel && hasPrev && (
           <button
