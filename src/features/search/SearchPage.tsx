@@ -78,7 +78,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
   const [dimensionMap, setDimensionMap] = useState<Map<number, { width: number; height: number }>>(new Map())
   const ratingsCacheRef = useRef<Map<number, Record<string, number | boolean>>>(new Map())
   const numColsRef = useRef(1)
-  const isMobile = useMobile()
+  const { isMobile } = useMobile()
   const touchStartRef = useRef({ x: 0, y: 0, t: 0 })
 
   tagsRef.current = tags

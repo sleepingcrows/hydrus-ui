@@ -19,7 +19,7 @@ interface Props {
 }
 
 export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onRequestMore, onRatingChange, sortByRating }: Props) {
-  const isMobile = useMobile()
+  const { isMobile } = useMobile()
   const carouselFloatingPanel = useSettingsStore((s) => s.carouselFloatingPanel)
   const carouselNavSide = useSettingsStore((s) => s.carouselNavSide)
   const [index, setIndex] = useState(initialIndex)

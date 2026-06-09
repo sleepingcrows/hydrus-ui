@@ -80,7 +80,7 @@ export function SmashOrPass() {
   const services = useRatingServicesStore((s) => s.services)
   const ratingServiceKey = (configuredKey || services.find((rs) => rs.type === SERVICE_TYPE.INC_DEC_RATING)?.service_key) ?? null
   const isNumerical = false
-  const isMobile = useMobile()
+  const { isMobile, orientation } = useMobile()
   const smashFloatingPanel = useSettingsStore((s) => s.smashFloatingPanel)
   const smashNavSide = useSettingsStore((s) => s.smashNavSide)
 
@@ -698,7 +698,7 @@ export function SmashOrPass() {
         )}
       </div>
 
-      <div className={`flex-1 flex ${isMobile ? 'flex-col' : 'flex-row'} gap-2 p-2 min-h-0`}>
+      <div className={`flex-1 flex ${isMobile && orientation === 'portrait' ? 'flex-col' : 'flex-row'} gap-2 p-2 min-h-0`}>
         {!loading && (!fileA || !fileB) && (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-4">
             <p className="text-lg">No more files!</p>
@@ -818,10 +818,10 @@ export function SmashOrPass() {
       </div>
 
       {votingOpen && (
-        <div className={`flex justify-center ${isMobile ? 'gap-2 text-[10px]' : 'gap-4'} py-2 text-xs text-gray-500 flex-wrap`}>
-          <span className="text-green-400">{isMobile ? 'Tap top' : '← / A'}</span> {isMobile ? 'choose left' : 'choose left'}
-          <span className="text-yellow-400">{isMobile ? 'Tap center' : 'Space / S'}</span> draw
-          <span className="text-green-400">{isMobile ? 'Tap bottom' : '→ / D'}</span> {isMobile ? 'choose right' : 'choose right'}
+        <div className={`flex justify-center ${isMobile && orientation === 'portrait' ? 'gap-2 text-[10px]' : 'gap-4'} py-2 text-xs text-gray-500 flex-wrap`}>
+          <span className="text-green-400">{isMobile && orientation === 'portrait' ? 'Tap top' : '← / A'}</span> {isMobile && orientation === 'portrait' ? 'choose left' : 'choose left'}
+          <span className="text-yellow-400">{isMobile && orientation === 'portrait' ? 'Tap center' : 'Space / S'}</span> draw
+          <span className="text-green-400">{isMobile && orientation === 'portrait' ? 'Tap bottom' : '→ / D'}</span> {isMobile && orientation === 'portrait' ? 'choose right' : 'choose right'}
         </div>
       )}
 

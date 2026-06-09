@@ -27,7 +27,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const analyticsTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
   const [favTags, setFavTags] = useState<string[]>([])
-  const isMobile = useMobile()
+  const { isMobile } = useMobile()
 
   const configuredLikeKey = useSettingsStore((s) => s.likeServiceKey)
   const allServices = useRatingServicesStore((s) => s.services)

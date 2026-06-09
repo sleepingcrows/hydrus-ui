@@ -1,17 +1,27 @@
 import { useEffect, useState } from 'react'
 
-export function useMobile(): boolean {
+export type Orientation = 'portrait' | 'landscape'
+
+export function useMobile(): { isMobile: boolean; orientation: Orientation } {
   const [mobile, setMobile] = useState(false)
+  const [orientation, setOrientation] = useState<Orientation>('portrait')
 
   useEffect(() => {
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
     function check() {
-      setMobile(window.innerWidth < 768 || (window.innerWidth < 1024 && isTouchDevice))
+      const w = window.innerWidth
+      const h = window.innerHeight
+      setMobile(w < 768 || (w < 1024 && isTouchDevice))
+      setOrientation(w > h ? 'landscape' : 'portrait')
     }
     check()
     window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
+    window.addEventListener('orientationchange', () => setTimeout(check, 200))
+    return () => {
+      window.removeEventListener('resize', check)
+      window.removeEventListener('orientationchange', check)
+    }
   }, [])
 
-  return mobile
+  return { isMobile: mobile, orientation }
 }
