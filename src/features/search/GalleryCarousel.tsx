@@ -233,13 +233,6 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
         )}
         {carouselFloatingPanel && (
           <div className={`absolute ${carouselNavSide === 'left' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 flex flex-col gap-3 z-10`}>
-            <button
-              className={`w-12 h-12 bg-black/50 hover:bg-black/70 text-white/80 hover:text-white text-3xl leading-none rounded-xl flex items-center justify-center transition-colors ${!hasPrev ? 'opacity-20 pointer-events-none' : ''}`}
-              onClick={(e) => { e.stopPropagation(); if (hasPrev) goPrev() }}
-              aria-label="Previous"
-            >
-              ‹
-            </button>
             {(() => {
               const key = likeKeyRef.current
               const hash = hashRef.current
@@ -247,7 +240,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
               const val = likeValRef.current
               return (
                 <button
-                  className={`w-12 h-12 bg-black/50 hover:bg-black/70 text-3xl leading-none rounded-xl flex items-center justify-center transition-colors`}
+                  className="w-12 h-12 bg-black/50 hover:bg-black/70 text-3xl leading-none rounded-xl flex items-center justify-center transition-colors"
                   style={{ color: val === true ? '#ef4444' : val === false ? '#3b82f6' : '#ffffff80' }}
                   onClick={(e) => {
                     e.stopPropagation()
@@ -260,6 +253,13 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
                 </button>
               )
             })()}
+            <button
+              className={`w-12 h-12 bg-black/50 hover:bg-black/70 text-white/80 hover:text-white text-3xl leading-none rounded-xl flex items-center justify-center transition-colors ${!hasPrev ? 'opacity-20 pointer-events-none' : ''}`}
+              onClick={(e) => { e.stopPropagation(); if (hasPrev) goPrev() }}
+              aria-label="Previous"
+            >
+              ‹
+            </button>
             <button
               className={`w-12 h-12 bg-black/50 hover:bg-black/70 text-white/80 hover:text-white text-3xl leading-none rounded-xl flex items-center justify-center transition-colors ${!hasNext ? 'opacity-20 pointer-events-none' : ''}`}
               onClick={(e) => { e.stopPropagation(); if (hasNext) goNext() }}

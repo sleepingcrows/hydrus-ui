@@ -111,7 +111,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   ratingServiceKey: loadStr('hydrus-rating-service-key', ''),
   likeServiceKey: loadStr('hydrus-like-service-key', ''),
   galleryLayoutMode: (loadStr('hydrus-gallery-layout', 'grid') as GalleryLayoutMode),
-  carouselFloatingPanel: loadBool('hydrus-carousel-floating-panel'),
+  carouselFloatingPanel: localStorage.getItem(CAROUSEL_FLOATING_PANEL_KEY) !== null
+    ? loadBool('hydrus-carousel-floating-panel')
+    : (typeof window !== 'undefined' && window.innerWidth < 768),
   carouselNavSide: (loadStr('hydrus-carousel-nav-side', 'right') as 'left' | 'right'),
   ratingsCacheBuildProgress: null,
   toggleDark: () => {
