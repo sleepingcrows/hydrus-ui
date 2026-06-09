@@ -39,6 +39,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   const urlCacheRef = useRef<Map<string, string>>(new Map())
   const prefetchingRef = useRef<Set<string>>(new Set())
   const slideTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const navigatingRef = useRef(false)
   const initDoneRef = useRef(false)
   const [slideOutUrl, setSlideOutUrl] = useState<string | null>(null)
   const [slideDir, setSlideDir] = useState<1 | -1 | null>(null)
@@ -104,7 +105,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
 
   async function loadImage(idx: number, outgoing: string | null, dir: 1 | -1 | null) {
     const f = files[idx]
-    if (!f) return
+    if (!f) { navigatingRef.current = false; return }
     setError(false)
     setLoading(!outgoing)
     try {
@@ -125,11 +126,15 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           setSlideOutUrl(null)
           setSlideDir(null)
           setSliding(false)
+          navigatingRef.current = false
         }, 300)
+      } else {
+        navigatingRef.current = false
       }
     } catch {
       setError(true)
       setLoading(false)
+      navigatingRef.current = false
     }
   }
 
@@ -219,8 +224,9 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   }
 
   function goNext() {
-    if (slideTimerRef.current) return
+    if (navigatingRef.current) return
     if (index < files.length - 1) {
+      navigatingRef.current = true
       const nextIdx = index + 1
       loadImage(nextIdx, imageUrl, 1)
       setIndex(nextIdx)
@@ -231,8 +237,9 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
     }
   }
   function goPrev() {
-    if (slideTimerRef.current) return
+    if (navigatingRef.current) return
     if (index > 0) {
+      navigatingRef.current = true
       const prevIdx = index - 1
       loadImage(prevIdx, imageUrl, -1)
       setIndex(prevIdx)
