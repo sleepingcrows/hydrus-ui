@@ -24,6 +24,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('search')
   const [analyticsView, setAnalyticsView] = useState<'tag-preferences' | 'elo-graph'>('tag-preferences')
   const [analyticsOpen, setAnalyticsOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const analyticsTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
   const [favTags, setFavTags] = useState<string[]>([])
   const isMobile = useMobile()
@@ -79,15 +80,18 @@ export default function App() {
         <header className="flex items-center gap-1 px-2 py-1 border-b dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
           {isMobile ? (
             <>
-              <select
-                className="flex-1 min-h-[44px] border dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                value={tab}
-                onChange={(e) => setTab(e.target.value as Tab)}
+              <button
+                className="min-h-[44px] min-w-[44px] p-2 text-lg leading-none text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 active:text-gray-700"
+                onClick={() => setMenuOpen(true)}
+                aria-label="Menu"
               >
-                {tabs.map((t) => (
-                  <option key={t.id} value={t.id}>{t.label}</option>
-                ))}
-              </select>
+                ☰
+              </button>
+              <span className="flex-1 text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">
+                {tab === 'analytics'
+                  ? `Analytics – ${analyticsView === 'tag-preferences' ? 'Tag Preferences' : 'ELO Distribution'}`
+                  : tabs.find((t) => t.id === tab)?.label ?? 'hydrus-ui'}
+              </span>
               <button
                 className="min-h-[44px] min-w-[44px] p-2 text-xs text-gray-400 hover:text-red-500 active:text-red-600"
                 onClick={() => useApiStore.getState().disconnect()}
@@ -95,6 +99,42 @@ export default function App() {
               >
                 ✕
               </button>
+              {menuOpen && (
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setMenuOpen(false)}
+                />
+              )}
+              <div
+                className={`fixed left-0 top-0 bottom-0 w-64 z-50 bg-white dark:bg-gray-900 border-r dark:border-gray-700 shadow-xl transform transition-transform duration-200 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-4 py-3 border-b dark:border-gray-700">
+                  <span className="text-sm font-bold text-gray-900 dark:text-gray-100">hydrus-ui</span>
+                  <button
+                    className="min-h-[44px] min-w-[44px] p-2 text-lg leading-none text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 active:text-gray-900"
+                    onClick={() => setMenuOpen(false)}
+                    aria-label="Close menu"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <nav className="p-2 space-y-1">
+                  {tabs.map((t) => (
+                    <button
+                      key={t.id}
+                      className={`w-full text-left min-h-[44px] px-3 py-2 text-sm rounded ${
+                        tab === t.id
+                          ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-medium'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700'
+                      }`}
+                      onClick={() => { setTab(t.id); setMenuOpen(false) }}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </nav>
+              </div>
             </>
           ) : (
             <>
