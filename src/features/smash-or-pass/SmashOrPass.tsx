@@ -830,9 +830,9 @@ export function SmashOrPass() {
           <button
             className="w-14 h-14 bg-green-600/80 hover:bg-green-600 active:bg-green-700 text-white text-xs font-bold rounded-2xl shadow-lg flex items-center justify-center transition-colors"
             onClick={() => decide('left')}
-            aria-label="Smash (choose left)"
+            aria-label="Choose top file (A)"
           >
-            Smash
+            A
           </button>
           <button
             className="w-14 h-14 bg-yellow-600/80 hover:bg-yellow-600 active:bg-yellow-700 text-white text-xs font-bold rounded-2xl shadow-lg flex items-center justify-center transition-colors"
@@ -844,9 +844,9 @@ export function SmashOrPass() {
           <button
             className="w-14 h-14 bg-red-600/80 hover:bg-red-600 active:bg-red-700 text-white text-xs font-bold rounded-2xl shadow-lg flex items-center justify-center transition-colors"
             onClick={() => decide('right')}
-            aria-label="Pass (choose right)"
+            aria-label="Choose bottom file (B)"
           >
-            Pass
+            B
           </button>
         </div>
       )}
