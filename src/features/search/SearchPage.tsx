@@ -451,9 +451,14 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
     setFiles(map)
   }
 
-  function handleTagsSaved(fileId: number, serviceKey: string, tags: string[]) {
-    const file = filesRef.current.get(fileId)
-    if (!file) return
+  function handleTagsSaved(fileId: number, hash: string, serviceKey: string, tags: string[]) {
+    let file = filesRef.current.get(fileId)
+    if (!file) {
+      for (const [, f] of filesRef.current) {
+        if (f.hash === hash) { file = f; break }
+      }
+      if (!file) return
+    }
     const updated = { ...file }
     updated.tags = { ...file.tags }
     const existing = updated.tags[serviceKey]
@@ -464,7 +469,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
       display_tags: { '0': [...tags] },
     }
     const map = new Map(filesRef.current)
-    map.set(fileId, updated)
+    map.set(file.file_id, updated)
     filesRef.current = map
     setFiles(map)
   }

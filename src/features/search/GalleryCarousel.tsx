@@ -16,7 +16,7 @@ interface Props {
   hasMore?: boolean
   onRequestMore?: () => void
   onRatingChange?: (hash: string) => void | Promise<void>
-  onTagsSaved?: (fileId: number, serviceKey: string, tags: string[]) => void
+  onTagsSaved?: (fileId: number, hash: string, serviceKey: string, tags: string[]) => void
   sortByRating?: boolean
 }
 
@@ -536,9 +536,8 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           file={file}
           onClose={() => setShowTagEditor(false)}
           onSaved={async (serviceKey, tags) => {
-            onTagsSaved?.(file.file_id, serviceKey, tags)
+            onTagsSaved?.(file.file_id, file.hash, serviceKey, tags)
             setShowTagEditor(false)
-            onRatingChangeRef.current?.(file.hash)
           }}
         />
       )}
