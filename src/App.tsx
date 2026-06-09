@@ -92,13 +92,6 @@ export default function App() {
                   ? `Analytics – ${analyticsView === 'tag-preferences' ? 'Tag Preferences' : 'ELO Distribution'}`
                   : tabs.find((t) => t.id === tab)?.label ?? 'hydrus-ui'}
               </span>
-              <button
-                className="min-h-[44px] min-w-[44px] p-2 text-xs text-gray-400 hover:text-red-500 active:text-red-600"
-                onClick={() => useApiStore.getState().disconnect()}
-                title="Disconnect"
-              >
-                ✕
-              </button>
               {menuOpen && (
                 <div
                   className="fixed inset-0 z-40"
@@ -191,12 +184,6 @@ export default function App() {
                   </button>
                 )
               )}
-              <button
-                className="ml-auto min-h-[44px] min-w-[44px] p-2 text-xs text-gray-400 hover:text-red-500 active:text-red-600 flex-shrink-0"
-                onClick={() => useApiStore.getState().disconnect()}
-              >
-                Disconnect
-              </button>
             </>
           )}
         </header>
