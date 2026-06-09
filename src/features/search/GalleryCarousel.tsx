@@ -151,6 +151,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   const [panX, setPanX] = useState(0)
   const [panY, setPanY] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
+  const [panelVisible, setPanelVisible] = useState(true)
   const imageContainerRef = useRef<HTMLDivElement>(null)
 
   const touchRef = useRef({ startX: 0, startY: 0, lastTap: 0, pinching: false, pinchDist: 0, scale: 1, panX: 0, panY: 0, moved: false, wasZoomed: false })
@@ -251,9 +252,14 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
       }
       if (t.moved) {
         const dx = e.changedTouches[0].clientX - t.startX
+        const dy = e.changedTouches[0].clientY - t.startY
         if (zoomRef.current.scale <= 1) {
-          if (dx > 50) goPrev()
-          else if (dx < -50) goNext()
+          if (Math.abs(dy) > Math.abs(dx) && dy < -50 && carouselFloatingPanel) {
+            setPanelVisible((v) => !v)
+          } else if (Math.abs(dx) >= Math.abs(dy) && Math.abs(dx) > 50) {
+            if (dx > 50) goPrev()
+            else goNext()
+          }
         }
         return
       }
@@ -285,6 +291,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
 
   useEffect(() => {
     resetZoom()
+    setPanelVisible(true)
   }, [file?.hash])
 
   return (
@@ -358,7 +365,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           </button>
         )}
         {carouselFloatingPanel && (
-          <div className={`absolute ${carouselNavSide === 'left' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 flex flex-col gap-3 z-10`}>
+          <div className={`absolute ${carouselNavSide === 'left' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 flex flex-col gap-3 z-10 transition-all duration-200 ${panelVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             {(() => {
               const key = likeKeyRef.current
               const hash = hashRef.current
@@ -408,7 +415,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
       )}
 
       <div className="text-center text-white/25 text-xs py-1.5" onClick={(e) => e.stopPropagation()}>
-        a/d or ← → or j/k navigate · w like · Esc close · i info
+        a/d or ← → or j/k navigate · {carouselFloatingPanel ? '↑ toggle panel · ' : ''}w like · Esc close · i info
       </div>
     </div>
   )
