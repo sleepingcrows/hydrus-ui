@@ -19,13 +19,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
   const url = new URL(event.request.url)
-  if (url.pathname.startsWith('/get_files/') || url.pathname.startsWith('/api_version') || url.pathname.startsWith('/search_files')) {
-    event.respondWith(fetch(event.request).catch(() => new Response(null, { status: 503 })))
-    return
-  }
+  if (url.origin !== self.location.origin) return
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return
+
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
-      if (response.ok && response.type === 'basic' && !url.pathname.startsWith('/api/') && !url.pathname.startsWith('/get_files/')) {
+      if (response.ok && response.type === 'basic') {
         const clone = response.clone()
         caches.open(CACHE).then((cache) => cache.put(event.request, clone))
       }
