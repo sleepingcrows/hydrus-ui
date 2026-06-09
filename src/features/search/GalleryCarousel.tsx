@@ -410,7 +410,8 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
               transform: sliding ? `translate3d(${slideDir === 1 ? '-100%' : '100%'}, 0, 0)` : 'translate3d(0, 0, 0)',
               transition: sliding ? 'transform 0.3s ease' : 'none',
               backfaceVisibility: 'hidden',
-              zIndex: slideOutUrl ? 1 : 0,
+              willChange: 'transform',
+              zIndex: 1,
             }}
           >
             {slideOutUrl ? (
@@ -423,6 +424,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
               transform: sliding ? 'translate3d(0, 0, 0)' : slideDir ? `translate3d(${slideDir === 1 ? '100%' : '-100%'}, 0, 0)` : 'translate3d(0, 0, 0)',
               transition: sliding ? 'transform 0.3s ease' : 'none',
               backfaceVisibility: 'hidden',
+              willChange: 'transform',
               zIndex: 2,
             }}
           >
