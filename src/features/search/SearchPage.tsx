@@ -491,36 +491,11 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
         ) : (
           <>
             {isMobile ? (
-              <div className="w-full">
-                <div className="flex items-center gap-2">
-                  {!searchOpen && (
-                    <button
-                      className="flex-1 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 truncate min-h-[44px]"
-                      onClick={onSearchToggle}
-                    >
-                      <svg viewBox="0 0 24 24" className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="11" cy="11" r="8" />
-                        <path d="M21 21l-4.35-4.35" />
-                      </svg>
-                      <span className="truncate">{tags.length > 0 ? tags.join(', ') : 'Search tags...'}</span>
-                      <span className="text-xs text-gray-400 ml-auto">{fileIds.length} files</span>
-                    </button>
-                  )}
-                  {!searchOpen && (
-                    <button
-                      className="min-h-[44px] px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-50 hover:bg-blue-700 active:bg-blue-800"
-                      onClick={doSearch}
-                      disabled={loading || tags.length === 0}
-                    >
-                      {loading ? '...' : 'Search'}
-                    </button>
-                  )}
-                </div>
-                <div className={`overflow-hidden transition-all duration-200 ${searchOpen ? 'max-h-[300px]' : 'max-h-0'}`}>
-                  <div className="pt-2 space-y-2">
-                    <TagSearch tags={tags} onTagsChange={handleTagsChange} onSubmit={doSearch} />
-                    <div className="flex gap-2 items-center">
-                      <select
+              <div className={`w-full overflow-hidden transition-all duration-200 ${searchOpen ? 'max-h-[300px]' : 'max-h-0'}`}>
+                <div className="pt-2 pb-1 space-y-2">
+                  <TagSearch tags={tags} onTagsChange={handleTagsChange} onSubmit={doSearch} />
+                  <div className="flex gap-2 items-center">
+                    <select
                         className="text-sm border rounded px-2 py-1 min-h-[44px] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-600"
                         value={sortType}
                         onChange={(e) => setSortType(Number(e.target.value))}
@@ -548,8 +523,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
                     </div>
                   </div>
                 </div>
-              </div>
-            ) : (
+              ) : (
               <>
                 <div className="flex-1 min-w-0">
                   <TagSearch tags={tags} onTagsChange={handleTagsChange} onSubmit={doSearch} />
