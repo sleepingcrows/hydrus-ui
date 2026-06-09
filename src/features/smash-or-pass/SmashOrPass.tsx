@@ -826,7 +826,7 @@ export function SmashOrPass() {
       )}
 
       {votingOpen && isMobile && smashFloatingPanel && (
-        <div className={`fixed bottom-4 z-50 flex gap-3 ${smashNavSide === 'left' ? 'left-4' : 'right-4'} flex-col`}>
+        <div className={`fixed top-1/2 -translate-y-1/2 z-50 flex gap-3 ${smashNavSide === 'left' ? 'left-3' : 'right-3'} flex-col`}>
           <button
             className="w-14 h-14 bg-green-600/80 hover:bg-green-600 active:bg-green-700 text-white text-xs font-bold rounded-2xl shadow-lg flex items-center justify-center transition-colors"
             onClick={() => decide('left')}
