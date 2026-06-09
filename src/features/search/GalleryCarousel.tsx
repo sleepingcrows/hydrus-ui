@@ -11,7 +11,7 @@ import { FileRenderer } from '../../components/FileRenderer'
 interface Props {
   files: FileMetadata[]
   initialIndex: number
-  onClose: () => void
+  onClose: (index?: number) => void
   hasMore?: boolean
   onRequestMore?: () => void
   onRatingChange?: (hash: string) => void | Promise<void>
@@ -151,7 +151,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return
       switch (e.key) {
         case 'Escape':
-          onClose()
+          onClose(index)
           break
         case 'a':
         case 'ArrowLeft':
@@ -315,7 +315,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           if (Math.abs(dy) > Math.abs(dx) && dy < -50 && carouselFloatingPanel) {
             setPanelVisible((v) => !v)
           } else if (Math.abs(dy) > Math.abs(dx) && dy > 50) {
-            onClose()
+            onClose(index)
           } else if (Math.abs(dx) >= Math.abs(dy) && Math.abs(dx) > 50) {
             if (dx > 50) goPrev()
             else goNext()
@@ -354,7 +354,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   }, [file?.hash])
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex flex-col" onClick={onClose}
+    <div className="fixed inset-0 z-50 bg-black/90 flex flex-col" onClick={() => onClose(index)}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -381,7 +381,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           const color = val === true ? '#ef4444' : val === false ? '#3b82f6' : '#ffffff30'
           return <span className="text-sm ml-3" style={{ color }}>{'\u2764'}</span>
         })()}
-        <button className="text-white/50 hover:text-white text-xl leading-none px-1" onClick={onClose}>✕</button>
+        <button className="text-white/50 hover:text-white text-xl leading-none px-1" onClick={() => onClose(index)}>✕</button>
       </div>
 
       <div

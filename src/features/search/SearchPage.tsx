@@ -723,7 +723,15 @@ const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' 
         <GalleryCarousel
           files={currentPageFiles}
           initialIndex={galleryIndex}
-          onClose={() => setGalleryIndex(null)}
+          onClose={(finalIdx) => {
+            const idx = finalIdx ?? galleryIndex
+            if (idx != null && idx >= 0 && idx < displayFileIds.length) {
+              const fid = displayFileIds[idx]
+              const el = scrollRef.current?.querySelector<HTMLElement>(`[data-id="${fid}"]`)
+              if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+            }
+            setGalleryIndex(null)
+          }}
           hasMore={page < totalPages - 1}
           onRequestMore={loadMore}
           onRatingChange={handleRatingChange}
