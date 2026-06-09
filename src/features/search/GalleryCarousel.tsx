@@ -531,10 +531,11 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
 
       {showTagEditor && file && (
         <TagEditor
+          key={file.hash + file.file_id}
           file={file}
           onClose={() => setShowTagEditor(false)}
-          onSaved={() => {
-            onRatingChange?.(file.hash)
+          onSaved={async () => {
+            await onRatingChange?.(file.hash)
             setShowTagEditor(false)
           }}
         />
