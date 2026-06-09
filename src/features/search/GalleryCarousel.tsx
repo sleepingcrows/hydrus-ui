@@ -150,11 +150,26 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   const [zoomScale, setZoomScale] = useState(1)
   const [panX, setPanX] = useState(0)
   const [panY, setPanY] = useState(0)
-  const isZoomed = zoomScale > 1
+  const [isZoomed, setIsZoomed] = useState(false)
   const imageContainerRef = useRef<HTMLDivElement>(null)
 
-  const touchRef = useRef({ startX: 0, startY: 0, lastTap: 0, pinching: false, pinchDist: 0, scale: 1, panX: 0, panY: 0, moved: false })
+  const touchRef = useRef({ startX: 0, startY: 0, lastTap: 0, pinching: false, pinchDist: 0, scale: 1, panX: 0, panY: 0, moved: false, wasZoomed: false })
   const zoomRef = useRef({ scale: 1, panX: 0, panY: 0 })
+
+  function applyTransform() {
+    const el = imageContainerRef.current
+    if (!el) return
+    const { scale, panX, panY } = zoomRef.current
+    el.style.transform = `scale(${scale}) translate(${panX}px, ${panY}px)`
+  }
+
+  function syncZoomState() {
+    const { scale, panX, panY } = zoomRef.current
+    setZoomScale(scale)
+    setPanX(panX)
+    setPanY(panY)
+    setIsZoomed(scale > 1)
+  }
 
   function goNext() {
     if (index < files.length - 1) {
@@ -171,6 +186,9 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   function handleTouchStart(e: React.TouchEvent) {
     const t = touchRef.current
     t.moved = false
+    t.wasZoomed = zoomRef.current.scale > 1
+    const el = imageContainerRef.current
+    if (el) el.style.transition = 'none'
     if (e.touches.length === 2) {
       const dx = e.touches[0].clientX - e.touches[1].clientX
       const dy = e.touches[0].clientY - e.touches[1].clientY
@@ -196,18 +214,17 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
       let newScale = t.scale * (dist / t.pinchDist)
       newScale = Math.max(1, Math.min(newScale, 8))
       zoomRef.current.scale = newScale
-      setZoomScale(newScale)
       t.pinchDist = dist
       t.moved = true
+      applyTransform()
     } else if (e.touches.length === 1 && zoomRef.current.scale > 1) {
       e.preventDefault()
       const ddx = e.touches[0].clientX - t.startX
       const ddy = e.touches[0].clientY - t.startY
       zoomRef.current.panX = t.panX + ddx
       zoomRef.current.panY = t.panY + ddy
-      setPanX(zoomRef.current.panX)
-      setPanY(zoomRef.current.panY)
       t.moved = true
+      applyTransform()
     } else if (e.touches.length === 1) {
       const dx = Math.abs(e.touches[0].clientX - t.startX)
       const dy = Math.abs(e.touches[0].clientY - t.startY)
@@ -217,8 +234,13 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
 
   function handleTouchEnd(e: React.TouchEvent) {
     const t = touchRef.current
+    const el = imageContainerRef.current
+    if (el) el.style.transition = ''
     if (e.changedTouches.length === 1) {
-      if (t.moved && zoomRef.current.scale > 1) return
+      if (t.moved && zoomRef.current.scale > 1) {
+        syncZoomState()
+        return
+      }
       if (t.moved) {
         const dx = e.changedTouches[0].clientX - t.startX
         if (zoomRef.current.scale <= 1) {
@@ -229,34 +251,28 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
       }
       const now = Date.now()
       if (now - t.lastTap < 300) {
-        if (zoomRef.current.scale > 1) {
-          zoomRef.current.scale = 1
-          zoomRef.current.panX = 0
-          zoomRef.current.panY = 0
-          setZoomScale(1)
-          setPanX(0)
-          setPanY(0)
-        } else {
-          zoomRef.current.scale = 2.5
-          zoomRef.current.panX = 0
-          zoomRef.current.panY = 0
-          setZoomScale(2.5)
-          setPanX(0)
-          setPanY(0)
+        zoomRef.current.scale = zoomRef.current.scale > 1 ? 1 : 2.5
+        zoomRef.current.panX = 0
+        zoomRef.current.panY = 0
+        syncZoomState()
+        if (el) {
+          el.style.transition = 'transform 0.2s'
+          applyTransform()
         }
       }
       t.lastTap = now
     }
-    if (e.touches.length === 0) t.pinching = false
+    if (e.touches.length === 0) {
+      t.pinching = false
+      if (t.moved && zoomRef.current.scale <= 1) syncZoomState()
+    }
   }
 
   function resetZoom() {
     zoomRef.current.scale = 1
     zoomRef.current.panX = 0
     zoomRef.current.panY = 0
-    setZoomScale(1)
-    setPanX(0)
-    setPanY(0)
+    syncZoomState()
   }
 
   useEffect(() => {
@@ -310,10 +326,8 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
         {imageUrl && !loading && (
           <div
             ref={imageContainerRef}
-            className="w-full h-full flex items-center justify-center transition-transform duration-200"
-            style={{
-              transform: `scale(${zoomScale}) translate(${panX}px, ${panY}px)`,
-            }}
+            className="w-full h-full flex items-center justify-center"
+            style={{ willChange: 'transform' }}
           >
             <FileRenderer url={imageUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain" />
           </div>
