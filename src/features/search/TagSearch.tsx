@@ -23,6 +23,7 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus }: TagSearch
   const containerRef = useRef<HTMLDivElement>(null)
   const displayed = results.slice(0, MAX_RESULTS)
   const searchHistory = useSettingsStore((s) => s.searchHistory)
+  const searchAutoSubmit = useSettingsStore((s) => s.searchAutoSubmit)
 
   useEffect(() => {
     if (autoFocus && inputRef.current) inputRef.current.focus()
@@ -38,10 +39,17 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus }: TagSearch
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  function addTag(tag: string) {
-    if (!tags.includes(tag)) onTagsChange([...tags, tag])
+  function addTag(tag: string, skipAutoSubmit = false) {
+    const newTags = tags.includes(tag) ? tags : [...tags, tag]
+    if (!tags.includes(tag)) onTagsChange(newTags)
     setInput('')
     setFocusedIdx(-1)
+    if (searchAutoSubmit && !skipAutoSubmit && newTags.length > 0) {
+      setTimeout(() => {
+        useSettingsStore.getState().addToSearchHistory(newTags)
+        onSubmit?.()
+      }, 0)
+    }
   }
 
   function removeTag(tag: string) {
@@ -60,9 +68,9 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus }: TagSearch
       e.preventDefault()
       if (input) {
         if (focusedIdx >= 0 && focusedIdx < displayed.length) {
-          addTag(displayed[focusedIdx])
+          addTag(displayed[focusedIdx], true)
         } else {
-          addTag(input)
+          addTag(input, true)
         }
       }
       handleSubmit()
@@ -142,7 +150,7 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus }: TagSearch
               <div
                 key={JSON.stringify(entry)}
                 className="min-h-[44px] px-2 py-1 text-xs cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 active:bg-blue-100 dark:active:bg-gray-600 flex flex-wrap gap-1"
-                onMouseDown={(e) => { e.preventDefault(); onTagsChange(entry); setShowHistory(false) }}
+                onMouseDown={(e) => { e.preventDefault(); onTagsChange(entry); setShowHistory(false); if (searchAutoSubmit) setTimeout(() => onSubmit?.(), 0) }}
               >
                 {entry.map((tag) => (
                   <span key={tag} className="text-gray-700 dark:text-gray-300">{tag}{' '}</span>

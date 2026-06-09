@@ -246,6 +246,21 @@ export function ConnectionSettings() {
       <GalleryLayoutSettings />
 
       <hr className="border-gray-200 dark:border-gray-700" />
+      <h3 className="text-sm font-bold">Search</h3>
+      <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <input
+          type="checkbox"
+          checked={useSettingsStore((s) => s.searchAutoSubmit)}
+          onChange={() => useSettingsStore.getState().toggleSearchAutoSubmit()}
+          className="rounded"
+        />
+        Auto-submit on tag select
+      </label>
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        Selecting a tag from autocomplete or pressing Enter immediately submits search instead of requiring Search button.
+      </p>
+
+      <hr className="border-gray-200 dark:border-gray-700" />
       <NamespaceColorsConfig />
     </div>
   )

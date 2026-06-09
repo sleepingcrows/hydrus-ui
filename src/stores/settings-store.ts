@@ -22,6 +22,7 @@ const CAROUSEL_FLOATING_PANEL_KEY = 'hydrus-carousel-floating-panel'
 const CAROUSEL_NAV_SIDE_KEY = 'hydrus-carousel-nav-side'
 const SMASH_FLOATING_PANEL_KEY = 'hydrus-smash-floating-panel'
 const SMASH_NAV_SIDE_KEY = 'hydrus-smash-nav-side'
+const SEARCH_AUTO_SUBMIT_KEY = 'hydrus-search-auto-submit'
 
 type GalleryLayoutMode = 'grid' | 'mosaic'
 
@@ -48,6 +49,7 @@ interface SettingsState {
   carouselNavSide: 'left' | 'right'
   smashFloatingPanel: boolean
   smashNavSide: 'left' | 'right'
+  searchAutoSubmit: boolean
   toggleDark: () => void
   toggleSmashPassStatic: () => void
   toggleTerminatedMode: () => void
@@ -69,6 +71,7 @@ interface SettingsState {
   setCarouselNavSide: (side: 'left' | 'right') => void
   toggleSmashFloatingPanel: () => void
   setSmashNavSide: (side: 'left' | 'right') => void
+  toggleSearchAutoSubmit: () => void
   hydrate: () => void
   rebuildRatingsCache: (tags: string[]) => Promise<void>
   getRatingsCache: () => Map<number, Record<string, number | boolean>> | null
@@ -125,6 +128,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     ? loadBool('hydrus-smash-floating-panel')
     : (typeof window !== 'undefined' && window.innerWidth < 768),
   smashNavSide: (loadStr('hydrus-smash-nav-side', 'right') as 'left' | 'right'),
+  searchAutoSubmit: loadBool('hydrus-search-auto-submit'),
   ratingsCacheBuildProgress: null,
   toggleDark: () => {
     const next = !get().darkMode
@@ -200,6 +204,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setSmashNavSide: (side) => {
     localStorage.setItem(SMASH_NAV_SIDE_KEY, side)
     set({ smashNavSide: side })
+  },
+  toggleSearchAutoSubmit: () => {
+    const next = !get().searchAutoSubmit
+    localStorage.setItem(SEARCH_AUTO_SUBMIT_KEY, String(next))
+    set({ searchAutoSubmit: next })
   },
   hydrate: () => {
     if (loadBool('hydrus-dark-mode')) document.documentElement.classList.add('dark')
