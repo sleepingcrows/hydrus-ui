@@ -79,6 +79,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
   const ratingsCacheRef = useRef<Map<number, Record<string, number | boolean>>>(new Map())
   const numColsRef = useRef(1)
   const isMobile = useMobile()
+  const touchStartRef = useRef({ x: 0, y: 0, t: 0 })
 
   tagsRef.current = tags
   sortTypeRef.current = sortType
@@ -547,8 +548,15 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
                 }
                 return {}
               })() : undefined}
-              onClick={() => { setSelectedIdx(i); setShowInfoPane(false) }}
-              onDoubleClick={() => setGalleryIndex(i)}
+              onClick={() => { if (isMobile) { setGalleryIndex(i) } else { setSelectedIdx(i); setShowInfoPane(false) } }}
+              onDoubleClick={() => { if (!isMobile) setGalleryIndex(i) }}
+              onTouchStart={(e) => { touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() } }}
+              onTouchEnd={(e) => {
+                const dx = Math.abs(e.changedTouches[0].clientX - touchStartRef.current.x)
+                const dy = Math.abs(e.changedTouches[0].clientY - touchStartRef.current.y)
+                const dt = Date.now() - touchStartRef.current.t
+                if (dx > 10 || dy > 10 || dt > 300) e.preventDefault()
+              }}
             >
               {(() => {
                 const f = files.get(id)
