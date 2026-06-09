@@ -397,9 +397,11 @@ export function SmashOrPass() {
 
       const streakBonus = (winnerStreak > 0 && winnerStreak % streakThreshold === 0)
         ? streakBonusAmt * Math.floor(winnerStreak / streakThreshold) : 0
-      let winnerNew = winnerElo + baseInc + streakBonus
+      let winnerNew: number
       if (winnerElo <= underdogThreshold && (loserElo - winnerElo) >= underdogMinGap) {
-        winnerNew += Math.floor((loserElo - winnerElo) * underdogBoostPct / 100)
+        winnerNew = winnerElo + Math.floor((loserElo - winnerElo) * underdogBoostPct / 100)
+      } else {
+        winnerNew = winnerElo + baseInc + streakBonus
       }
       const loserNew = Math.max(0, loserElo - loserDec)
 
