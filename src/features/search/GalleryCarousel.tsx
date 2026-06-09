@@ -20,7 +20,7 @@ interface Props {
   sortByRating?: boolean
 }
 
-export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onRequestMore, onRatingChange, sortByRating }: Props) {
+export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onRequestMore, onRatingChange, onTagsSaved, sortByRating }: Props) {
   const { isMobile } = useMobile()
   const carouselFloatingPanel = useSettingsStore((s) => s.carouselFloatingPanel)
   const carouselNavSide = useSettingsStore((s) => s.carouselNavSide)
@@ -538,6 +538,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           onSaved={async (serviceKey, tags) => {
             onTagsSaved?.(file.file_id, serviceKey, tags)
             setShowTagEditor(false)
+            onRatingChangeRef.current?.(file.hash)
           }}
         />
       )}
