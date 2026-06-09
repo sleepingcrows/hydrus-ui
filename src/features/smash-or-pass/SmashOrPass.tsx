@@ -310,9 +310,7 @@ export function SmashOrPass() {
       } catch (e) {
         console.warn('Could not load saved ratings (starting fresh):', e)
       }
-      const tagsRaw = localStorage.getItem('hydrus-smashpass-tags')
-      const hasSavedTags = tagsRaw ? (() => { try { return JSON.parse(tagsRaw).length > 0 } catch { return false } })() : false
-      if (!hasSavedTags) loadMatch()
+      loadMatch()
     }
     init()
   }, [])
@@ -378,16 +376,28 @@ export function SmashOrPass() {
     ratingsRef.current.set(fileB.file_id, newB)
 
     if (winner !== 'draw' && ratingServiceKey) {
-      const BASE_INC = 5
-      const LOSER_DEC = 2
+      const cfg = useSettingsStore.getState()
+      const baseInc = cfg.ratingBaseInc
+      const loserDec = cfg.ratingLoserDec
+      const streakThreshold = cfg.ratingStreakThreshold
+      const streakBonusAmt = cfg.ratingStreakBonus
+      const underdogThreshold = cfg.underdogThreshold
+      const underdogMinGap = cfg.underdogMinGap
+      const underdogBoostPct = cfg.underdogBoostPct
 
       const winnerId = winner === 'left' ? fileA.file_id : fileB.file_id
       const loserId = winner === 'left' ? fileB.file_id : fileA.file_id
       const winnerStreak = winner === 'left' ? prevStreakA : prevStreakB
+      const winnerElo = syncedRatings.get(winnerId) ?? 0
+      const loserElo = syncedRatings.get(loserId) ?? 0
 
-      const streakBonus = (winnerStreak > 0 && winnerStreak % 3 === 0) ? (Math.floor(Math.random() * 2) + 1) : 0
-      const winnerNew = (syncedRatings.get(winnerId) ?? 0) + BASE_INC + streakBonus
-      const loserNew = Math.max(0, (syncedRatings.get(loserId) ?? 0) - LOSER_DEC)
+      const streakBonus = (winnerStreak > 0 && winnerStreak % streakThreshold === 0)
+        ? streakBonusAmt * Math.floor(winnerStreak / streakThreshold) : 0
+      let winnerNew = winnerElo + baseInc + streakBonus
+      if (winnerElo <= underdogThreshold && (loserElo - winnerElo) >= underdogMinGap) {
+        winnerNew += Math.floor((loserElo - winnerElo) * underdogBoostPct / 100)
+      }
+      const loserNew = Math.max(0, loserElo - loserDec)
 
       try {
         await Promise.all([
@@ -465,6 +475,7 @@ export function SmashOrPass() {
       if (winner === 'left') {
         setFadingB(true)
         setLoadingB(true)
+        queueIndexRefB.current++
         const found = await findNextSupported(queueIndexRefB.current, fileIdsRefB.current, hashesRefB.current, fileA.hash)
         queueIndexRefB.current = found.index
         const newB = found.file
@@ -493,6 +504,7 @@ export function SmashOrPass() {
       } else if (winner === 'right') {
         setFadingA(true)
         setLoadingA(true)
+        queueIndexRefA.current++
         const found = await findNextSupported(queueIndexRefA.current, fileIdsRefA.current, hashesRefA.current, fileB.hash)
         queueIndexRefA.current = found.index
         const newA = found.file

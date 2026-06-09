@@ -2,6 +2,29 @@
 
 * {
   scrollbar-width: thin;
+  scrollbar-color: #4b5563 transparent;
+}
+
+.dark * {
+  scrollbar-color: #6b7280 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 3px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #6b7280;
 }
 
 body {

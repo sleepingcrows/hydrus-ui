@@ -105,6 +105,7 @@ function PdfViewer({ url, className }: { url: string; className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [pageCount, setPageCount] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
+  const [badSig, setBadSig] = useState(false)
 
   useEffect(() => {
     pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -114,11 +115,22 @@ function PdfViewer({ url, className }: { url: string; className?: string }) {
   }, [])
 
   useEffect(() => {
+    if (!url) return
     let cancelled = false
     async function render() {
       if (!canvasRef.current) return
       try {
-        const doc = await pdfjsLib.getDocument(url).promise
+        const sigResp = await fetch(url, { headers: { Range: 'bytes=0-3' } })
+        if (sigResp.ok && sigResp.status === 206) {
+          const sigBuf = await sigResp.arrayBuffer()
+          const sig = String.fromCharCode(...new Uint8Array(sigBuf))
+          if (sig !== '%PDF') {
+            console.warn('PDF render failed: invalid magic bytes', sig)
+            setBadSig(true)
+            return
+          }
+        }
+        const doc = await pdfjsLib.getDocument({ url }).promise
         if (cancelled) return
         setPageCount(doc.numPages)
         const page = await doc.getPage(currentPage)
@@ -138,9 +150,19 @@ function PdfViewer({ url, className }: { url: string; className?: string }) {
     return () => { cancelled = true }
   }, [url, currentPage])
 
+  function handleWheel(e: React.WheelEvent) {
+    if (pageCount <= 1) return
+    if (e.deltaY > 0 && currentPage < pageCount) { setCurrentPage((p) => p + 1); e.preventDefault() }
+    else if (e.deltaY < 0 && currentPage > 1) { setCurrentPage((p) => p - 1); e.preventDefault() }
+  }
+
   return (
-    <div className={`flex flex-col items-center ${className ?? ''}`}>
-      <canvas ref={canvasRef} className="max-w-full max-h-full object-contain" />
+    <div className={`flex flex-col items-center ${className ?? ''}`} onWheel={handleWheel}>
+      {badSig ? (
+        <div className="flex items-center justify-center text-sm text-white/50 p-4">Unsupported file type</div>
+      ) : (
+        <canvas ref={canvasRef} className="max-w-full max-h-full object-contain" />
+      )}
       {pageCount > 1 && (
         <div className="flex items-center gap-2 mt-1 text-xs text-white/60">
           <button
@@ -163,6 +185,8 @@ function PdfViewer({ url, className }: { url: string; className?: string }) {
 function PsdViewer({ url, className }: { url: string; className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [error, setError] = useState(false)
+  const [fallbackUrl, setFallbackUrl] = useState<string | null>(null)
+  const fallbackUrlRef = useRef<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -172,6 +196,20 @@ function PsdViewer({ url, className }: { url: string; className?: string }) {
         const resp = await fetch(url)
         const buffer = await resp.arrayBuffer()
         if (cancelled) return
+        const view = new Uint8Array(buffer, 0, 4)
+        const sig = String.fromCharCode(view[0], view[1], view[2], view[3])
+        if (sig !== '8BPS') {
+          const blob = new Blob([buffer], { type: 'image/png' })
+          const objUrl = URL.createObjectURL(blob)
+          if (!cancelled) {
+            if (fallbackUrlRef.current) URL.revokeObjectURL(fallbackUrlRef.current)
+            fallbackUrlRef.current = objUrl
+            setFallbackUrl(objUrl)
+          } else {
+            URL.revokeObjectURL(objUrl)
+          }
+          return
+        }
         const psd = readPsd(buffer, { skipCompositeImageData: false, skipLayerImageData: true, skipThumbnail: true })
         if (cancelled || !psd.canvas) return
         const srcCanvas = psd.canvas
@@ -189,8 +227,18 @@ function PsdViewer({ url, className }: { url: string; className?: string }) {
       }
     }
     render()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+      if (fallbackUrlRef.current) {
+        URL.revokeObjectURL(fallbackUrlRef.current)
+        fallbackUrlRef.current = null
+      }
+    }
   }, [url])
+
+  if (fallbackUrl) {
+    return <img src={fallbackUrl} alt="" className={`max-w-full max-h-full object-contain ${className ?? ''}`} />
+  }
 
   if (error) {
     return (
