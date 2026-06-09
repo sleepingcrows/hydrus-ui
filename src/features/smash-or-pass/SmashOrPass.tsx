@@ -81,6 +81,8 @@ export function SmashOrPass() {
   const ratingServiceKey = (configuredKey || services.find((rs) => rs.type === SERVICE_TYPE.INC_DEC_RATING)?.service_key) ?? null
   const isNumerical = false
   const isMobile = useMobile()
+  const smashFloatingPanel = useSettingsStore((s) => s.smashFloatingPanel)
+  const smashNavSide = useSettingsStore((s) => s.smashNavSide)
 
   async function fillQueue(): Promise<void> {
     if (fillingRef.current) return
@@ -731,12 +733,14 @@ export function SmashOrPass() {
                   <span key={`elo-a-${pulseAKey}`} className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${baseGlow} ${pulseAKey > 0 ? 'elo-pulse' : ''}`}>
                     {rating}
                   </span>
+                  {(!isMobile || !smashFloatingPanel) && (
                   <button
                     className="bg-black/50 hover:bg-black hover:border active:bg-gray-900 active:border-green-400 hover:border-green-500 border border-transparent text-white text-xs min-h-[44px] min-w-[44px] px-2 py-0.5 rounded cursor-pointer transition-colors"
                     onClick={e => { e.stopPropagation(); votingOpen && decide('left') }}
                   >
                     ← / A
                   </button>
+                  )}
                 </div>
               )
             })()}
@@ -783,12 +787,14 @@ export function SmashOrPass() {
                   <span key={`elo-b-${pulseBKey}`} className={`bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono ${baseGlow} ${pulseBKey > 0 ? 'elo-pulse' : ''}`}>
                     {rating}
                   </span>
+                  {(!isMobile || !smashFloatingPanel) && (
                   <button
                     className="bg-black/50 hover:bg-black hover:border active:bg-gray-900 active:border-green-400 hover:border-green-500 border border-transparent text-white text-xs min-h-[44px] min-w-[44px] px-2 py-0.5 rounded cursor-pointer transition-colors"
                     onClick={e => { e.stopPropagation(); votingOpen && decide('right') }}
                   >
                     → / D
                   </button>
+                  )}
                 </div>
               )
             })()}
@@ -814,6 +820,32 @@ export function SmashOrPass() {
           <span className="text-green-400">{isMobile ? 'Tap top' : '← / A'}</span> {isMobile ? 'choose left' : 'choose left'}
           <span className="text-yellow-400">{isMobile ? 'Tap center' : 'Space / S'}</span> draw
           <span className="text-green-400">{isMobile ? 'Tap bottom' : '→ / D'}</span> {isMobile ? 'choose right' : 'choose right'}
+        </div>
+      )}
+
+      {votingOpen && isMobile && smashFloatingPanel && (
+        <div className={`fixed bottom-4 z-50 flex gap-3 ${smashNavSide === 'left' ? 'left-4' : 'right-4'} flex-col`}>
+          <button
+            className="w-14 h-14 bg-green-600/80 hover:bg-green-600 active:bg-green-700 text-white text-xs font-bold rounded-2xl shadow-lg flex items-center justify-center transition-colors"
+            onClick={() => decide('left')}
+            aria-label="Smash (choose left)"
+          >
+            Smash
+          </button>
+          <button
+            className="w-14 h-14 bg-yellow-600/80 hover:bg-yellow-600 active:bg-yellow-700 text-white text-xs font-bold rounded-2xl shadow-lg flex items-center justify-center transition-colors"
+            onClick={() => decide('draw')}
+            aria-label="Draw"
+          >
+            Draw
+          </button>
+          <button
+            className="w-14 h-14 bg-red-600/80 hover:bg-red-600 active:bg-red-700 text-white text-xs font-bold rounded-2xl shadow-lg flex items-center justify-center transition-colors"
+            onClick={() => decide('right')}
+            aria-label="Pass (choose right)"
+          >
+            Pass
+          </button>
         </div>
       )}
     </div>

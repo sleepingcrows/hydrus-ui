@@ -20,6 +20,8 @@ const RATING_UNDERDOG_MIN_GAP_KEY = 'hydrus-rating-underdog-min-gap'
 const RATING_UNDERDOG_BOOST_PCT_KEY = 'hydrus-rating-underdog-boost-pct'
 const CAROUSEL_FLOATING_PANEL_KEY = 'hydrus-carousel-floating-panel'
 const CAROUSEL_NAV_SIDE_KEY = 'hydrus-carousel-nav-side'
+const SMASH_FLOATING_PANEL_KEY = 'hydrus-smash-floating-panel'
+const SMASH_NAV_SIDE_KEY = 'hydrus-smash-nav-side'
 
 type GalleryLayoutMode = 'grid' | 'mosaic'
 
@@ -44,6 +46,8 @@ interface SettingsState {
   underdogBoostPct: number
   carouselFloatingPanel: boolean
   carouselNavSide: 'left' | 'right'
+  smashFloatingPanel: boolean
+  smashNavSide: 'left' | 'right'
   toggleDark: () => void
   toggleSmashPassStatic: () => void
   toggleTerminatedMode: () => void
@@ -63,6 +67,8 @@ interface SettingsState {
   setUnderdogBoostPct: (n: number) => void
   toggleCarouselFloatingPanel: () => void
   setCarouselNavSide: (side: 'left' | 'right') => void
+  toggleSmashFloatingPanel: () => void
+  setSmashNavSide: (side: 'left' | 'right') => void
   hydrate: () => void
   rebuildRatingsCache: (tags: string[]) => Promise<void>
   getRatingsCache: () => Map<number, Record<string, number | boolean>> | null
@@ -115,6 +121,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     ? loadBool('hydrus-carousel-floating-panel')
     : (typeof window !== 'undefined' && window.innerWidth < 768),
   carouselNavSide: (loadStr('hydrus-carousel-nav-side', 'right') as 'left' | 'right'),
+  smashFloatingPanel: localStorage.getItem(SMASH_FLOATING_PANEL_KEY) !== null
+    ? loadBool('hydrus-smash-floating-panel')
+    : (typeof window !== 'undefined' && window.innerWidth < 768),
+  smashNavSide: (loadStr('hydrus-smash-nav-side', 'right') as 'left' | 'right'),
   ratingsCacheBuildProgress: null,
   toggleDark: () => {
     const next = !get().darkMode
@@ -181,6 +191,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setCarouselNavSide: (side) => {
     localStorage.setItem(CAROUSEL_NAV_SIDE_KEY, side)
     set({ carouselNavSide: side })
+  },
+  toggleSmashFloatingPanel: () => {
+    const next = !get().smashFloatingPanel
+    localStorage.setItem(SMASH_FLOATING_PANEL_KEY, String(next))
+    set({ smashFloatingPanel: next })
+  },
+  setSmashNavSide: (side) => {
+    localStorage.setItem(SMASH_NAV_SIDE_KEY, side)
+    set({ smashNavSide: side })
   },
   hydrate: () => {
     if (loadBool('hydrus-dark-mode')) document.documentElement.classList.add('dark')
