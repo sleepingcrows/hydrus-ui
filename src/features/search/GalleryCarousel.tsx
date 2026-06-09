@@ -7,6 +7,7 @@ import { useSettingsStore } from '../../stores/settings-store'
 import { setRating } from '../../api/ratings'
 import { useMobile } from '../../hooks/use-mobile'
 import { FileRenderer } from '../../components/FileRenderer'
+import { TagEditor } from '../tags/TagEditor'
 
 interface Props {
   files: FileMetadata[]
@@ -26,6 +27,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [showInfo, setShowInfo] = useState(false)
+  const [showTagEditor, setShowTagEditor] = useState(false)
   const [error, setError] = useState(false)
   const prevUrlRef = useRef<string | null>(null)
   const loadingMoreRef = useRef(false)
@@ -395,6 +397,9 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           const color = val === true ? '#ef4444' : val === false ? '#3b82f6' : '#ffffff30'
           return <span className="text-sm ml-3" style={{ color }}>{'\u2764'}</span>
         })()}
+        <button className="text-white/50 hover:text-white active:text-white/80 min-h-[44px] min-w-[44px] px-2 py-1 ml-auto text-sm leading-none" onClick={() => setShowTagEditor(true)}>
+          Tags
+        </button>
         <button className="text-white/50 hover:text-white active:text-white/80 min-h-[44px] min-w-[44px] p-2 text-xl leading-none" onClick={() => onClose(index)}>✕</button>
       </div>
 
@@ -523,6 +528,17 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
       <div className="text-center text-white/25 text-xs py-1.5" onClick={(e) => e.stopPropagation()}>
         a/d or ← → or j/k navigate · {carouselFloatingPanel ? '↑ toggle panel · ' : ''}w like · Esc close · i info
       </div>
+
+      {showTagEditor && file && (
+        <TagEditor
+          file={file}
+          onClose={() => setShowTagEditor(false)}
+          onSaved={() => {
+            onRatingChange?.(file.hash)
+            setShowTagEditor(false)
+          }}
+        />
+      )}
     </div>
   )
 }
