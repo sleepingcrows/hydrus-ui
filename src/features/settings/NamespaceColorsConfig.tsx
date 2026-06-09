@@ -41,9 +41,12 @@ export function NamespaceColorsConfig() {
           onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
           placeholder="Add namespace..."
           className="flex-1 border dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+          autoCapitalize="off"
+          autoComplete="off"
+          inputMode="text"
         />
         <button
-          className="px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
+          className="px-3 py-1 min-h-[44px] bg-blue-600 text-white rounded text-sm disabled:opacity-50 hover:bg-blue-700 active:bg-blue-800"
           onClick={handleAdd}
           disabled={!customNs.trim()}
         >
@@ -65,9 +68,9 @@ export function NamespaceColorsConfig() {
                 {COLOR_NAMES.map((c) => (
                   <button
                     key={c}
-                    className={`w-5 h-5 rounded-full border-2 ${
+                    className={`w-9 h-9 min-w-[44px] min-h-[44px] rounded-full border-2 ${
                       c === currentColor ? 'border-gray-900 dark:border-gray-100' : 'border-transparent'
-                    } ${COLOR_CLASSES[c].bg}`}
+                    } ${COLOR_CLASSES[c].bg} hover:opacity-80 active:opacity-60`}
                     onClick={() => handleChange(ns, c)}
                     title={c}
                   />

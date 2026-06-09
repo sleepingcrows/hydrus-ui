@@ -116,13 +116,13 @@ export function TagAnalyticsPanel() {
           min={1}
         />
         <button
-          className={`text-xs px-2 py-1 rounded ${mode === 'prefs' ? 'bg-blue-100 dark:bg-blue-900' : ''}`}
+          className={`min-h-[44px] text-xs px-2 py-1 rounded ${mode === 'prefs' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
           onClick={() => handleModeChange('prefs')}
         >
           Alignment
         </button>
         <button
-          className={`text-xs px-2 py-1 rounded ${mode === 'stats' ? 'bg-blue-100 dark:bg-blue-900' : ''}`}
+          className={`min-h-[44px] text-xs px-2 py-1 rounded ${mode === 'stats' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
           onClick={() => handleModeChange('stats')}
         >
           Ratio

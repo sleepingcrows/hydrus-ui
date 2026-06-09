@@ -395,7 +395,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           const color = val === true ? '#ef4444' : val === false ? '#3b82f6' : '#ffffff30'
           return <span className="text-sm ml-3" style={{ color }}>{'\u2764'}</span>
         })()}
-        <button className="text-white/50 hover:text-white text-xl leading-none px-1" onClick={() => onClose(index)}>✕</button>
+        <button className="text-white/50 hover:text-white active:text-white/80 min-h-[44px] min-w-[44px] p-2 text-xl leading-none" onClick={() => onClose(index)}>✕</button>
       </div>
 
       <div
@@ -456,7 +456,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
 
         {!carouselFloatingPanel && hasPrev && (
           <button
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white/70 hover:text-white text-4xl leading-none w-10 h-14 rounded-lg flex items-center justify-center transition-colors"
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 active:bg-black/80 text-white/70 hover:text-white active:text-white text-4xl leading-none min-w-[44px] w-11 h-14 rounded-lg flex items-center justify-center transition-colors"
             onClick={(e) => { e.stopPropagation(); goPrev() }}
           >
             ‹
@@ -464,7 +464,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
         )}
         {!carouselFloatingPanel && hasNext && (
           <button
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white/70 hover:text-white text-4xl leading-none w-10 h-14 rounded-lg flex items-center justify-center transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 active:bg-black/80 text-white/70 hover:text-white active:text-white text-4xl leading-none min-w-[44px] w-11 h-14 rounded-lg flex items-center justify-center transition-colors"
             onClick={(e) => { e.stopPropagation(); goNext() }}
           >
             ›

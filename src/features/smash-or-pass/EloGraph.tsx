@@ -112,13 +112,13 @@ export function EloGraph() {
 
       <div className="flex gap-2 items-center">
         <button
-          className={`text-xs px-2 py-1 rounded ${source === 'cache' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+          className={`min-h-[44px] text-xs px-2 py-1 rounded ${source === 'cache' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
           onClick={loadFromCache}
         >
           From Cache
         </button>
         <button
-          className={`text-xs px-2 py-1 rounded ${source === 'leaderboard' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+          className={`min-h-[44px] text-xs px-2 py-1 rounded ${source === 'leaderboard' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
           onClick={loadFromLeaderboard}
           disabled={loading}
         >
@@ -126,13 +126,13 @@ export function EloGraph() {
         </button>
         <span className="text-xs text-gray-400 ml-auto">Y-axis:</span>
         <button
-          className={`text-xs px-2 py-1 rounded ${!logScale ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+          className={`min-h-[44px] text-xs px-2 py-1 rounded ${!logScale ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
           onClick={() => setLogScale(false)}
         >
           Linear
         </button>
         <button
-          className={`text-xs px-2 py-1 rounded ${logScale ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+          className={`min-h-[44px] text-xs px-2 py-1 rounded ${logScale ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
           onClick={() => setLogScale(true)}
         >
           Log

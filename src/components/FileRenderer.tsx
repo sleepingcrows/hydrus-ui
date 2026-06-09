@@ -166,13 +166,13 @@ function PdfViewer({ url, className }: { url: string; className?: string }) {
       {pageCount > 1 && (
         <div className="flex items-center gap-2 mt-1 text-xs text-white/60">
           <button
-            className="px-2 py-0.5 bg-white/10 rounded hover:bg-white/20 disabled:opacity-30"
+            className="min-h-[44px] min-w-[44px] px-2 py-0.5 bg-white/10 rounded hover:bg-white/20 active:bg-white/30 disabled:opacity-30"
             disabled={currentPage <= 1}
             onClick={() => setCurrentPage((p) => p - 1)}
           >‹</button>
           <span>{currentPage} / {pageCount}</span>
           <button
-            className="px-2 py-0.5 bg-white/10 rounded hover:bg-white/20 disabled:opacity-30"
+            className="min-h-[44px] min-w-[44px] px-2 py-0.5 bg-white/10 rounded hover:bg-white/20 active:bg-white/30 disabled:opacity-30"
             disabled={currentPage >= pageCount}
             onClick={() => setCurrentPage((p) => p + 1)}
           >›</button>
@@ -271,7 +271,7 @@ function UnsupportedFile({ url, mime, className }: { url: string; mime: string; 
       <a
         href={url}
         download
-        className="px-3 py-1.5 bg-white/10 rounded hover:bg-white/20 transition-colors text-white/70 text-xs"
+        className="min-h-[44px] px-3 py-1.5 bg-white/10 rounded hover:bg-white/20 active:bg-white/30 transition-colors text-white/70 text-xs"
       >
         Download file
       </a>

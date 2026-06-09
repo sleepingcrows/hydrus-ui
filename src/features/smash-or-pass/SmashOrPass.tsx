@@ -698,7 +698,7 @@ export function SmashOrPass() {
         {!loading && (!fileA || !fileB) && (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-4">
             <p className="text-lg">No more files!</p>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={loadMatch}>
+            <button className="px-4 py-2 min-h-[44px] bg-blue-600 text-white rounded hover:bg-blue-700 active:bg-blue-800" onClick={loadMatch}>
               Try Again
             </button>
           </div>
@@ -732,7 +732,7 @@ export function SmashOrPass() {
                     {rating}
                   </span>
                   <button
-                    className="bg-black/50 hover:bg-black hover:border hover:border-green-500 border border-transparent text-white text-xs px-2 py-0.5 rounded cursor-pointer transition-colors"
+                    className="bg-black/50 hover:bg-black hover:border active:bg-gray-900 active:border-green-400 hover:border-green-500 border border-transparent text-white text-xs min-h-[44px] min-w-[44px] px-2 py-0.5 rounded cursor-pointer transition-colors"
                     onClick={e => { e.stopPropagation(); votingOpen && decide('left') }}
                   >
                     ← / A
@@ -784,7 +784,7 @@ export function SmashOrPass() {
                     {rating}
                   </span>
                   <button
-                    className="bg-black/50 hover:bg-black hover:border hover:border-green-500 border border-transparent text-white text-xs px-2 py-0.5 rounded cursor-pointer transition-colors"
+                    className="bg-black/50 hover:bg-black hover:border active:bg-gray-900 active:border-green-400 hover:border-green-500 border border-transparent text-white text-xs min-h-[44px] min-w-[44px] px-2 py-0.5 rounded cursor-pointer transition-colors"
                     onClick={e => { e.stopPropagation(); votingOpen && decide('right') }}
                   >
                     → / D

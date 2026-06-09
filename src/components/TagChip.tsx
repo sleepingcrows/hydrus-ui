@@ -30,7 +30,7 @@ export function TagChip({ tag, onRemove, size = 'md' }: TagChipProps) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full cursor-pointer ${SIZE_CLASSES[size]} ${COLOR_MAP[colorName]}`}
+      className={`inline-flex items-center gap-1 rounded-full cursor-pointer min-h-[44px] ${SIZE_CLASSES[size]} ${COLOR_MAP[colorName]}`}
       onClick={onRemove}
       title={onRemove ? 'Click to remove' : tag}
     >

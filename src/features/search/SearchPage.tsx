@@ -491,7 +491,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
               <TagSearch tags={tags} onTagsChange={handleTagsChange} onSubmit={doSearch} />
             </div>
             <select
-              className="text-sm border rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-600"
+              className="text-sm border rounded px-2 py-1 min-h-[44px] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-600"
               value={sortType}
               onChange={(e) => setSortType(Number(e.target.value))}
             >
@@ -502,14 +502,13 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit }: Se
               <option value={FILE_SORT_TYPES.RANDOM}>Random</option>
             </select>
             <button
-              className="text-sm px-2 py-1 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-600"
-              onClick={() => setSortAsc(!sortAsc)}
+              className="text-sm px-2 py-1 min-h-[44px] min-w-[44px] border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600"
               title={sortAsc ? 'Newest first' : 'Oldest first'}
             >
               {sortAsc ? '\u2191' : '\u2193'}
             </button>
             <button
-              className="px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
+              className="px-3 py-1 min-h-[44px] bg-blue-600 text-white rounded text-sm disabled:opacity-50 hover:bg-blue-700 active:bg-blue-800"
               onClick={doSearch}
               disabled={loading || tags.length === 0}
             >
@@ -608,7 +607,7 @@ const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' 
               })()}
               {i === selectedIdx && (
                 <button
-                  className="absolute bottom-1 right-1 w-5 h-5 bg-gray-100/80 dark:bg-gray-800/80 rounded flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 z-10"
+                  className="absolute bottom-1 right-1 w-10 h-10 min-w-[44px] min-h-[44px] bg-gray-100/80 dark:bg-gray-800/80 rounded flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 active:text-gray-700 dark:active:text-gray-300 z-10"
                   onClick={(e) => { e.stopPropagation(); setShowInfoPane(true) }}
                   title="File info (i)"
                 >
@@ -653,7 +652,7 @@ const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' 
                 Loaded {page + 1} / {totalPages} pages · {displayFileIds.length} / {fileIds.length} files
               </span>
               <button
-                className="px-2 py-1 border rounded disabled:opacity-30 bg-white dark:bg-gray-800 dark:border-gray-600"
+                className="px-2 py-1 min-h-[44px] border rounded disabled:opacity-30 bg-white dark:bg-gray-800 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600"
                 disabled={page >= totalPages - 1}
                 onClick={() => goPage(page + 1)}
               >
@@ -670,7 +669,7 @@ const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' 
           <div className={`fixed right-0 ${isMobile ? 'left-0' : ''} top-0 bottom-0 ${isMobile ? 'w-full' : 'w-80'} border-l dark:border-gray-700 overflow-y-auto p-3 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 z-50`}>
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-bold text-sm">File Info</h3>
-              <button onClick={() => { setShowInfoPane(false); setSelectedIdx(-1) }} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-lg leading-none">&times;</button>
+              <button onClick={() => { setShowInfoPane(false); setSelectedIdx(-1) }} className="min-h-[44px] min-w-[44px] p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 active:text-gray-900 dark:active:text-gray-100 text-lg leading-none">&times;</button>
             </div>
             <div className="space-y-1 text-xs">
               <div><span className="text-gray-500">ID:</span> {selectedFile.file_id}</div>

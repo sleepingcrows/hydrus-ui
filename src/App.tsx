@@ -86,10 +86,10 @@ export default function App() {
                 onMouseLeave={() => { if (!isMobile) { analyticsTimeoutRef.current = setTimeout(() => setAnalyticsOpen(false), 200) }}}
               >
                 <button
-                  className={`px-3 py-1 text-sm rounded whitespace-nowrap ${
+                  className={`min-h-[44px] px-3 py-1 text-sm rounded whitespace-nowrap ${
                     tab === 'analytics'
                       ? 'bg-blue-600 text-white'
-                      : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                      : 'hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600'
                   }`}
                   onClick={() => { if (isMobile) { setAnalyticsOpen(!analyticsOpen) } else { setTab('analytics') }}}
                 >
@@ -98,16 +98,16 @@ export default function App() {
                 {analyticsOpen && (
                   <div className="absolute top-full left-0 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow-lg z-50 min-w-[160px] text-gray-900 dark:text-gray-100">
                     <button
-                      className={`block w-full text-left px-3 py-1.5 text-sm whitespace-nowrap ${
-                        analyticsView === 'tag-preferences' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                      className={`block w-full text-left min-h-[44px] px-3 py-1.5 text-sm whitespace-nowrap ${
+                        analyticsView === 'tag-preferences' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'
                       }`}
                       onClick={() => { setTab('analytics'); setAnalyticsView('tag-preferences'); setAnalyticsOpen(false) }}
                     >
                       Tag Preferences
                     </button>
                     <button
-                      className={`block w-full text-left px-3 py-1.5 text-sm whitespace-nowrap ${
-                        analyticsView === 'elo-graph' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                      className={`block w-full text-left min-h-[44px] px-3 py-1.5 text-sm whitespace-nowrap ${
+                        analyticsView === 'elo-graph' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'
                       }`}
                       onClick={() => { setTab('analytics'); setAnalyticsView('elo-graph'); setAnalyticsOpen(false) }}
                     >
@@ -119,10 +119,10 @@ export default function App() {
             ) : (
               <button
                 key={t.id}
-                className={`px-3 py-1 text-sm rounded whitespace-nowrap flex-shrink-0 ${
+                className={`min-h-[44px] px-3 py-1 text-sm rounded whitespace-nowrap flex-shrink-0 ${
                   tab === t.id
                     ? 'bg-blue-600 text-white'
-                    : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                    : 'hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600'
                 }`}
                 onClick={() => setTab(t.id)}
               >
@@ -131,7 +131,7 @@ export default function App() {
             )
           )}
           <button
-            className="ml-auto text-xs text-gray-400 hover:text-red-500 flex-shrink-0"
+            className="ml-auto min-h-[44px] min-w-[44px] p-2 text-xs text-gray-400 hover:text-red-500 active:text-red-600 flex-shrink-0"
             onClick={() => useApiStore.getState().disconnect()}
           >
             Disconnect
