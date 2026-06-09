@@ -50,7 +50,14 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
   const pristineRef = useRef(true)
+  const freshMetaRef = useRef<FileMetadata | null>(null)
   const displayed = results.slice(0, 100)
+
+  function applyTagsFromMeta(meta: FileMetadata, serviceKey: string) {
+    const tags = extractServiceTags(meta, serviceKey)
+    setWorkingTags(tags)
+    setOriginalTags(tags)
+  }
 
   useEffect(() => {
     const store = useTagServicesStore.getState()
@@ -72,25 +79,20 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
 
   useEffect(() => {
     if (services.length > 0 && !selectedServiceKey) {
-      const first = services[0].service_key
-      setSelectedServiceKey(first)
-      const tags = extractServiceTags(file, first)
-      setWorkingTags(tags)
-      setOriginalTags(tags)
+      setSelectedServiceKey(services[0].service_key)
     }
-  }, [services, selectedServiceKey, file])
+  }, [services, selectedServiceKey])
 
   useEffect(() => {
     if (!selectedServiceKey) return
     let cancelled = false
     fetchFileMetadata([file.hash]).then((meta) => {
       if (cancelled || meta.length === 0) return
-      const fresh = extractServiceTags(meta[0], selectedServiceKey)
-      setOriginalTags(fresh)
-      if (pristineRef.current) setWorkingTags(fresh)
+      freshMetaRef.current = meta[0]
+      if (!cancelled) applyTagsFromMeta(meta[0], selectedServiceKey)
     }).catch(() => {})
     return () => { cancelled = true }
-  }, [file.hash, selectedServiceKey])
+  }, [file.hash])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -106,9 +108,14 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
     setSelectedServiceKey(serviceKey)
     pristineRef.current = false
     setError(null)
-    const tags = extractServiceTags(file, serviceKey)
-    setWorkingTags(tags)
-    setOriginalTags(tags)
+    const cached = freshMetaRef.current
+    if (cached) {
+      applyTagsFromMeta(cached, serviceKey)
+    } else {
+      const tags = extractServiceTags(file, serviceKey)
+      setWorkingTags(tags)
+      setOriginalTags(tags)
+    }
     setInput('')
   }
 
