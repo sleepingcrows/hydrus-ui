@@ -5,6 +5,7 @@ import { SERVICE_TYPE } from '../../api/types'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
 import { setRating } from '../../api/ratings'
+import { useMobile } from '../../hooks/use-mobile'
 import { FileRenderer } from '../../components/FileRenderer'
 
 interface Props {
@@ -18,6 +19,9 @@ interface Props {
 }
 
 export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onRequestMore, onRatingChange, sortByRating }: Props) {
+  const isMobile = useMobile()
+  const carouselFloatingPanel = useSettingsStore((s) => s.carouselFloatingPanel)
+  const carouselNavSide = useSettingsStore((s) => s.carouselNavSide)
   const [index, setIndex] = useState(initialIndex)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -211,7 +215,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           <FileRenderer url={imageUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain" />
         )}
 
-        {hasPrev && (
+        {!carouselFloatingPanel && hasPrev && (
           <button
             className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white/70 hover:text-white text-4xl leading-none w-10 h-14 rounded-lg flex items-center justify-center transition-colors"
             onClick={(e) => { e.stopPropagation(); goPrev() }}
@@ -219,13 +223,51 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
             ‹
           </button>
         )}
-        {hasNext && (
+        {!carouselFloatingPanel && hasNext && (
           <button
             className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white/70 hover:text-white text-4xl leading-none w-10 h-14 rounded-lg flex items-center justify-center transition-colors"
             onClick={(e) => { e.stopPropagation(); goNext() }}
           >
             ›
           </button>
+        )}
+        {carouselFloatingPanel && (
+          <div className={`absolute ${carouselNavSide === 'left' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 flex flex-col gap-3 z-10`}>
+            <button
+              className={`w-12 h-12 bg-black/50 hover:bg-black/70 text-white/80 hover:text-white text-3xl leading-none rounded-xl flex items-center justify-center transition-colors ${!hasPrev ? 'opacity-20 pointer-events-none' : ''}`}
+              onClick={(e) => { e.stopPropagation(); if (hasPrev) goPrev() }}
+              aria-label="Previous"
+            >
+              ‹
+            </button>
+            {(() => {
+              const key = likeKeyRef.current
+              const hash = hashRef.current
+              if (!key || !hash) return null
+              const val = likeValRef.current
+              return (
+                <button
+                  className={`w-12 h-12 bg-black/50 hover:bg-black/70 text-3xl leading-none rounded-xl flex items-center justify-center transition-colors`}
+                  style={{ color: val === true ? '#ef4444' : val === false ? '#3b82f6' : '#ffffff80' }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setRating({ hash, rating_service_key: key, rating: val === true ? null : true })
+                      .then(() => onRatingChangeRef.current?.(hash))
+                  }}
+                  aria-label="Toggle favorite"
+                >
+                  ♥
+                </button>
+              )
+            })()}
+            <button
+              className={`w-12 h-12 bg-black/50 hover:bg-black/70 text-white/80 hover:text-white text-3xl leading-none rounded-xl flex items-center justify-center transition-colors ${!hasNext ? 'opacity-20 pointer-events-none' : ''}`}
+              onClick={(e) => { e.stopPropagation(); if (hasNext) goNext() }}
+              aria-label="Next"
+            >
+              ›
+            </button>
+          </div>
         )}
       </div>
 

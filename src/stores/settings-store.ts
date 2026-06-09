@@ -18,6 +18,8 @@ const RATING_STREAK_BONUS_KEY = 'hydrus-rating-streak-bonus'
 const RATING_UNDERDOG_THRESHOLD_KEY = 'hydrus-rating-underdog-threshold'
 const RATING_UNDERDOG_MIN_GAP_KEY = 'hydrus-rating-underdog-min-gap'
 const RATING_UNDERDOG_BOOST_PCT_KEY = 'hydrus-rating-underdog-boost-pct'
+const CAROUSEL_FLOATING_PANEL_KEY = 'hydrus-carousel-floating-panel'
+const CAROUSEL_NAV_SIDE_KEY = 'hydrus-carousel-nav-side'
 
 type GalleryLayoutMode = 'grid' | 'mosaic'
 
@@ -40,6 +42,8 @@ interface SettingsState {
   underdogThreshold: number
   underdogMinGap: number
   underdogBoostPct: number
+  carouselFloatingPanel: boolean
+  carouselNavSide: 'left' | 'right'
   toggleDark: () => void
   toggleSmashPassStatic: () => void
   toggleTerminatedMode: () => void
@@ -57,6 +61,8 @@ interface SettingsState {
   setUnderdogThreshold: (n: number) => void
   setUnderdogMinGap: (n: number) => void
   setUnderdogBoostPct: (n: number) => void
+  toggleCarouselFloatingPanel: () => void
+  setCarouselNavSide: (side: 'left' | 'right') => void
   hydrate: () => void
   rebuildRatingsCache: (tags: string[]) => Promise<void>
   getRatingsCache: () => Map<number, Record<string, number | boolean>> | null
@@ -105,6 +111,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   ratingServiceKey: loadStr('hydrus-rating-service-key', ''),
   likeServiceKey: loadStr('hydrus-like-service-key', ''),
   galleryLayoutMode: (loadStr('hydrus-gallery-layout', 'grid') as GalleryLayoutMode),
+  carouselFloatingPanel: loadBool('hydrus-carousel-floating-panel'),
+  carouselNavSide: (loadStr('hydrus-carousel-nav-side', 'right') as 'left' | 'right'),
   ratingsCacheBuildProgress: null,
   toggleDark: () => {
     const next = !get().darkMode
@@ -162,6 +170,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setGalleryLayoutMode: (mode) => {
     localStorage.setItem(GALLERY_LAYOUT_KEY, mode)
     set({ galleryLayoutMode: mode })
+  },
+  toggleCarouselFloatingPanel: () => {
+    const next = !get().carouselFloatingPanel
+    localStorage.setItem(CAROUSEL_FLOATING_PANEL_KEY, String(next))
+    set({ carouselFloatingPanel: next })
+  },
+  setCarouselNavSide: (side) => {
+    localStorage.setItem(CAROUSEL_NAV_SIDE_KEY, side)
+    set({ carouselNavSide: side })
   },
   hydrate: () => {
     if (loadBool('hydrus-dark-mode')) document.documentElement.classList.add('dark')
