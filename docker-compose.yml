@@ -1,0 +1,7 @@
+services:
+  hydrus-ui:
+    build: .
+    container_name: hydrus-ui
+    ports:
+      - "${PORT:-8080}:80"
+    restart: unless-stopped
