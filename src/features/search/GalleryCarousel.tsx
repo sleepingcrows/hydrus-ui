@@ -213,14 +213,22 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
       const dist = Math.sqrt(dx * dx + dy * dy)
       let newScale = t.scale * (dist / t.pinchDist)
       newScale = Math.max(1, Math.min(newScale, 8))
+      const oldScale = zoomRef.current.scale
+      const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2
+      const my = (e.touches[0].clientY + e.touches[1].clientY) / 2
+      const invDelta = 1 / newScale - 1 / oldScale
       zoomRef.current.scale = newScale
+      zoomRef.current.panX += mx * invDelta
+      zoomRef.current.panY += my * invDelta
+      t.scale = newScale
       t.pinchDist = dist
       t.moved = true
       applyTransform()
     } else if (e.touches.length === 1 && zoomRef.current.scale > 1) {
       e.preventDefault()
-      const ddx = e.touches[0].clientX - t.startX
-      const ddy = e.touches[0].clientY - t.startY
+      const scale = zoomRef.current.scale
+      const ddx = (e.touches[0].clientX - t.startX) / scale
+      const ddy = (e.touches[0].clientY - t.startY) / scale
       zoomRef.current.panX = t.panX + ddx
       zoomRef.current.panY = t.panY + ddy
       t.moved = true
