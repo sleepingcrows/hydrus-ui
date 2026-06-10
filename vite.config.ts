@@ -1,11 +1,19 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { execSync } from 'child_process'
+import { readFileSync, existsSync } from 'fs'
+import { resolve } from 'path'
 
 const gitHash = (() => {
+  const headPath = resolve('.git/HEAD')
+  if (!existsSync(headPath)) return 'unknown'
   try {
-    return execSync('git rev-parse --short HEAD').toString().trim()
+    const head = readFileSync(headPath, 'utf-8').trim()
+    if (head.startsWith('ref: ')) {
+      const refPath = resolve('.git', head.slice(5))
+      return readFileSync(refPath, 'utf-8').trim().slice(0, 7)
+    }
+    return head.slice(0, 7)
   } catch {
     return 'unknown'
   }
