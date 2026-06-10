@@ -16,18 +16,10 @@ interface TagEditorProps {
 function extractServiceTags(file: FileMetadata, serviceKey: string): string[] {
   const entry = file.tags?.[serviceKey]
   if (!entry) return []
-  const seen = new Set<string>()
-  for (const list of Object.values(entry.display_tags)) {
-    for (const tag of list) {
-      if (!seen.has(tag)) seen.add(tag)
-    }
-  }
-  for (const list of Object.values(entry.storage_tags)) {
-    for (const tag of list) {
-      if (!seen.has(tag)) seen.add(tag)
-    }
-  }
-  return [...seen]
+  return [...new Set([
+    ...(entry.storage_tags?.['0'] ?? []),
+    ...(entry.display_tags?.['0'] ?? []),
+  ])]
 }
 
 function getApplicableServices(file: FileMetadata, available: { service_key: string; name: string; type: number }[]): { service_key: string; name: string; type: number }[] {
