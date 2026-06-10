@@ -301,19 +301,29 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
           console.warn('Migration clear failed:', e)
         }
       }
+      const syncedInit = new Map<number, number>()
       try {
         const ratings = await getAllFileRatings()
-        const syncedInit = new Map<number, number>()
         for (const r of ratings) {
           ratingsRef.current.set(r.file_id, { mu: r.mu, sigma: r.sigma })
           if (r.synced_rating !== undefined) {
             syncedInit.set(r.file_id, r.synced_rating)
           }
         }
-        setSyncedRatings(syncedInit)
       } catch (e) {
         console.warn('Could not load saved ratings (starting fresh):', e)
       }
+      const cached = useSettingsStore.getState().getRatingsCache()
+      if (cached && ratingServiceKey) {
+        for (const [fileId, ratings] of cached) {
+          if (syncedInit.has(fileId)) continue
+          const v = ratings[ratingServiceKey]
+          if (typeof v === 'number') {
+            syncedInit.set(fileId, v)
+          }
+        }
+      }
+      setSyncedRatings(syncedInit)
       loadMatch()
     }
     init()
