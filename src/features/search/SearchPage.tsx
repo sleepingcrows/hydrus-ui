@@ -9,6 +9,7 @@ import { fetchServices } from '../../api/services'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
 import { useMobile } from '../../hooks/use-mobile'
+import { SystemFilters } from './SystemFilters'
 const PAGE_SIZE = 200
 const COL_WIDTH = 200
 const COL_GAP = 8
@@ -544,6 +545,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
                       </button>
                       <span className="text-xs text-gray-500">{fileIds.length} files</span>
                     </div>
+                    <SystemFilters tags={tags} onTagsChange={handleTagsChange} />
                   </div>
                 </div>
               ) : (
@@ -578,6 +580,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
                 <span className="text-xs text-gray-500">{fileIds.length} files</span>
               </>
             )}
+            <SystemFilters tags={tags} onTagsChange={handleTagsChange} />
           </>)}
       </div>
 
