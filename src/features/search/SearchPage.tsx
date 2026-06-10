@@ -533,6 +533,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
                       <button
                         className="text-sm px-2 py-1 min-h-[44px] min-w-[44px] border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600"
                         title={sortAsc ? 'Newest first' : 'Oldest first'}
+                        onClick={() => setSortAsc(!sortAsc)}
                       >
                         {sortAsc ? '\u2191' : '\u2193'}
                       </button>
@@ -567,6 +568,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
                 <button
                   className="text-sm px-2 py-1 min-h-[44px] min-w-[44px] border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600"
                   title={sortAsc ? 'Newest first' : 'Oldest first'}
+                  onClick={() => setSortAsc(!sortAsc)}
                 >
                   {sortAsc ? '\u2191' : '\u2193'}
                 </button>

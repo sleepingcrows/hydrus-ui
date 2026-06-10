@@ -108,7 +108,7 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus }: TagSearch
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}
-            onBlur={() => { setIsFocused(false); setShowHistory(false) }}
+            onBlur={(e) => { setIsFocused(false); if (!containerRef.current?.contains(e.relatedTarget as Node)) setShowHistory(false) }}
             placeholder="Type a tag... Enter to add/search empty, Shift+Enter to search"
             className="flex-1 outline-none bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
             autoComplete="off"
