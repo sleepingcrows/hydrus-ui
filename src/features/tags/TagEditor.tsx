@@ -72,20 +72,26 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
 
   useEffect(() => {
     if (services.length > 0 && !selectedServiceKey) {
-      setSelectedServiceKey(services[0].service_key)
+      const last = localStorage.getItem('hydrus-tag-editor-last-service')
+      const match = last && services.find((s) => s.service_key === last)
+      setSelectedServiceKey(match ? match.service_key : services[0].service_key)
     }
   }, [services, selectedServiceKey])
 
   useEffect(() => {
     if (!selectedServiceKey) return
     let cancelled = false
+    if (freshMetaRef.current) {
+      if (!cancelled) applyTagsFromMeta(freshMetaRef.current, selectedServiceKey)
+      return
+    }
     fetchFileMetadata([file.hash]).then((meta) => {
       if (cancelled || meta.length === 0) return
       freshMetaRef.current = meta[0]
       if (!cancelled) applyTagsFromMeta(meta[0], selectedServiceKey)
     }).catch(() => {})
     return () => { cancelled = true }
-  }, [file.hash])
+  }, [file.hash, selectedServiceKey])
 
   function refreshTags() {
     pristineRef.current = true
@@ -108,6 +114,7 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
 
   function handleServiceChange(serviceKey: string) {
     setSelectedServiceKey(serviceKey)
+    localStorage.setItem('hydrus-tag-editor-last-service', serviceKey)
     pristineRef.current = false
     setError(null)
     const cached = freshMetaRef.current
@@ -158,6 +165,7 @@ export function TagEditor({ file, onClose, onSaved }: TagEditorProps) {
       }
       const identifier = file.hash ? { hash: file.hash } : { file_id: file.file_id }
       await addTags(identifier, { [selectedServiceKey]: actions })
+      localStorage.setItem('hydrus-tag-editor-last-service', selectedServiceKey)
       const cleanedAll = await cleanTags(workingTags)
       await onSaved(selectedServiceKey, cleanedAll)
       onClose()
