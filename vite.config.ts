@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { readFileSync, existsSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { resolve } from 'path'
 
 const gitHash = (() => {
@@ -20,7 +20,19 @@ const gitHash = (() => {
 })()
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    {
+      name: 'inject-sw-cache-hash',
+      closeBundle() {
+        const swPath = resolve('dist/sw.js')
+        if (!existsSync(swPath)) return
+        const sw = readFileSync(swPath, 'utf-8')
+        writeFileSync(swPath, sw.replace('__SW_CACHE_HASH__', gitHash))
+      },
+    },
+  ],
   define: {
     __GIT_HASH__: JSON.stringify(gitHash),
   },

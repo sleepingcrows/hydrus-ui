@@ -1,4 +1,4 @@
-const CACHE = 'hydrus-ui-v1'
+const CACHE = 'hydrus-ui-__SW_CACHE_HASH__'
 const STATIC_ASSETS = [
   '/',
   '/index.html',
