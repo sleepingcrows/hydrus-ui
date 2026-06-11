@@ -6,7 +6,38 @@ import { testConnection } from '../../api/client'
 import { NamespaceColorsConfig } from './NamespaceColorsConfig'
 import { GalleryLayoutSettings } from './GalleryLayoutSettings'
 import { SERVICE_TYPE } from '../../api/types'
-import { exportToQR, importFromQR } from '../../utils/qr-io'
+import { exportToQR, importFromQR, scanQRFromCamera } from '../../utils/qr-io'
+
+async function applyImportData(data: import('../../utils/qr-io').ExportData) {
+  const s = useSettingsStore.getState()
+  const count = data.bookmarks.length + data.searchHistory.length
+  if (!confirm(`Import ${count} items? ${data.bookmarks.length} bookmarks, ${data.searchHistory.length} history entries. This will replace current data.`)) return
+  for (const b of data.bookmarks) s.addBookmark(b)
+  for (const h of data.searchHistory) s.addToSearchHistory(h)
+  const set = data.settings
+  if (set.ratingServiceKey !== undefined) s.setRatingServiceKey(set.ratingServiceKey)
+  if (set.likeServiceKey !== undefined) s.setLikeServiceKey(set.likeServiceKey)
+  if (set.ratingBaseInc !== undefined) s.setRatingBaseInc(set.ratingBaseInc)
+  if (set.ratingLoserDec !== undefined) s.setRatingLoserDec(set.ratingLoserDec)
+  if (set.ratingStreakThreshold !== undefined) s.setRatingStreakThreshold(set.ratingStreakThreshold)
+  if (set.ratingStreakBonus !== undefined) s.setRatingStreakBonus(set.ratingStreakBonus)
+  if (set.underdogThreshold !== undefined) s.setUnderdogThreshold(set.underdogThreshold)
+  if (set.underdogMinGap !== undefined) s.setUnderdogMinGap(set.underdogMinGap)
+  if (set.underdogBoostPct !== undefined) s.setUnderdogBoostPct(set.underdogBoostPct)
+  if (set.searchAutoSubmit !== undefined && s.searchAutoSubmit !== set.searchAutoSubmit) s.toggleSearchAutoSubmit()
+  if (set.smashPassStaticMode !== undefined && s.smashPassStaticMode !== set.smashPassStaticMode) s.toggleSmashPassStatic()
+  if (set.smashPassTags !== undefined) s.setSmashPassTags(set.smashPassTags)
+  if (set.smashPassTagsB !== undefined) s.setSmashPassTagsB(set.smashPassTagsB)
+  if (set.smashPassDualMode !== undefined && s.smashPassDualMode !== set.smashPassDualMode) s.toggleSmashPassDualMode()
+  if (set.terminatedMode !== undefined && s.terminatedMode !== set.terminatedMode) s.toggleTerminatedMode()
+  if (set.smashPassSwipeVote !== undefined && s.smashPassSwipeVote !== set.smashPassSwipeVote) s.toggleSmashPassSwipeVote()
+  if (set.galleryLayoutMode !== undefined) s.setGalleryLayoutMode(set.galleryLayoutMode)
+  if (set.carouselFloatingPanel !== undefined && s.carouselFloatingPanel !== set.carouselFloatingPanel) s.toggleCarouselFloatingPanel()
+  if (set.carouselNavSide !== undefined) s.setCarouselNavSide(set.carouselNavSide)
+  if (set.smashFloatingPanel !== undefined && s.smashFloatingPanel !== set.smashFloatingPanel) s.toggleSmashFloatingPanel()
+  if (set.smashNavSide !== undefined) s.setSmashNavSide(set.smashNavSide)
+  alert('Import complete — reload to apply all settings')
+}
 
 export function ConnectionSettings() {
   const { url, key, connected, setApiKey, disconnect } = useApiStore()
@@ -313,42 +344,22 @@ export function ConnectionSettings() {
               input.onchange = async () => {
                 const file = input.files?.[0]
                 if (!file) return
-                try {
-                  const data = await importFromQR(file)
-                  const s = useSettingsStore.getState()
-                  const count = data.bookmarks.length + data.searchHistory.length
-                  if (!confirm(`Import ${count} items? ${data.bookmarks.length} bookmarks, ${data.searchHistory.length} history entries. This will replace current data.`)) return
-                  for (const b of data.bookmarks) s.addBookmark(b)
-                  for (const h of data.searchHistory) s.addToSearchHistory(h)
-                  const set = data.settings
-                  if (set.ratingServiceKey !== undefined) s.setRatingServiceKey(set.ratingServiceKey)
-                  if (set.likeServiceKey !== undefined) s.setLikeServiceKey(set.likeServiceKey)
-                  if (set.ratingBaseInc !== undefined) s.setRatingBaseInc(set.ratingBaseInc)
-                  if (set.ratingLoserDec !== undefined) s.setRatingLoserDec(set.ratingLoserDec)
-                  if (set.ratingStreakThreshold !== undefined) s.setRatingStreakThreshold(set.ratingStreakThreshold)
-                  if (set.ratingStreakBonus !== undefined) s.setRatingStreakBonus(set.ratingStreakBonus)
-                  if (set.underdogThreshold !== undefined) s.setUnderdogThreshold(set.underdogThreshold)
-                  if (set.underdogMinGap !== undefined) s.setUnderdogMinGap(set.underdogMinGap)
-                  if (set.underdogBoostPct !== undefined) s.setUnderdogBoostPct(set.underdogBoostPct)
-                  if (set.searchAutoSubmit !== undefined) { if (s.searchAutoSubmit !== set.searchAutoSubmit) s.toggleSearchAutoSubmit() }
-                  if (set.smashPassStaticMode !== undefined) { if (s.smashPassStaticMode !== set.smashPassStaticMode) s.toggleSmashPassStatic() }
-                  if (set.smashPassTags !== undefined) s.setSmashPassTags(set.smashPassTags)
-                  if (set.smashPassTagsB !== undefined) s.setSmashPassTagsB(set.smashPassTagsB)
-                  if (set.smashPassDualMode !== undefined) { if (s.smashPassDualMode !== set.smashPassDualMode) s.toggleSmashPassDualMode() }
-                  if (set.terminatedMode !== undefined) { if (s.terminatedMode !== set.terminatedMode) s.toggleTerminatedMode() }
-                  if (set.smashPassSwipeVote !== undefined) { if (s.smashPassSwipeVote !== set.smashPassSwipeVote) s.toggleSmashPassSwipeVote() }
-                  if (set.galleryLayoutMode !== undefined) s.setGalleryLayoutMode(set.galleryLayoutMode)
-                  if (set.carouselFloatingPanel !== undefined) { if (s.carouselFloatingPanel !== set.carouselFloatingPanel) s.toggleCarouselFloatingPanel() }
-                  if (set.carouselNavSide !== undefined) s.setCarouselNavSide(set.carouselNavSide)
-                  if (set.smashFloatingPanel !== undefined) { if (s.smashFloatingPanel !== set.smashFloatingPanel) s.toggleSmashFloatingPanel() }
-                  if (set.smashNavSide !== undefined) s.setSmashNavSide(set.smashNavSide)
-                  alert('Import complete — reload to apply all settings')
-                } catch (e) { alert('Import failed: ' + String(e)) }
+                try { await applyImportData(await importFromQR(file)) }
+                catch (e) { alert('Import failed: ' + String(e)) }
               }
               input.click()
             }}
           >
             Import from QR
+          </button>
+          <button
+            className="px-3 py-1 min-h-[44px] bg-green-700 text-white rounded text-sm disabled:opacity-50 hover:bg-green-600 active:bg-green-800"
+            onClick={async () => {
+              try { await applyImportData(await scanQRFromCamera()) }
+              catch (e) { alert('Scan failed: ' + String(e)) }
+            }}
+          >
+            Scan QR from camera
           </button>
         </div>
       </details>

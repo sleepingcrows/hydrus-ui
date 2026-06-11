@@ -60,6 +60,46 @@ export async function importFromQR(file: File): Promise<ExportData> {
   return JSON.parse(result.data) as ExportData
 }
 
+export async function scanQRFromCamera(): Promise<ExportData> {
+  if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera not available')
+
+  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+  const video = document.createElement('video')
+  video.srcObject = stream
+  video.setAttribute('playsinline', '')
+  video.play()
+
+  try {
+    const data = await new Promise<ExportData>((resolve, reject) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      if (!ctx) { reject(new Error('Canvas not available')); return }
+
+      let animId = 0
+      function tick() {
+        if (video.videoWidth === 0 || video.videoHeight === 0) { animId = requestAnimationFrame(tick); return }
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+        ctx.drawImage(video, 0, 0)
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const result = jsQR(imageData.data, imageData.width, imageData.height)
+        if (result) {
+          try {
+            resolve(JSON.parse(result.data) as ExportData)
+          } catch { /* continue scanning */ }
+        }
+        animId = requestAnimationFrame(tick)
+      }
+      tick()
+
+      setTimeout(() => { cancelAnimationFrame(animId); reject(new Error('Scan timed out')) }, 30000)
+    })
+    return data
+  } finally {
+    for (const track of stream.getTracks()) track.stop()
+  }
+}
+
 function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image()
