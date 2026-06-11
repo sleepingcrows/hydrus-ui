@@ -126,6 +126,15 @@ export function ConnectionSettings() {
         />
         Dual queue mode (A vs B tag sets)
       </label>
+      <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <input
+          type="checkbox"
+          checked={useSettingsStore((s) => s.smashPassSwipeVote)}
+          onChange={() => useSettingsStore.getState().toggleSmashPassSwipeVote()}
+          className="rounded"
+        />
+        Swipe voting (mobile: up=left, down=right, right=draw)
+      </label>
 
       <details className="text-sm">
         <summary className="cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Rating formula</summary>
@@ -263,8 +272,9 @@ export function ConnectionSettings() {
       <hr className="border-gray-200 dark:border-gray-700" />
       <NamespaceColorsConfig />
 
-      <div className="text-xs text-gray-400 dark:text-gray-500 pt-2 border-t border-gray-200 dark:border-gray-700">
+      <div className="text-xs text-gray-400 dark:text-gray-500 pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
         <span className="font-mono">{__BUILD_TIMESTAMP__}</span>
+        <span>{(() => { try { return window.matchMedia('(display-mode: standalone)').matches ? 'PWA' : 'Browser' } catch { return '' } })()}</span>
       </div>
     </div>
   )

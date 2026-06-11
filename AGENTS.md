@@ -17,6 +17,24 @@ User says "stop caveman" or "normal mode" to disable.
 
 ---
 
+# Smash/Pass Swipe Voting
+
+- Optional feature controlled by `smashPassSwipeVote` in settings-store.ts.
+- Toggle in ConnectionSettings.tsx (Smash/Pass section).
+- Default: `false` (opt-in).
+- Touch handlers on file container in SmashOrPass.tsx.
+- Swipe UP → decide('left') (file A), DOWN → decide('right') (file B), RIGHT → decide('draw').
+- Min swipe distance: 50px.
+
+# PWA / Standalone Mode
+
+- SW registration at `src/pwa/register.ts`. Logs mode to console: `hydrus-ui: PWA mode: standalone` vs `browser tab`.
+- Settings panel footer shows "PWA" or "Browser" indicator.
+- `display-mode: standalone` CSS media query detects standalone mode.
+- iOS fallback: `window.navigator.standalone`.
+- `apple-touch-icon` uses PNG (icon-192.png). SVG not supported on iOS.
+- Manifest has `display: standalone`, icons at 192/512 with maskable variants.
+
 # Tag Search History — Known Fixes
 
 ## History Write Sources

@@ -83,6 +83,29 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
   const { isMobile, orientation } = useMobile()
   const smashFloatingPanel = useSettingsStore((s) => s.smashFloatingPanel)
   const smashNavSide = useSettingsStore((s) => s.smashNavSide)
+  const smashSwipeVote = useSettingsStore((s) => s.smashPassSwipeVote)
+  const touchRef = useRef({ sx: 0, sy: 0, swiping: false })
+
+  function handleTouchStart(e: React.TouchEvent) {
+    if (!smashSwipeVote || !votingOpen) return
+    touchRef.current = { sx: e.touches[0].clientX, sy: e.touches[0].clientY, swiping: true }
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (!touchRef.current.swiping) return
+    touchRef.current.swiping = false
+    const dx = e.changedTouches[0].clientX - touchRef.current.sx
+    const dy = e.changedTouches[0].clientY - touchRef.current.sy
+    const absDx = Math.abs(dx), absDy = Math.abs(dy)
+    const min = 50
+    if (absDx < min && absDy < min) return
+    if (absDy > absDx) {
+      if (dy < 0) decide('left')
+      else decide('right')
+    } else {
+      if (dx > 0) decide('draw')
+    }
+  }
 
   async function fillQueue(): Promise<void> {
     if (fillingRef.current) return
@@ -733,7 +756,11 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
         )}
       </div>
 
-      <div className={`flex-1 flex ${isMobile && orientation === 'portrait' ? 'flex-col' : 'flex-row'} gap-2 p-2 min-h-0`}>
+      <div
+        className={`flex-1 flex ${isMobile && orientation === 'portrait' ? 'flex-col' : 'flex-row'} gap-2 p-2 min-h-0`}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {!loading && (!fileA || !fileB) && (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-4">
             <p className="text-lg">No more files!</p>

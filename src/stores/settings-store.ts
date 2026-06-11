@@ -22,6 +22,7 @@ const CAROUSEL_FLOATING_PANEL_KEY = 'hydrus-carousel-floating-panel'
 const CAROUSEL_NAV_SIDE_KEY = 'hydrus-carousel-nav-side'
 const SMASH_FLOATING_PANEL_KEY = 'hydrus-smash-floating-panel'
 const SMASH_NAV_SIDE_KEY = 'hydrus-smash-nav-side'
+const SMASH_SWIPE_VOTE_KEY = 'hydrus-smash-swipe-vote'
 const SEARCH_AUTO_SUBMIT_KEY = 'hydrus-search-auto-submit'
 
 type GalleryLayoutMode = 'grid' | 'mosaic'
@@ -49,6 +50,7 @@ interface SettingsState {
   carouselNavSide: 'left' | 'right'
   smashFloatingPanel: boolean
   smashNavSide: 'left' | 'right'
+  smashPassSwipeVote: boolean
   searchAutoSubmit: boolean
   toggleDark: () => void
   toggleSmashPassStatic: () => void
@@ -71,6 +73,7 @@ interface SettingsState {
   setCarouselNavSide: (side: 'left' | 'right') => void
   toggleSmashFloatingPanel: () => void
   setSmashNavSide: (side: 'left' | 'right') => void
+  toggleSmashPassSwipeVote: () => void
   toggleSearchAutoSubmit: () => void
   hydrate: () => void
   rebuildRatingsCache: (tags: string[]) => Promise<void>
@@ -128,6 +131,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     ? loadBool('hydrus-smash-floating-panel')
     : (typeof window !== 'undefined' && window.innerWidth < 768),
   smashNavSide: (loadStr('hydrus-smash-nav-side', 'right') as 'left' | 'right'),
+  smashPassSwipeVote: loadBool('hydrus-smash-swipe-vote'),
   searchAutoSubmit: loadBool('hydrus-search-auto-submit'),
   ratingsCacheBuildProgress: null,
   toggleDark: () => {
@@ -204,6 +208,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setSmashNavSide: (side) => {
     localStorage.setItem(SMASH_NAV_SIDE_KEY, side)
     set({ smashNavSide: side })
+  },
+  toggleSmashPassSwipeVote: () => {
+    const next = !get().smashPassSwipeVote
+    localStorage.setItem(SMASH_SWIPE_VOTE_KEY, String(next))
+    set({ smashPassSwipeVote: next })
   },
   toggleSearchAutoSubmit: () => {
     const next = !get().searchAutoSubmit
