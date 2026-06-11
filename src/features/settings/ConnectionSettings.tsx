@@ -6,7 +6,7 @@ import { testConnection } from '../../api/client'
 import { NamespaceColorsConfig } from './NamespaceColorsConfig'
 import { GalleryLayoutSettings } from './GalleryLayoutSettings'
 import { SERVICE_TYPE } from '../../api/types'
-import { exportToQR, importFromQR, scanQRFromCamera } from '../../utils/qr-io'
+import { exportToJSON, importFromJSON } from '../../utils/json-io'
 
 async function applyImportData(data: import('../../utils/qr-io').ExportData) {
   const s = useSettingsStore.getState()
@@ -311,7 +311,7 @@ export function ConnectionSettings() {
             className="px-3 py-1 min-h-[44px] bg-blue-600 text-white rounded text-sm disabled:opacity-50 hover:bg-blue-700 active:bg-blue-800"
             onClick={async () => {
               const s = useSettingsStore.getState()
-              const blob = await exportToQR({
+              const blob = exportToJSON({
                 version: 1,
                 bookmarks: s.bookmarks.map((b) => ({ name: b.name, tags: b.tags, sortType: b.sortType, sortAsc: b.sortAsc, limit: b.limit })),
                 searchHistory: s.searchHistory,
@@ -330,36 +330,27 @@ export function ConnectionSettings() {
               })
               const url = URL.createObjectURL(blob)
               const a = document.createElement('a')
-              a.href = url; a.download = 'hydrus-ui-backup.svg'; a.click()
+              a.href = url; a.download = 'hydrus-ui-backup.json'; a.click()
               URL.revokeObjectURL(url)
             }}
           >
-            Export backup QR
+            Export backup
           </button>
           <button
             className="px-3 py-1 min-h-[44px] bg-gray-600 text-white rounded text-sm disabled:opacity-50 hover:bg-gray-700 active:bg-gray-800"
             onClick={() => {
               const input = document.createElement('input')
-              input.type = 'file'; input.accept = 'image/png,image/svg+xml'
+              input.type = 'file'; input.accept = '.json,application/json'
               input.onchange = async () => {
                 const file = input.files?.[0]
                 if (!file) return
-                try { await applyImportData(await importFromQR(file)) }
+                try { await applyImportData(await importFromJSON(file)) }
                 catch (e) { alert('Import failed: ' + String(e)) }
               }
               input.click()
             }}
           >
-            Import from QR
-          </button>
-          <button
-            className="px-3 py-1 min-h-[44px] bg-green-700 text-white rounded text-sm disabled:opacity-50 hover:bg-green-600 active:bg-green-800"
-            onClick={async () => {
-              try { await applyImportData(await scanQRFromCamera()) }
-              catch (e) { alert('Scan failed: ' + String(e)) }
-            }}
-          >
-            Scan QR from camera
+            Import from file
           </button>
         </div>
       </details>
