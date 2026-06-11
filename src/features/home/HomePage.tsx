@@ -47,21 +47,21 @@ export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: strin
           const meta = await fetchFileMetadata(hashes.filter(Boolean))
           if (id !== fetchIdRef.current) return null
           const thumbnails = new Map<number, string>()
+          setSections((prev) => [...prev, { bookmark: b, files: meta, thumbnails }])
           for (const f of meta) {
             try {
               const url = await getThumbnailUrl(f.hash)
+              if (id !== fetchIdRef.current) return null
               thumbnails.set(f.file_id, url)
+              setSections((prev) => prev.map((s) => s.bookmark.id === b.id ? { ...s, thumbnails: new Map(s.thumbnails).set(f.file_id, url) } : s))
             } catch { /* skip */ }
           }
-          return { bookmark: b, files: meta, thumbnails }
+          return null
         } catch {
           return null
         }
       })
-    ).then((results) => {
-      if (id !== fetchIdRef.current) return
-      setSections(results.filter((r): r is SectionData => r !== null))
-    })
+    )
     return () => { fetchIdRef.current = id }
   }, [bookmarks])
 
@@ -131,7 +131,7 @@ export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: strin
                 {s.thumbnails.has(f.file_id) ? (
                   <img src={s.thumbnails.get(f.file_id)} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">{f.file_id}</div>
+                  <div className="w-full h-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
                 )}
               </button>
             ))}
