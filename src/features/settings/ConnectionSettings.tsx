@@ -312,11 +312,11 @@ export function ConnectionSettings() {
             className="px-3 py-1 min-h-[44px] bg-blue-600 text-white rounded text-sm disabled:opacity-50 hover:bg-blue-700 active:bg-blue-800"
             onClick={async () => {
               const s = useSettingsStore.getState()
-              const a = useApiStore.getState()
+              const api = useApiStore.getState()
               const blob = exportToJSON({
                 version: 1,
-                apiUrl: a.url,
-                apiKey: a.key,
+                apiUrl: api.url,
+                apiKey: api.key,
                 bookmarks: s.bookmarks.map((b) => ({ name: b.name, tags: b.tags, sortType: b.sortType, sortAsc: b.sortAsc, limit: b.limit })),
                 searchHistory: s.searchHistory,
                 settings: {
