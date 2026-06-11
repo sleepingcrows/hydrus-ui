@@ -34,9 +34,10 @@ export async function exportToQR(data: ExportData): Promise<Blob> {
   const json = JSON.stringify(data)
   const canvas = document.createElement('canvas')
   await QRCode.toCanvas(canvas, json, {
-    width: 512,
-    margin: 2,
-    errorCorrectionLevel: 'M',
+    width: 1024,
+    margin: 4,
+    errorCorrectionLevel: 'H',
+    color: { dark: '#000000', light: '#ffffff' },
   })
   return new Promise((resolve, reject) => {
     canvas.toBlob((b) => {
@@ -48,13 +49,20 @@ export async function exportToQR(data: ExportData): Promise<Blob> {
 
 export async function importFromQR(file: File): Promise<ExportData> {
   const img = await loadImage(file)
+  const maxDim = 1500
+  let w = img.naturalWidth
+  let h = img.naturalHeight
+  if (w > maxDim || h > maxDim) {
+    const scale = Math.min(maxDim / w, maxDim / h)
+    w = Math.round(w * scale); h = Math.round(h * scale)
+  }
   const canvas = document.createElement('canvas')
-  canvas.width = img.naturalWidth
-  canvas.height = img.naturalHeight
+  canvas.width = w; canvas.height = h
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Canvas not available')
-  ctx.drawImage(img, 0, 0)
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  ctx.imageSmoothingEnabled = false
+  ctx.drawImage(img, 0, 0, w, h)
+  const imageData = ctx.getImageData(0, 0, w, h)
   const result = jsQR(imageData.data, imageData.width, imageData.height)
   if (!result) throw new Error('No QR code found in image')
   return JSON.parse(result.data) as ExportData
