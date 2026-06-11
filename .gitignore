@@ -14,7 +14,7 @@ dist-ssr
 .env
 
 # Agent context
-AGENTS.md
+#AGENTS.md
 
 # Editor directories and files
 .vscode/*
