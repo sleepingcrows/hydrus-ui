@@ -25,8 +25,6 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus, disableHist
   const searchHistory = useSettingsStore((s) => s.searchHistory)
   const searchAutoSubmit = useSettingsStore((s) => s.searchAutoSubmit)
 
-  console.log('[TagSearch] render — showHistory:', showHistory, '| history.length:', searchHistory.length, '| history:', JSON.stringify(searchHistory))
-
   useEffect(() => {
     if (autoFocus && inputRef.current) inputRef.current.focus()
   }, [autoFocus])
@@ -50,6 +48,7 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus, disableHist
     setFocusedIdx(-1)
     if (searchAutoSubmit && !skipAutoSubmit && newTags.length > 0) {
       setTimeout(() => {
+        if (!disableHistory) useSettingsStore.getState().addToSearchHistory(newTags)
         onSubmit?.()
       }, 0)
     }

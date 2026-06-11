@@ -21,7 +21,12 @@ User says "stop caveman" or "normal mode" to disable.
 
 ## History Write Sources
 
-History writes happen ONLY from `handleSubmit()` in `TagSearch.tsx:59-63`. `addTag()` no longer writes history.
+History writes happen from TWO paths:
+1. `addTag()` at `TagSearch.tsx:53` — auto-submit path (Enter with text, `searchAutoSubmit` on). Saves the *new* tag set (`newTags`).
+2. `handleSubmit()` at `TagSearch.tsx:63-65` — manual submit (Shift+Enter, Enter with empty input). Saves current `tags`.
+3. `handleSearchSubmit()` at `SearchPage.tsx:301-303` — Search button click in SearchPage. Saves current `tags`, calls `doSearch()`.
+
+No double-writes: these paths are mutually exclusive (Enter-with-text vs Shift+Enter/empty-Enter vs button click). Preset/leaderboard initial searches skip history entirely (call `doSearch()` directly).
 
 ## `disableHistory` Prop
 
@@ -37,6 +42,8 @@ History writes happen ONLY from `handleSubmit()` in `TagSearch.tsx:59-63`. `addT
 ## Breakage Patterns (Fixed)
 
 1. **Double-write on auto-submit**: `addTag()` called `addToSearchHistory(newTags)` then `onSubmit()` → `handleSubmit()` called it again. Both writes often in same tick. Fix: removed history write from `addTag()`, only `handleSubmit()` writes.
+
+   *Later reverted: `handleSubmit()` never fires on normal Enter (only Shift+Enter/empty-Enter). Restored `addToSearchHistory` in `addTag()` for auto-submit, kept it in `handleSubmit()` for manual submit. Paths are mutually exclusive — no double-write.*
 
 2. **Intermediate partial tag sets saved**: Building query incrementally (e.g. "cat" Enter, "dog" Enter) saved `["cat"]`, `["cat", "dog"]` as separate history entries. Fix: same as #1 — history only written on explicit submit, not per-tag-add.
 

@@ -298,6 +298,11 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
     }
   }
 
+  function handleSearchSubmit() {
+    if (tags.length > 0) useSettingsStore.getState().addToSearchHistory(tags)
+    doSearch()
+  }
+
   const pendingThumbnailsRef = useRef(new Map<number, string>())
   const flushScheduledRef = useRef(false)
   const flushRafIdRef = useRef(0)
@@ -539,7 +544,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
                       </button>
                       <button
                         className="px-3 py-1 min-h-[44px] bg-blue-600 text-white rounded text-sm disabled:opacity-50 hover:bg-blue-700 active:bg-blue-800"
-                        onClick={doSearch}
+                        onClick={handleSearchSubmit}
                         disabled={loading || tags.length === 0}
                       >
                         {loading ? '...' : 'Search'}
@@ -574,7 +579,7 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
                 </button>
                 <button
                   className="px-3 py-1 min-h-[44px] bg-blue-600 text-white rounded text-sm disabled:opacity-50 hover:bg-blue-700 active:bg-blue-800"
-                  onClick={doSearch}
+                  onClick={handleSearchSubmit}
                   disabled={loading || tags.length === 0}
                 >
                   {loading ? '...' : 'Search'}
