@@ -12,7 +12,7 @@ interface SectionData {
   thumbnails: Map<number, string>
 }
 
-export function HomePage() {
+export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: string[]) => void }) {
   const bookmarks = useSettingsStore((s) => s.bookmarks)
   const removeBookmark = useSettingsStore((s) => s.removeBookmark)
   const [sections, setSections] = useState<SectionData[]>([])
@@ -79,11 +79,19 @@ export function HomePage() {
           <div className="flex items-center gap-2 mb-2">
             <h2 className="text-sm font-bold truncate">{s.bookmark.name}</h2>
             <span className="text-xs text-gray-500">{s.files.length} files</span>
+            {onSearchBookmark && (
+              <button
+                className="text-xs text-blue-400 hover:text-blue-300 active:text-blue-200 min-h-[44px] px-2"
+                onClick={() => onSearchBookmark(s.bookmark.tags)}
+              >
+                Search
+              </button>
+            )}
             <button
-              className="ml-auto text-xs text-gray-400 hover:text-red-400 active:text-red-500 min-h-[44px] px-2"
+              className="ml-auto text-gray-400 hover:text-red-400 active:text-red-500 min-h-[44px] w-11 flex items-center justify-center"
               onClick={() => removeBookmark(s.bookmark.id)}
             >
-              Remove
+              ✕
             </button>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin" style={{ overscrollBehavior: 'contain' }}>

@@ -31,6 +31,7 @@ export default function App() {
   const { isMobile } = useMobile()
   const [searchOpen, setSearchOpen] = useState(false)
   const [smashSearchOpen, setSmashSearchOpen] = useState(false)
+  const [bookmarkSearch, setBookmarkSearch] = useState<{ tags: string[]; key: number } | null>(null)
 
   const configuredLikeKey = useSettingsStore((s) => s.likeServiceKey)
   const allServices = useRatingServicesStore((s) => s.services)
@@ -241,13 +242,13 @@ export default function App() {
           )}
         </header>
         <main className="flex-1 overflow-hidden">
-          {tab === 'search' && <SearchPage key="search" searchOpen={searchOpen} onSearchToggle={() => setSearchOpen((v) => !v)} />}
+          {tab === 'search' && (bookmarkSearch ? <SearchPage key={'bookmark-' + bookmarkSearch.key} presetTags={bookmarkSearch.tags} /> : <SearchPage key="search" searchOpen={searchOpen} onSearchToggle={() => setSearchOpen((v) => !v)} />)}
           {tab === 'smash-pass' && <SmashOrPass smashSearchOpen={smashSearchOpen} onSmashSearchToggle={() => setSmashSearchOpen((v) => !v)} />}
           {tab === 'leaderboard' && <SearchPage key="leaderboard" presetTags={['system:has count for skill']} title="Leaderboard" sortByRating displayLimit={500} />}
           {tab === 'favorites' && <SearchPage key="favorites" presetTags={favTags} title="Favorites" />}
           {tab === 'analytics' && analyticsView === 'tag-preferences' && <TagAnalyticsPanel />}
           {tab === 'analytics' && analyticsView === 'elo-graph' && <EloGraph />}
-          {tab === 'home' && <HomePage />}
+          {tab === 'home' && <HomePage onSearchBookmark={(tags) => { setBookmarkSearch({ tags, key: Date.now() }); setTab('search') }} />}
           {tab === 'settings' && <ConnectionSettings />}
         </main>
       </div>
