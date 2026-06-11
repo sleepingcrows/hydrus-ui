@@ -89,7 +89,7 @@ export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: strin
             )}
             <button
               className="ml-auto text-gray-400 hover:text-red-400 active:text-red-500 min-h-[44px] w-11 flex items-center justify-center"
-              onClick={() => removeBookmark(s.bookmark.id)}
+              onClick={() => { if (confirm('Remove bookmark "' + s.bookmark.name + '"?')) removeBookmark(s.bookmark.id) }}
             >
               ✕
             </button>
