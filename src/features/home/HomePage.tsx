@@ -81,14 +81,18 @@ export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: strin
             <span className="text-xs text-gray-500">{s.files.length} files</span>
             {onSearchBookmark && (
               <button
-                className="text-xs text-blue-400 hover:text-blue-300 active:text-blue-200 min-h-[44px] px-2"
+                className="min-h-[44px] min-w-[44px] p-2 rounded text-gray-400 hover:text-blue-400 active:text-blue-300 transition-colors"
                 onClick={() => onSearchBookmark(s.bookmark.tags)}
+                aria-label="Search this bookmark"
               >
-                Search
+                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" />
+                </svg>
               </button>
             )}
             <button
-              className="ml-auto text-gray-400 hover:text-red-400 active:text-red-500 min-h-[44px] w-11 flex items-center justify-center"
+              className="ml-auto text-gray-400 hover:text-red-400 active:text-red-500 min-h-[44px] w-11 flex items-center justify-center transition-colors"
               onClick={() => { if (confirm('Remove bookmark "' + s.bookmark.name + '"?')) removeBookmark(s.bookmark.id) }}
             >
               ✕
@@ -98,7 +102,7 @@ export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: strin
             {s.files.map((f, fi) => (
               <button
                 key={f.file_id}
-                className="flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800 hover:ring-2 hover:ring-blue-500 active:ring-blue-400 focus:outline-none"
+                className="flex-shrink-0 w-32 h-32 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden border-2 border-transparent hover:border-blue-500 transition-colors"
                 onClick={() => setGalleryIndex({ section: si, fileIdx: fi })}
               >
                 {s.thumbnails.has(f.file_id) ? (

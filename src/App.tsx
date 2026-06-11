@@ -242,7 +242,7 @@ export default function App() {
           )}
         </header>
         <main className="flex-1 overflow-hidden">
-          {tab === 'search' && (bookmarkSearch ? <SearchPage key={'bookmark-' + bookmarkSearch.key} presetTags={bookmarkSearch.tags} /> : <SearchPage key="search" searchOpen={searchOpen} onSearchToggle={() => setSearchOpen((v) => !v)} />)}
+          {tab === 'search' && (bookmarkSearch ? <SearchPage key={'bookmark-' + bookmarkSearch.key} initialTags={bookmarkSearch.tags} /> : <SearchPage key="search" searchOpen={searchOpen} onSearchToggle={() => setSearchOpen((v) => !v)} />)}
           {tab === 'smash-pass' && <SmashOrPass smashSearchOpen={smashSearchOpen} onSmashSearchToggle={() => setSmashSearchOpen((v) => !v)} />}
           {tab === 'leaderboard' && <SearchPage key="leaderboard" presetTags={['system:has count for skill']} title="Leaderboard" sortByRating displayLimit={500} />}
           {tab === 'favorites' && <SearchPage key="favorites" presetTags={favTags} title="Favorites" />}

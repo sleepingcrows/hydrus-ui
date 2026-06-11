@@ -40,6 +40,7 @@ function TrashIcon() {
 
 interface SearchPageProps {
   presetTags?: string[]
+  initialTags?: string[]
   title?: string
   sortByRating?: boolean
   displayLimit?: number
@@ -47,8 +48,8 @@ interface SearchPageProps {
   onSearchToggle?: () => void
 }
 
-export function SearchPage({ presetTags, title, sortByRating, displayLimit, searchOpen: extSearchOpen, onSearchToggle }: SearchPageProps = {}) {
-  const [tags, setTags] = useState<string[]>(presetTags ?? [])
+export function SearchPage({ presetTags, initialTags, title, sortByRating, displayLimit, searchOpen: extSearchOpen, onSearchToggle }: SearchPageProps = {}) {
+  const [tags, setTags] = useState<string[]>(presetTags ?? initialTags ?? [])
   const [fileIds, setFileIds] = useState<number[]>([])
   const [hashes, setHashes] = useState<string[]>([])
   const [files, setFiles] = useState<Map<number, FileMetadata>>(new Map())
@@ -286,6 +287,10 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
 
   useEffect(() => {
     if (presetTags && presetTags.length > 0) doSearch()
+  }, [])
+
+  useEffect(() => {
+    if (initialTags && initialTags.length > 0) doSearch()
   }, [])
 
   function handleTagsChange(newTags: string[]) {
