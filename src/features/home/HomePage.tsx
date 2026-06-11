@@ -31,10 +31,14 @@ export function HomePage() {
             return_hashes: true,
             file_limit: b.limit,
           })
+          console.log('[HomePage] search result for', b.name, ':', result.file_ids?.length, 'ids', result.hashes?.length, 'hashes')
           if (id !== fetchIdRef.current) return null
           const ids = result.file_ids || []
           const hashes = result.hashes || []
-          if (ids.length === 0) return null
+          if (ids.length === 0) {
+            console.log('[HomePage] no results for', b.name)
+            return null
+          }
           const meta = await fetchFileMetadata(hashes.filter(Boolean))
           if (id !== fetchIdRef.current) return null
           const thumbnails = new Map<number, string>()
@@ -45,7 +49,8 @@ export function HomePage() {
             } catch { /* skip */ }
           }
           return { bookmark: b, files: meta, thumbnails }
-        } catch {
+        } catch (e) {
+          console.log('[HomePage] error for', b.name, ':', e)
           return null
         }
       })
