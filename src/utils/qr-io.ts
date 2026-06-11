@@ -61,7 +61,7 @@ export async function importFromQR(file: File): Promise<ExportData> {
 }
 
 export async function scanQRFromCamera(): Promise<ExportData> {
-  if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera not available')
+  if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera requires HTTPS or localhost — use file import instead')
 
   const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
   const video = document.createElement('video')
