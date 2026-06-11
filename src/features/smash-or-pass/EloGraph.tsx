@@ -120,53 +120,53 @@ export function EloGraph() {
         </span>
       </div>
 
-      <div className="flex gap-2 items-center">
+      <div className="flex gap-1 items-center flex-wrap">
         <button
-          className={`min-h-[44px] text-xs px-2 py-1 rounded ${source === 'cache' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
+          className={`min-h-[36px] text-xs px-1.5 py-1 rounded ${source === 'cache' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
           onClick={loadFromCache}
         >
-          From Cache
+          Cache
         </button>
         <button
-          className={`min-h-[44px] text-xs px-2 py-1 rounded ${source === 'leaderboard' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
+          className={`min-h-[36px] text-xs px-1.5 py-1 rounded ${source === 'leaderboard' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
           onClick={loadFromLeaderboard}
           disabled={loading}
         >
-          {loading ? 'Loading...' : 'From Leaderboard'}
+          {loading ? 'Loading...' : 'Leaderboard'}
         </button>
-        <span className="text-xs text-gray-400 ml-auto">Y-axis:</span>
+        <span className="text-xs text-gray-400 mx-1">Y:</span>
         <button
-          className={`min-h-[44px] text-xs px-2 py-1 rounded ${!logScale ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
+          className={`min-h-[36px] text-xs px-1.5 py-1 rounded ${!logScale ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
           onClick={() => setLogScale(false)}
         >
-          Linear
+          Lin
         </button>
         <button
-          className={`min-h-[44px] text-xs px-2 py-1 rounded ${logScale ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
+          className={`min-h-[36px] text-xs px-1.5 py-1 rounded ${logScale ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
           onClick={() => setLogScale(true)}
         >
           Log
         </button>
-        <span className="text-xs text-gray-400 ml-2">View:</span>
+        <span className="text-xs text-gray-400 mx-1">V:</span>
         <button
-          className={`min-h-[44px] text-xs px-2 py-1 rounded ${chartMode === 'bar' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
+          className={`min-h-[36px] text-xs px-1.5 py-1 rounded ${chartMode === 'bar' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
           onClick={() => setChartMode('bar')}
         >
           Bars
         </button>
         <button
-          className={`min-h-[44px] text-xs px-2 py-1 rounded ${chartMode === 'curve' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
+          className={`min-h-[36px] text-xs px-1.5 py-1 rounded ${chartMode === 'curve' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
           onClick={() => setChartMode('curve')}
         >
           Curve
         </button>
-        <span className="text-xs text-gray-400 ml-2">Bin:</span>
+        <span className="text-xs text-gray-400 mx-1">B:</span>
         {[1, 5, 10].map((b) => (
           <button key={b}
-            className={`min-h-[44px] text-xs px-2 py-1 rounded ${binSize === b ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
+            className={`min-h-[36px] text-xs px-1.5 py-1 rounded ${binSize === b ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
             onClick={() => setBinSize(b)}
           >
-            {b === 1 ? '1' : b === 5 ? '5' : '10'}
+            {b}
           </button>
         ))}
       </div>
