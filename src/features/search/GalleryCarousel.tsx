@@ -223,7 +223,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
     const el = imageContainerRef.current
     if (!el) return
     const { scale, panX, panY } = zoomRef.current
-    el.style.transform = `scale(${scale}) translate(${panX}px, ${panY}px)`
+    el.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`
   }
 
   function syncZoomState() {
@@ -280,6 +280,8 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
       t.pinching = true
       t.pinchDist = Math.sqrt(dx * dx + dy * dy)
       t.scale = zoomRef.current.scale
+      t.panX = zoomRef.current.panX
+      t.panY = zoomRef.current.panY
     } else if (e.touches.length === 1) {
       t.pinching = false
       t.startX = e.touches[0].clientX
@@ -298,13 +300,12 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
       const dist = Math.sqrt(dx * dx + dy * dy)
       let newScale = t.scale * (dist / t.pinchDist)
       newScale = Math.max(1, Math.min(newScale, 8))
-      const oldScale = zoomRef.current.scale
       const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2
       const my = (e.touches[0].clientY + e.touches[1].clientY) / 2
-      const invDelta = 1 / newScale - 1 / oldScale
+      const ratio = newScale / t.scale
       zoomRef.current.scale = newScale
-      zoomRef.current.panX += mx * invDelta
-      zoomRef.current.panY += my * invDelta
+      zoomRef.current.panX = mx - (mx - t.panX) * ratio
+      zoomRef.current.panY = my - (my - t.panY) * ratio
       t.scale = newScale
       t.pinchDist = dist
       t.moved = true
