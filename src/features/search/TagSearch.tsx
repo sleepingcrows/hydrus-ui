@@ -33,6 +33,7 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus, disableHist
     function handleClick(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setShowHistory(false)
+        setIsFocused(false)
       }
     }
     document.addEventListener('mousedown', handleClick)
@@ -107,7 +108,7 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus, disableHist
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}
-            onBlur={(e) => { setIsFocused(false); if (!containerRef.current?.contains(e.relatedTarget as Node)) setShowHistory(false) }}
+            onBlur={() => setIsFocused(false)}
             placeholder="Type a tag... Enter to add/search empty, Shift+Enter to search"
             className="flex-1 outline-none bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
             autoComplete="off"
@@ -119,7 +120,7 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus, disableHist
           <button
             type="button"
             tabIndex={-1}
-            onClick={() => { setShowHistory((s) => !s); inputRef.current?.blur() }}
+            onClick={() => setShowHistory((s) => !s)}
             className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="w-4 h-4" fill="currentColor">

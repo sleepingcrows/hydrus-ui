@@ -6,6 +6,17 @@ User says "stop caveman" or "normal mode" to disable.
 
 ---
 
+# Build Timestamp
+
+- `__BUILD_TIMESTAMP__` injected via Vite `define` in `vite.config.ts`.
+- Format: `YYYY-MM-DD HH:mm:ss` (UTC ISO string, truncated at seconds).
+- Determined at build time by `new Date().toISOString()`.
+- Displayed in settings panel (`ConnectionSettings.tsx:267`).
+- Also used for SW cache key (`hydrus-ui-{timestamp}`) — unique per build, auto-busts stale SW caches.
+- No dependency on git, `.git` directory, or external binaries. Reliable everywhere.
+
+---
+
 # Tag Search History — Known Fixes
 
 ## History Write Sources
@@ -30,6 +41,8 @@ History writes happen ONLY from `handleSubmit()` in `TagSearch.tsx:59-63`. `addT
 2. **Intermediate partial tag sets saved**: Building query incrementally (e.g. "cat" Enter, "dog" Enter) saved `["cat"]`, `["cat", "dog"]` as separate history entries. Fix: same as #1 — history only written on explicit submit, not per-tag-add.
 
 3. **Smash/Pass leakage**: Every `TagSearch` in Smash/Pass called `handleSubmit()` → `addToSearchHistory()` when pressing Enter (even without `onSubmit` prop). Clogged search history with tag filter changes. Fix: `disableHistory` prop, set `true` on all Smash/Pass TagSearch instances.
+
+4. **Waterfox/Firefox history button dead**: `onBlur` had `setShowHistory(false)` with `relatedTarget` check. Waterfox `relatedTarget` is `null` when clicking non-focusable button (`tabIndex={-1}`), so `contains(null)` = false → closes history immediately after opening. Earlier fix attempt (`inputRef.current?.blur()` in onClick) made it worse — triggered onBlur explicitly. Fix: removed `setShowHistory(false)` from `onBlur` entirely (redundant — `mousedown` document handler already closes on outside clicks), removed `blur()` call from button. `mousedown` handler also now sets `setIsFocused(false)` to close autocomplete.
 
 ## Future-Check
 

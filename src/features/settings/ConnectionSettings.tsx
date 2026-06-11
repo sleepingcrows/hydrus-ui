@@ -264,7 +264,7 @@ export function ConnectionSettings() {
       <NamespaceColorsConfig />
 
       <div className="text-xs text-gray-400 dark:text-gray-500 pt-2 border-t border-gray-200 dark:border-gray-700">
-        <span className="font-mono">{__GIT_HASH__}</span>
+        <span className="font-mono">{__BUILD_TIMESTAMP__}</span>
       </div>
     </div>
   )
