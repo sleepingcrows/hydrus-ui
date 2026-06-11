@@ -9,11 +9,11 @@ const MAX_HISTORY = 10
 interface TagSearchProps {
   tags: string[]
   onTagsChange: (tags: string[]) => void
-  onSubmit?: () => void
+  onSubmit?: () => void       // optional
   autoFocus?: boolean
+  disableHistory?: boolean    // don't save to search history (e.g. Smash/Pass)
 }
-
-export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus }: TagSearchProps) {
+export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus, disableHistory = false }: TagSearchProps) {
   const [input, setInput] = useState('')
   const [focusedIdx, setFocusedIdx] = useState(-1)
   const [isFocused, setIsFocused] = useState(false)
@@ -46,7 +46,6 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus }: TagSearch
     setFocusedIdx(-1)
     if (searchAutoSubmit && !skipAutoSubmit && newTags.length > 0) {
       setTimeout(() => {
-        useSettingsStore.getState().addToSearchHistory(newTags)
         onSubmit?.()
       }, 0)
     }
@@ -57,7 +56,7 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus }: TagSearch
   }
 
   function handleSubmit() {
-    if (tags.length > 0) {
+    if (tags.length > 0 && !disableHistory) {
       useSettingsStore.getState().addToSearchHistory(tags)
     }
     onSubmit?.()

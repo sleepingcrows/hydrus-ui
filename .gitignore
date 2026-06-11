@@ -13,6 +13,9 @@ dist-ssr
 *.local
 .env
 
+# Agent context
+AGENTS.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

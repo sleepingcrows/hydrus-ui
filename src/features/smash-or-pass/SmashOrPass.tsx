@@ -681,18 +681,18 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-500 font-mono w-4">A</span>
                   <div className="flex-1">
-                    <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
+                    <TagSearch disableHistory tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-500 font-mono w-4">B</span>
                   <div className="flex-1">
-                    <TagSearch tags={smashPassTagsB} onTagsChange={(t) => { setSmashPassTagsB(t); setTagVersion((v) => v + 1) }} />
+                    <TagSearch disableHistory tags={smashPassTagsB} onTagsChange={(t) => { setSmashPassTagsB(t); setTagVersion((v) => v + 1) }} />
                   </div>
                 </div>
               </>
             ) : (
-              <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
+              <TagSearch disableHistory tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
             )}
           </div>
         </div>
@@ -703,18 +703,18 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-500 font-mono w-4">A</span>
                 <div className="flex-1">
-                  <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
+                  <TagSearch disableHistory tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-500 font-mono w-4">B</span>
                 <div className="flex-1">
-                  <TagSearch tags={smashPassTagsB} onTagsChange={(t) => { setSmashPassTagsB(t); setTagVersion((v) => v + 1) }} />
+                  <TagSearch disableHistory tags={smashPassTagsB} onTagsChange={(t) => { setSmashPassTagsB(t); setTagVersion((v) => v + 1) }} />
                 </div>
               </div>
             </>
           ) : (
-            <TagSearch tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
+            <TagSearch disableHistory tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
           )}
         </div>
       )}
