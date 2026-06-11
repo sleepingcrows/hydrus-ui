@@ -41,6 +41,8 @@ function TrashIcon() {
 interface SearchPageProps {
   presetTags?: string[]
   initialTags?: string[]
+  initialSortType?: number
+  initialSortAsc?: boolean
   title?: string
   sortByRating?: boolean
   displayLimit?: number
@@ -48,7 +50,7 @@ interface SearchPageProps {
   onSearchToggle?: () => void
 }
 
-export function SearchPage({ presetTags, initialTags, title, sortByRating, displayLimit, searchOpen: extSearchOpen, onSearchToggle }: SearchPageProps = {}) {
+export function SearchPage({ presetTags, initialTags, initialSortType, initialSortAsc, title, sortByRating, displayLimit, searchOpen: extSearchOpen, onSearchToggle }: SearchPageProps = {}) {
   const [tags, setTags] = useState<string[]>(presetTags ?? initialTags ?? [])
   const [fileIds, setFileIds] = useState<number[]>([])
   const [hashes, setHashes] = useState<string[]>([])
@@ -58,8 +60,8 @@ export function SearchPage({ presetTags, initialTags, title, sortByRating, displ
   const [showInfoPane, setShowInfoPane] = useState(false)
   const [galleryIndex, setGalleryIndex] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
-  const [sortType, setSortType] = useState<number>(FILE_SORT_TYPES.IMPORT_TIME)
-  const [sortAsc, setSortAsc] = useState(false)
+  const [sortType, setSortType] = useState<number>(initialSortType ?? FILE_SORT_TYPES.IMPORT_TIME)
+  const [sortAsc, setSortAsc] = useState(initialSortAsc ?? false)
   const [page, setPage] = useState(0)
   const searchOpen = extSearchOpen !== undefined ? extSearchOpen : false
 

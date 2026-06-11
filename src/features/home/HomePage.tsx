@@ -14,7 +14,7 @@ interface SectionData {
   thumbnails: Map<number, string>
 }
 
-export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: string[]) => void }) {
+export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: string[], sortType: number, sortAsc: boolean) => void }) {
   const bookmarks = useSettingsStore((s) => s.bookmarks)
   const removeBookmark = useSettingsStore((s) => s.removeBookmark)
   const configuredLikeKey = useSettingsStore((s) => s.likeServiceKey)
@@ -89,7 +89,7 @@ export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: strin
             {onSearchBookmark && (
               <button
                 className="min-h-[44px] min-w-[44px] p-2 rounded text-gray-400 hover:text-blue-400 active:text-blue-300 transition-colors"
-                onClick={() => onSearchBookmark(s.bookmark.tags)}
+                onClick={() => onSearchBookmark(s.bookmark.tags, s.bookmark.sortType, s.bookmark.sortAsc)}
                 aria-label="Search this bookmark"
               >
                 <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
