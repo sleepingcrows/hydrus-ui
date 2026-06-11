@@ -208,7 +208,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const touchSurfaceRef = useRef<HTMLDivElement>(null)
 
-  const touchRef = useRef({ startX: 0, startY: 0, lastTap: 0, pinching: false, pinchDist: 0, scale: 1, panX: 0, panY: 0, moved: false, wasZoomed: false })
+  const touchRef = useRef({ startX: 0, startY: 0, lastTap: 0, pinching: false, pinchDist: 0, scale: 1, panX: 0, panY: 0, moved: false, wasZoomed: false, ignoreTap: false })
   const zoomRef = useRef({ scale: 1, panX: 0, panY: 0 })
 
   useEffect(() => {
@@ -272,6 +272,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
     const t = touchRef.current
     t.moved = false
     t.wasZoomed = zoomRef.current.scale > 1
+    t.ignoreTap = (e.target as HTMLElement).tagName === 'BUTTON' || !!(e.target as HTMLElement).closest('button')
     const el = imageContainerRef.current
     if (el) el.style.transition = 'none'
     if (e.touches.length === 2) {
@@ -345,18 +346,20 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
         }
         return
       }
-      const now = Date.now()
-      if (now - t.lastTap < 300) {
-        zoomRef.current.scale = zoomRef.current.scale > 1 ? 1 : 2.5
-        zoomRef.current.panX = 0
-        zoomRef.current.panY = 0
-        syncZoomState()
-        if (el) {
-          el.style.transition = 'transform 0.2s'
-          applyTransform()
+      if (!t.ignoreTap) {
+        const now = Date.now()
+        if (now - t.lastTap < 300) {
+          zoomRef.current.scale = zoomRef.current.scale > 1 ? 1 : 2.5
+          zoomRef.current.panX = 0
+          zoomRef.current.panY = 0
+          syncZoomState()
+          if (el) {
+            el.style.transition = 'transform 0.2s'
+            applyTransform()
+          }
         }
+        t.lastTap = now
       }
-      t.lastTap = now
     }
     if (e.touches.length === 0) {
       t.pinching = false
