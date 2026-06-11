@@ -4,6 +4,8 @@ import { useSettingsStore, type Bookmark } from '../../stores/settings-store'
 import type { FileMetadata } from '../../api/types'
 import { GalleryCarousel } from '../search/GalleryCarousel'
 
+const DISPLAY_LIMIT = 50
+
 interface SectionData {
   bookmark: Bookmark
   files: FileMetadata[]
@@ -20,7 +22,6 @@ export function HomePage() {
   useEffect(() => {
     const id = ++fetchIdRef.current
     setSections([])
-    console.log('[HomePage] effect — bookmarks:', bookmarks.length, JSON.stringify(bookmarks.map((b) => b.name)))
     if (bookmarks.length === 0) return
     Promise.all(
       bookmarks.map(async (b) => {
@@ -32,14 +33,10 @@ export function HomePage() {
             return_hashes: true,
             file_limit: b.limit,
           })
-          console.warn('[HomePage] search result for', b.name, ':', result.file_ids?.length, 'ids', result.hashes?.length, 'hashes')
           if (id !== fetchIdRef.current) return null
-          const ids = result.file_ids || []
-          const hashes = result.hashes || []
-          if (ids.length === 0) {
-            console.log('[HomePage] no results for', b.name)
-            return null
-          }
+          const ids = (result.file_ids || []).slice(0, DISPLAY_LIMIT)
+          const hashes = (result.hashes || []).slice(0, DISPLAY_LIMIT)
+          if (ids.length === 0) return null
           const meta = await fetchFileMetadata(hashes.filter(Boolean))
           if (id !== fetchIdRef.current) return null
           const thumbnails = new Map<number, string>()
@@ -50,8 +47,7 @@ export function HomePage() {
             } catch { /* skip */ }
           }
           return { bookmark: b, files: meta, thumbnails }
-        } catch (e) {
-          console.log('[HomePage] error for', b.name, ':', e)
+        } catch {
           return null
         }
       })
@@ -72,7 +68,6 @@ export function HomePage() {
 
   return (
     <div className="h-full overflow-y-auto p-4 space-y-6 text-gray-900 dark:text-gray-100">
-      {console.warn('[HomePage] render — bookmarks:', bookmarks.length, 'sections:', sections.length)}
       {bookmarks.length === 0 && (
         <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-4">
           <p className="text-lg">No bookmarks yet</p>
