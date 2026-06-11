@@ -396,7 +396,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           const raw = file?.ratings?.[key]
           const val = raw != null && typeof raw === 'boolean' ? raw : null
           const color = val === true ? '#ef4444' : val === false ? '#3b82f6' : '#ffffff30'
-          return <span className="text-sm ml-3" style={{ color }}>{'\u2764'}</span>
+          return <span className="text-sm ml-3" style={{ color }}><svg viewBox="0 0 24 24" className="w-3.5 h-3.5 align-text-top inline" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>
         })()}
         <button className="text-white/50 hover:text-white active:text-white/80 min-h-[44px] min-w-[44px] px-2 py-1 ml-auto text-sm leading-none" onClick={() => setShowTagEditor(true)}>
           Tags
