@@ -206,9 +206,18 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   const [isZoomed, setIsZoomed] = useState(false)
   const [panelVisible, setPanelVisible] = useState(true)
   const imageContainerRef = useRef<HTMLDivElement>(null)
+  const touchSurfaceRef = useRef<HTMLDivElement>(null)
 
   const touchRef = useRef({ startX: 0, startY: 0, lastTap: 0, pinching: false, pinchDist: 0, scale: 1, panX: 0, panY: 0, moved: false, wasZoomed: false })
   const zoomRef = useRef({ scale: 1, panX: 0, panY: 0 })
+
+  useEffect(() => {
+    const el = touchSurfaceRef.current
+    if (!el) return
+    const handler = (e: TouchEvent) => { if (e.touches.length === 2) e.preventDefault() }
+    el.addEventListener('touchmove', handler, { passive: false })
+    return () => el.removeEventListener('touchmove', handler)
+  }, [])
 
   function applyTransform() {
     const el = imageContainerRef.current
@@ -418,7 +427,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           <div className="text-red-400 text-sm">Failed to load file</div>
         )}
         {isMobile ? (
-        <div className="absolute inset-0 overflow-hidden">
+        <div ref={touchSurfaceRef} className="absolute inset-0 overflow-hidden" style={{ touchAction: 'none' }}>
           <div
             className="absolute inset-0 flex items-center justify-center"
             style={{
@@ -444,7 +453,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
             }}
           >
             {imageUrl ? (
-              <div ref={imageContainerRef} className="w-full h-full flex items-center justify-center" style={{ willChange: 'transform' }}>
+              <div ref={imageContainerRef} className="w-full h-full flex items-center justify-center" style={{ willChange: 'transform', touchAction: 'none' }}>
                 <FileRenderer url={imageUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain" />
               </div>
             ) : <div />}
@@ -453,13 +462,12 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
         ) : (
         <div className="absolute inset-0 flex items-center justify-center">
           {imageUrl ? (
-            <div ref={imageContainerRef} className="w-full h-full flex items-center justify-center" style={{ willChange: 'transform' }}>
+            <div ref={imageContainerRef} className="w-full h-full flex items-center justify-center" style={{ willChange: 'transform', touchAction: 'none' }}>
               <FileRenderer url={imageUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain" />
             </div>
           ) : <div />}
         </div>
         )}
-
         {!carouselFloatingPanel && hasPrev && (
           <button
             className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 active:bg-black/80 text-white/70 hover:text-white active:text-white text-4xl leading-none min-w-[44px] w-11 h-14 rounded-lg flex items-center justify-center transition-colors"
