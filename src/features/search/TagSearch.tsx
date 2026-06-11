@@ -25,6 +25,8 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus, disableHist
   const searchHistory = useSettingsStore((s) => s.searchHistory)
   const searchAutoSubmit = useSettingsStore((s) => s.searchAutoSubmit)
 
+  console.log('[TagSearch] render — showHistory:', showHistory, '| history.length:', searchHistory.length, '| history:', JSON.stringify(searchHistory))
+
   useEffect(() => {
     if (autoFocus && inputRef.current) inputRef.current.focus()
   }, [autoFocus])
@@ -40,10 +42,6 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus, disableHist
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
-
-  function debug(...args: unknown[]) {
-    console.log('[TagSearch]', ...args)
-  }
 
   function addTag(tag: string, skipAutoSubmit = false) {
     const newTags = tags.includes(tag) ? tags : [...tags, tag]
@@ -125,7 +123,7 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus, disableHist
           <button
             type="button"
             tabIndex={-1}
-            onClick={() => { debug('clock button clicked, showHistory before:', showHistory); setShowHistory((s) => { debug('toggling showHistory:', s, '→', !s); return !s }) }}
+            onClick={() => setShowHistory((s) => !s)}
             className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="w-4 h-4" fill="currentColor">
@@ -148,7 +146,7 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus, disableHist
             ))}
           </ul>
         )}
-        {showHistory && searchHistory.length > 0 && (() => { debug('rendering history dropdown, entries:', searchHistory.length); return (
+        {showHistory && searchHistory.length > 0 && (
           <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-gray-800 dark:border-gray-600 border rounded shadow-lg">
             <div className="px-2 py-1 text-[10px] text-gray-400 uppercase tracking-wider sticky top-0 bg-white dark:bg-gray-800">Recent</div>
             {searchHistory.slice(0, MAX_HISTORY).map((entry) => (
@@ -163,7 +161,7 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus, disableHist
               </div>
             ))}
           </div>
-        )})()}
+        )}
         {loading && <span className="absolute right-1 top-1 text-xs text-gray-400">...</span>}
       </div>
     </div>
