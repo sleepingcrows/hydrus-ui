@@ -105,7 +105,7 @@ export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: strin
               ✕
             </button>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin" style={{ overscrollBehavior: 'contain' }}>
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin" style={{ overscrollBehavior: 'contain' }} onWheel={(e) => { e.currentTarget.scrollLeft += e.deltaY; e.preventDefault() }}>
             {s.files.map((f, fi) => (
               <button
                 key={f.file_id}
