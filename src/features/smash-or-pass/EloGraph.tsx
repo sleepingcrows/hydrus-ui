@@ -20,6 +20,7 @@ export function EloGraph() {
   const [fileCount, setFileCount] = useState(0)
   const [logScale, setLogScale] = useState(false)
   const [chartMode, setChartMode] = useState<'bar' | 'curve'>('bar')
+  const [binSize, setBinSize] = useState(1)
   const darkMode = useSettingsStore((s) => s.darkMode)
 
   const incDecKey = useRatingServicesStore((s) =>
@@ -35,7 +36,8 @@ export function EloGraph() {
     for (const [, ratings] of ratingsMap) {
       const elo = ratings[incDecKey]
       if (typeof elo === 'number') {
-        dist.set(elo, (dist.get(elo) || 0) + 1)
+        const binned = binSize > 1 ? Math.floor(elo / binSize) * binSize : elo
+        dist.set(binned, (dist.get(binned) || 0) + 1)
         total++
       }
     }
@@ -76,7 +78,8 @@ export function EloGraph() {
           if (f.ratings) {
             const elo = f.ratings[incDecKey]
             if (typeof elo === 'number') {
-              dist.set(elo, (dist.get(elo) || 0) + 1)
+              const binned = binSize > 1 ? Math.floor(elo / binSize) * binSize : elo
+              dist.set(binned, (dist.get(binned) || 0) + 1)
             }
           }
         }
@@ -98,6 +101,11 @@ export function EloGraph() {
   useEffect(() => {
     loadFromCache()
   }, [incDecKey])
+
+  useEffect(() => {
+    if (source === 'leaderboard') loadFromLeaderboard()
+    else loadFromCache()
+  }, [binSize])
 
   const maxCount = Math.max(1, ...data.map((d) => d.count))
   const chartHeight = Math.max(300, Math.min(600, data.length * 20 + 100))
@@ -152,6 +160,15 @@ export function EloGraph() {
         >
           Curve
         </button>
+        <span className="text-xs text-gray-400 ml-2">Bin:</span>
+        {[1, 5, 10].map((b) => (
+          <button key={b}
+            className={`min-h-[44px] text-xs px-2 py-1 rounded ${binSize === b ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'}`}
+            onClick={() => setBinSize(b)}
+          >
+            {b === 1 ? '1' : b === 5 ? '5' : '10'}
+          </button>
+        ))}
       </div>
 
       {data.length === 0 && !loading && (
@@ -170,10 +187,10 @@ export function EloGraph() {
             {chartMode === 'bar' ? (
               <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
                 <CartesianGrid strokeDasharray="2 5" stroke={darkMode ? '#374151' : '#d1d5db'} strokeWidth={0.5} />
-                <XAxis dataKey="elo" stroke={darkMode ? '#6b7280' : '#9ca3af'} tick={{ fill: darkMode ? '#9ca3af' : '#6b7280', fontSize: 11 }} label={{ value: 'ELO Rating', position: 'insideBottom', offset: -10, fontSize: 12, fill: darkMode ? '#9ca3af' : '#6b7280' }} />
+                <XAxis dataKey="elo" stroke={darkMode ? '#6b7280' : '#9ca3af'} tick={{ fill: darkMode ? '#9ca3af' : '#6b7280', fontSize: 11 }} tickFormatter={(v: number) => binSize > 1 ? `${v}-${v + binSize - 1}` : String(v)} label={{ value: 'ELO Rating', position: 'insideBottom', offset: -10, fontSize: 12, fill: darkMode ? '#9ca3af' : '#6b7280' }} />
                 <YAxis scale={logScale ? 'log' : 'auto'} domain={logScale ? [1, 'auto'] : [0, 'auto']} stroke={darkMode ? '#6b7280' : '#9ca3af'} tick={{ fill: darkMode ? '#9ca3af' : '#6b7280', fontSize: 11 }} label={{ value: 'Submissions', angle: -90, position: 'insideLeft', offset: 10, fontSize: 12, fill: darkMode ? '#9ca3af' : '#6b7280' }} />
                 <Tooltip contentStyle={{ fontSize: 12, backgroundColor: darkMode ? '#1f2937' : '#fff', border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`, color: darkMode ? '#e5e7eb' : '#111827' }} formatter={(value: number) => [value, 'Submissions']} labelFormatter={(label: number) => `ELO: ${label}`} />
-                <Bar dataKey="count" radius={[2, 2, 0, 0]} maxBarSize={40}>
+                <Bar dataKey="count" radius={[2, 2, 0, 0]} maxBarSize={binSize > 1 ? 80 : 40}>
                   {data.map((entry, i) => {
                     const intensity = Math.min(1, entry.count / maxCount)
                     const r = Math.round(59 + (37 - 59) * intensity)
@@ -186,7 +203,7 @@ export function EloGraph() {
             ) : (
               <AreaChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
                 <CartesianGrid strokeDasharray="2 5" stroke={darkMode ? '#374151' : '#d1d5db'} strokeWidth={0.5} />
-                <XAxis dataKey="elo" stroke={darkMode ? '#6b7280' : '#9ca3af'} tick={{ fill: darkMode ? '#9ca3af' : '#6b7280', fontSize: 11 }} label={{ value: 'ELO Rating', position: 'insideBottom', offset: -10, fontSize: 12, fill: darkMode ? '#9ca3af' : '#6b7280' }} />
+                <XAxis dataKey="elo" stroke={darkMode ? '#6b7280' : '#9ca3af'} tick={{ fill: darkMode ? '#9ca3af' : '#6b7280', fontSize: 11 }} tickFormatter={(v: number) => binSize > 1 ? `${v}-${v + binSize - 1}` : String(v)} label={{ value: 'ELO Rating', position: 'insideBottom', offset: -10, fontSize: 12, fill: darkMode ? '#9ca3af' : '#6b7280' }} />
                 <YAxis scale={logScale ? 'log' : 'auto'} domain={logScale ? [1, 'auto'] : [0, 'auto']} stroke={darkMode ? '#6b7280' : '#9ca3af'} tick={{ fill: darkMode ? '#9ca3af' : '#6b7280', fontSize: 11 }} label={{ value: 'Submissions', angle: -90, position: 'insideLeft', offset: 10, fontSize: 12, fill: darkMode ? '#9ca3af' : '#6b7280' }} />
                 <Tooltip contentStyle={{ fontSize: 12, backgroundColor: darkMode ? '#1f2937' : '#fff', border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`, color: darkMode ? '#e5e7eb' : '#111827' }} formatter={(value: number) => [value, 'Submissions']} labelFormatter={(label: number) => `ELO: ${label}`} />
                 <defs>
