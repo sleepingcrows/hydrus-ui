@@ -61,14 +61,14 @@ export function NamespaceColorsConfig() {
         {namespaces.map((ns) => {
           const currentColor = resolveNamespaceColor(ns)
           return (
-            <div key={ns} className="flex items-center gap-2">
+            <div key={ns} className="flex items-center gap-2 flex-wrap min-w-0">
               <TagChip tag={`${ns}:example`} size="sm" />
-              <span className="text-xs text-gray-500 dark:text-gray-400 w-20 truncate">{ns}</span>
-              <div className="flex gap-1">
+              <span className="text-xs text-gray-500 dark:text-gray-400 w-14 truncate">{ns}</span>
+              <div className="flex gap-1 flex-wrap">
                 {COLOR_NAMES.map((c) => (
                   <button
                     key={c}
-                    className={`w-9 h-9 min-w-[44px] min-h-[44px] rounded-full border-2 ${
+                    className={`w-7 h-7 min-w-[32px] min-h-[32px] rounded-full border-2 ${
                       c === currentColor ? 'border-gray-900 dark:border-gray-100' : 'border-transparent'
                     } ${COLOR_CLASSES[c].bg} hover:opacity-80 active:opacity-60`}
                     onClick={() => handleChange(ns, c)}

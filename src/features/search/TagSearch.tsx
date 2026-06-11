@@ -2,6 +2,7 @@ import { useState, type KeyboardEvent, useRef, useEffect } from 'react'
 import { useTagSearch } from '../../hooks/use-tag-search'
 import { TagChip } from '../../components/TagChip'
 import { useSettingsStore } from '../../stores/settings-store'
+import { useMobile } from '../../hooks/use-mobile'
 
 const MAX_RESULTS = 100
 const MAX_HISTORY = 10
@@ -24,6 +25,7 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus, disableHist
   const displayed = results.slice(0, MAX_RESULTS)
   const searchHistory = useSettingsStore((s) => s.searchHistory)
   const searchAutoSubmit = useSettingsStore((s) => s.searchAutoSubmit)
+  const { isMobile } = useMobile()
 
   useEffect(() => {
     if (autoFocus && inputRef.current) inputRef.current.focus()
@@ -112,7 +114,7 @@ export function TagSearch({ tags, onTagsChange, onSubmit, autoFocus, disableHist
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder="Type a tag... Enter to add/search empty, Shift+Enter to search"
-            className="flex-1 outline-none bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+            className={`flex-1 outline-none bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 ${isMobile ? 'min-h-[44px]' : ''}`}
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
