@@ -47,6 +47,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
   const [pulseBKey, setPulseBKey] = useState(0)
   const [glowA, setGlowA] = useState(0)
   const [glowB, setGlowB] = useState(0)
+  const [swipeDir, setSwipeDir] = useState<'up' | 'down' | 'right' | null>(null)
 
   const smashPassTags = useSettingsStore((s) => s.smashPassTags)
   const setSmashPassTags = useSettingsStore((s) => s.setSmashPassTags)
@@ -89,15 +90,25 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
   function handleTouchStart(e: React.TouchEvent) {
     if (!smashSwipeVote || !votingOpen) return
     touchRef.current = { sx: e.touches[0].clientX, sy: e.touches[0].clientY, swiping: true }
+    setSwipeDir(null)
   }
 
   function handleTouchMove(e: React.TouchEvent) {
-    if (touchRef.current.swiping) e.preventDefault()
+    if (!touchRef.current.swiping) return
+    e.preventDefault()
+    const dx = e.touches[0].clientX - touchRef.current.sx
+    const dy = e.touches[0].clientY - touchRef.current.sy
+    const absDx = Math.abs(dx), absDy = Math.abs(dy)
+    if (absDx < 10 && absDy < 10) { setSwipeDir(null); return }
+    if (absDy > absDx) setSwipeDir(dy < 0 ? 'up' : 'down')
+    else if (dx > 0) setSwipeDir('right')
+    else setSwipeDir(null)
   }
 
   function handleTouchEnd(e: React.TouchEvent) {
     if (!touchRef.current.swiping) return
     touchRef.current.swiping = false
+    setSwipeDir(null)
     const dx = e.changedTouches[0].clientX - touchRef.current.sx
     const dy = e.changedTouches[0].clientY - touchRef.current.sy
     const absDx = Math.abs(dx), absDy = Math.abs(dy)
@@ -761,12 +772,21 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
       </div>
 
       <div
-        className={`flex-1 flex ${isMobile && orientation === 'portrait' ? 'flex-col' : 'flex-row'} gap-2 p-2 min-h-0`}
+        className={`flex-1 flex ${isMobile && orientation === 'portrait' ? 'flex-col' : 'flex-row'} gap-2 p-2 min-h-0 relative`}
         style={smashSwipeVote ? { touchAction: 'none' } : undefined}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
+        {swipeDir && (
+          <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
+            <div className="bg-black/50 rounded-full w-24 h-24 flex items-center justify-center">
+              <span className="text-white text-5xl font-bold opacity-80">
+                {swipeDir === 'up' ? '\u2191' : swipeDir === 'down' ? '\u2193' : '\u2192'}
+              </span>
+            </div>
+          </div>
+        )}
         {!loading && (!fileA || !fileB) && (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-4">
             <p className="text-lg">No more files!</p>
