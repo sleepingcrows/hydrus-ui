@@ -439,7 +439,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
             }}
           >
             {slideOutUrl ? (
-              <FileRenderer url={slideOutUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain" />
+              <FileRenderer url={slideOutUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain pointer-events-none" />
             ) : <div />}
           </div>
           <div
@@ -454,7 +454,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           >
             {imageUrl ? (
               <div ref={imageContainerRef} className="w-full h-full flex items-center justify-center" style={{ willChange: 'transform', touchAction: 'none' }}>
-                <FileRenderer url={imageUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain" />
+                <FileRenderer url={imageUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain pointer-events-none" />
               </div>
             ) : <div />}
           </div>
@@ -463,7 +463,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
         <div className="absolute inset-0 flex items-center justify-center">
           {imageUrl ? (
             <div ref={imageContainerRef} className="w-full h-full flex items-center justify-center" style={{ willChange: 'transform', touchAction: 'none' }}>
-              <FileRenderer url={imageUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain" />
+              <FileRenderer url={imageUrl} mime={file?.mime ?? 'image/jpeg'} className="max-w-full max-h-full object-contain pointer-events-none" />
             </div>
           ) : <div />}
         </div>
