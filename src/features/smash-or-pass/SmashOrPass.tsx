@@ -91,6 +91,10 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
     touchRef.current = { sx: e.touches[0].clientX, sy: e.touches[0].clientY, swiping: true }
   }
 
+  function handleTouchMove(e: React.TouchEvent) {
+    if (touchRef.current.swiping) e.preventDefault()
+  }
+
   function handleTouchEnd(e: React.TouchEvent) {
     if (!touchRef.current.swiping) return
     touchRef.current.swiping = false
@@ -758,7 +762,9 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
 
       <div
         className={`flex-1 flex ${isMobile && orientation === 'portrait' ? 'flex-col' : 'flex-row'} gap-2 p-2 min-h-0`}
+        style={smashSwipeVote ? { touchAction: 'none' } : undefined}
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         {!loading && (!fileA || !fileB) && (
