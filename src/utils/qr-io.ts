@@ -32,19 +32,9 @@ export interface ExportData {
 
 export async function exportToQR(data: ExportData): Promise<Blob> {
   const json = JSON.stringify(data)
-  const canvas = document.createElement('canvas')
-  await QRCode.toCanvas(canvas, json, {
-    width: 1024,
-    margin: 4,
-    errorCorrectionLevel: 'H',
-    color: { dark: '#000000', light: '#ffffff' },
-  })
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((b) => {
-      if (b) resolve(b)
-      else reject(new Error('Failed to generate PNG'))
-    }, 'image/png')
-  })
+  const svg = await QRCode.toString(json, { type: 'svg', margin: 4, errorCorrectionLevel: 'H', color: { dark: '#000000', light: '#ffffff' } })
+  const blob = new Blob([svg], { type: 'image/svg+xml' })
+  return blob
 }
 
 export async function importFromQR(file: File): Promise<ExportData> {

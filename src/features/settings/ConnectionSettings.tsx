@@ -330,7 +330,7 @@ export function ConnectionSettings() {
               })
               const url = URL.createObjectURL(blob)
               const a = document.createElement('a')
-              a.href = url; a.download = 'hydrus-ui-backup.png'; a.click()
+              a.href = url; a.download = 'hydrus-ui-backup.svg'; a.click()
               URL.revokeObjectURL(url)
             }}
           >
@@ -340,7 +340,7 @@ export function ConnectionSettings() {
             className="px-3 py-1 min-h-[44px] bg-gray-600 text-white rounded text-sm disabled:opacity-50 hover:bg-gray-700 active:bg-gray-800"
             onClick={() => {
               const input = document.createElement('input')
-              input.type = 'file'; input.accept = 'image/png'
+              input.type = 'file'; input.accept = 'image/png,image/svg+xml'
               input.onchange = async () => {
                 const file = input.files?.[0]
                 if (!file) return
