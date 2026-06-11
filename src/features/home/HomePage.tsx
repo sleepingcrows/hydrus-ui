@@ -20,6 +20,7 @@ export function HomePage() {
   useEffect(() => {
     const id = ++fetchIdRef.current
     setSections([])
+    console.log('[HomePage] effect — bookmarks:', bookmarks.length, JSON.stringify(bookmarks.map((b) => b.name)))
     if (bookmarks.length === 0) return
     Promise.all(
       bookmarks.map(async (b) => {
@@ -31,7 +32,7 @@ export function HomePage() {
             return_hashes: true,
             file_limit: b.limit,
           })
-          console.log('[HomePage] search result for', b.name, ':', result.file_ids?.length, 'ids', result.hashes?.length, 'hashes')
+          console.warn('[HomePage] search result for', b.name, ':', result.file_ids?.length, 'ids', result.hashes?.length, 'hashes')
           if (id !== fetchIdRef.current) return null
           const ids = result.file_ids || []
           const hashes = result.hashes || []
@@ -71,6 +72,7 @@ export function HomePage() {
 
   return (
     <div className="h-full overflow-y-auto p-4 space-y-6 text-gray-900 dark:text-gray-100">
+      {console.warn('[HomePage] render — bookmarks:', bookmarks.length, 'sections:', sections.length)}
       {bookmarks.length === 0 && (
         <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-4">
           <p className="text-lg">No bookmarks yet</p>
