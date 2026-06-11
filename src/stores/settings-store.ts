@@ -24,8 +24,18 @@ const SMASH_FLOATING_PANEL_KEY = 'hydrus-smash-floating-panel'
 const SMASH_NAV_SIDE_KEY = 'hydrus-smash-nav-side'
 const SMASH_SWIPE_VOTE_KEY = 'hydrus-smash-swipe-vote'
 const SEARCH_AUTO_SUBMIT_KEY = 'hydrus-search-auto-submit'
+const BOOKMARKS_KEY = 'hydrus-bookmarks'
 
 type GalleryLayoutMode = 'grid' | 'mosaic'
+
+export interface Bookmark {
+  id: string
+  name: string
+  tags: string[]
+  sortType: number
+  sortAsc: boolean
+  limit: number
+}
 
 interface SettingsState {
   darkMode: boolean
@@ -52,6 +62,7 @@ interface SettingsState {
   smashNavSide: 'left' | 'right'
   smashPassSwipeVote: boolean
   searchAutoSubmit: boolean
+  bookmarks: Bookmark[]
   toggleDark: () => void
   toggleSmashPassStatic: () => void
   toggleTerminatedMode: () => void
@@ -75,6 +86,8 @@ interface SettingsState {
   setSmashNavSide: (side: 'left' | 'right') => void
   toggleSmashPassSwipeVote: () => void
   toggleSearchAutoSubmit: () => void
+  addBookmark: (b: Omit<Bookmark, 'id'>) => string
+  removeBookmark: (id: string) => void
   hydrate: () => void
   rebuildRatingsCache: (tags: string[]) => Promise<void>
   getRatingsCache: () => Map<number, Record<string, number | boolean>> | null
@@ -133,6 +146,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   smashNavSide: (loadStr('hydrus-smash-nav-side', 'right') as 'left' | 'right'),
   smashPassSwipeVote: loadBool('hydrus-smash-swipe-vote'),
   searchAutoSubmit: loadBool('hydrus-search-auto-submit'),
+  bookmarks: loadJson<Bookmark[]>('hydrus-bookmarks', []),
   ratingsCacheBuildProgress: null,
   toggleDark: () => {
     const next = !get().darkMode
@@ -218,6 +232,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const next = !get().searchAutoSubmit
     localStorage.setItem(SEARCH_AUTO_SUBMIT_KEY, String(next))
     set({ searchAutoSubmit: next })
+  },
+  addBookmark: (b) => {
+    const id = crypto.randomUUID()
+    const bookmarks = [...get().bookmarks, { ...b, id }]
+    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks))
+    set({ bookmarks })
+    return id
+  },
+  removeBookmark: (id) => {
+    const bookmarks = get().bookmarks.filter((b) => b.id !== id)
+    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks))
+    set({ bookmarks })
   },
   hydrate: () => {
     if (loadBool('hydrus-dark-mode')) document.documentElement.classList.add('dark')

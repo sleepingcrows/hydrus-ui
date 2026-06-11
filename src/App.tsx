@@ -7,6 +7,7 @@ import { SERVICE_TYPE } from './api/types'
 import { useMobile } from './hooks/use-mobile'
 import { ConnectionSettings } from './features/settings/ConnectionSettings'
 import { SearchPage } from './features/search/SearchPage'
+import { HomePage } from './features/home/HomePage'
 import { SmashOrPass } from './features/smash-or-pass/SmashOrPass'
 import { TagAnalyticsPanel } from './features/smash-or-pass/TagAnalyticsPanel'
 import { EloGraph } from './features/smash-or-pass/EloGraph'
@@ -15,7 +16,7 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
 })
 
-type Tab = 'search' | 'smash-pass' | 'analytics' | 'leaderboard' | 'favorites' | 'settings'
+type Tab = 'search' | 'smash-pass' | 'analytics' | 'leaderboard' | 'favorites' | 'settings' | 'home'
 
 export default function App() {
   const { connected, hydrate } = useApiStore()
@@ -60,6 +61,7 @@ export default function App() {
   }, [connected])
 
   const tabs: { id: Tab; label: string }[] = [
+    { id: 'home', label: 'Home' },
     { id: 'search', label: 'Search' },
     { id: 'smash-pass', label: 'Smash/Pass' },
     { id: 'leaderboard', label: 'Leaderboard' },
@@ -245,6 +247,7 @@ export default function App() {
           {tab === 'favorites' && <SearchPage key="favorites" presetTags={favTags} title="Favorites" />}
           {tab === 'analytics' && analyticsView === 'tag-preferences' && <TagAnalyticsPanel />}
           {tab === 'analytics' && analyticsView === 'elo-graph' && <EloGraph />}
+          {tab === 'home' && <HomePage />}
           {tab === 'settings' && <ConnectionSettings />}
         </main>
       </div>

@@ -303,6 +303,13 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
     doSearch()
   }
 
+  function handleBookmark() {
+    if (tags.length === 0) return
+    const name = prompt('Bookmark name:', tags.join(', '))
+    if (!name) return
+    useSettingsStore.getState().addBookmark({ name, tags, sortType, sortAsc, limit: 50 })
+  }
+
   const pendingThumbnailsRef = useRef(new Map<number, string>())
   const flushScheduledRef = useRef(false)
   const flushRafIdRef = useRef(0)
@@ -583,6 +590,14 @@ export function SearchPage({ presetTags, title, sortByRating, displayLimit, sear
                   disabled={loading || tags.length === 0}
                 >
                   {loading ? '...' : 'Search'}
+                </button>
+                <button
+                  className="px-2 py-1 min-h-[44px] text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:text-gray-800 dark:active:text-gray-100 disabled:opacity-30"
+                  onClick={handleBookmark}
+                  disabled={tags.length === 0 || !!presetTags}
+                  title="Bookmark current search"
+                >
+                  +Bookmark
                 </button>
                 <span className="text-xs text-gray-500">{fileIds.length} files</span>
               </>
