@@ -6,6 +6,7 @@ import { testConnection } from '../../api/client'
 import { NamespaceColorsConfig } from './NamespaceColorsConfig'
 import { GalleryLayoutSettings } from './GalleryLayoutSettings'
 import { SERVICE_TYPE } from '../../api/types'
+import { exportToQR, importFromQR } from '../../utils/qr-io'
 
 export function ConnectionSettings() {
   const { url, key, connected, setApiKey, disconnect } = useApiStore()
@@ -271,6 +272,86 @@ export function ConnectionSettings() {
 
       <hr className="border-gray-200 dark:border-gray-700" />
       <NamespaceColorsConfig />
+
+      <details className="text-sm">
+        <summary className="cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Data Export / Import</summary>
+        <div className="mt-2 space-y-2">
+          <button
+            className="px-3 py-1 min-h-[44px] bg-blue-600 text-white rounded text-sm disabled:opacity-50 hover:bg-blue-700 active:bg-blue-800"
+            onClick={async () => {
+              const s = useSettingsStore.getState()
+              const blob = await exportToQR({
+                version: 1,
+                bookmarks: s.bookmarks.map((b) => ({ name: b.name, tags: b.tags, sortType: b.sortType, sortAsc: b.sortAsc, limit: b.limit })),
+                searchHistory: s.searchHistory,
+                settings: {
+                  ratingServiceKey: s.ratingServiceKey, likeServiceKey: s.likeServiceKey,
+                  ratingBaseInc: s.ratingBaseInc, ratingLoserDec: s.ratingLoserDec,
+                  ratingStreakThreshold: s.ratingStreakThreshold, ratingStreakBonus: s.ratingStreakBonus,
+                  underdogThreshold: s.underdogThreshold, underdogMinGap: s.underdogMinGap, underdogBoostPct: s.underdogBoostPct,
+                  searchAutoSubmit: s.searchAutoSubmit,
+                  smashPassStaticMode: s.smashPassStaticMode, smashPassTags: s.smashPassTags, smashPassTagsB: s.smashPassTagsB,
+                  smashPassDualMode: s.smashPassDualMode, terminatedMode: s.terminatedMode, smashPassSwipeVote: s.smashPassSwipeVote,
+                  galleryLayoutMode: s.galleryLayoutMode,
+                  carouselFloatingPanel: s.carouselFloatingPanel, carouselNavSide: s.carouselNavSide,
+                  smashFloatingPanel: s.smashFloatingPanel, smashNavSide: s.smashNavSide,
+                },
+              })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url; a.download = 'hydrus-ui-backup.png'; a.click()
+              URL.revokeObjectURL(url)
+            }}
+          >
+            Export backup QR
+          </button>
+          <button
+            className="px-3 py-1 min-h-[44px] bg-gray-600 text-white rounded text-sm disabled:opacity-50 hover:bg-gray-700 active:bg-gray-800"
+            onClick={() => {
+              const input = document.createElement('input')
+              input.type = 'file'; input.accept = 'image/png'
+              input.onchange = async () => {
+                const file = input.files?.[0]
+                if (!file) return
+                try {
+                  const data = await importFromQR(file)
+                  const s = useSettingsStore.getState()
+                  const count = data.bookmarks.length + data.searchHistory.length
+                  if (!confirm(`Import ${count} items? ${data.bookmarks.length} bookmarks, ${data.searchHistory.length} history entries. This will replace current data.`)) return
+                  for (const b of data.bookmarks) s.addBookmark(b)
+                  for (const h of data.searchHistory) s.addToSearchHistory(h)
+                  const set = data.settings
+                  if (set.ratingServiceKey !== undefined) s.setRatingServiceKey(set.ratingServiceKey)
+                  if (set.likeServiceKey !== undefined) s.setLikeServiceKey(set.likeServiceKey)
+                  if (set.ratingBaseInc !== undefined) s.setRatingBaseInc(set.ratingBaseInc)
+                  if (set.ratingLoserDec !== undefined) s.setRatingLoserDec(set.ratingLoserDec)
+                  if (set.ratingStreakThreshold !== undefined) s.setRatingStreakThreshold(set.ratingStreakThreshold)
+                  if (set.ratingStreakBonus !== undefined) s.setRatingStreakBonus(set.ratingStreakBonus)
+                  if (set.underdogThreshold !== undefined) s.setUnderdogThreshold(set.underdogThreshold)
+                  if (set.underdogMinGap !== undefined) s.setUnderdogMinGap(set.underdogMinGap)
+                  if (set.underdogBoostPct !== undefined) s.setUnderdogBoostPct(set.underdogBoostPct)
+                  if (set.searchAutoSubmit !== undefined) { if (s.searchAutoSubmit !== set.searchAutoSubmit) s.toggleSearchAutoSubmit() }
+                  if (set.smashPassStaticMode !== undefined) { if (s.smashPassStaticMode !== set.smashPassStaticMode) s.toggleSmashPassStatic() }
+                  if (set.smashPassTags !== undefined) s.setSmashPassTags(set.smashPassTags)
+                  if (set.smashPassTagsB !== undefined) s.setSmashPassTagsB(set.smashPassTagsB)
+                  if (set.smashPassDualMode !== undefined) { if (s.smashPassDualMode !== set.smashPassDualMode) s.toggleSmashPassDualMode() }
+                  if (set.terminatedMode !== undefined) { if (s.terminatedMode !== set.terminatedMode) s.toggleTerminatedMode() }
+                  if (set.smashPassSwipeVote !== undefined) { if (s.smashPassSwipeVote !== set.smashPassSwipeVote) s.toggleSmashPassSwipeVote() }
+                  if (set.galleryLayoutMode !== undefined) s.setGalleryLayoutMode(set.galleryLayoutMode)
+                  if (set.carouselFloatingPanel !== undefined) { if (s.carouselFloatingPanel !== set.carouselFloatingPanel) s.toggleCarouselFloatingPanel() }
+                  if (set.carouselNavSide !== undefined) s.setCarouselNavSide(set.carouselNavSide)
+                  if (set.smashFloatingPanel !== undefined) { if (s.smashFloatingPanel !== set.smashFloatingPanel) s.toggleSmashFloatingPanel() }
+                  if (set.smashNavSide !== undefined) s.setSmashNavSide(set.smashNavSide)
+                  alert('Import complete — reload to apply all settings')
+                } catch (e) { alert('Import failed: ' + String(e)) }
+              }
+              input.click()
+            }}
+          >
+            Import from QR
+          </button>
+        </div>
+      </details>
 
       <div className="text-xs text-gray-400 dark:text-gray-500 pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
         <span className="font-mono">{__BUILD_TIMESTAMP__}</span>
