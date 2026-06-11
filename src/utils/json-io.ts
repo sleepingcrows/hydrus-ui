@@ -1,5 +1,7 @@
 export interface ExportData {
   version: 1
+  apiUrl: string
+  apiKey: string
   bookmarks: { name: string; tags: string[]; sortType: number; sortAsc: boolean; limit: number }[]
   searchHistory: string[][]
   settings: {
