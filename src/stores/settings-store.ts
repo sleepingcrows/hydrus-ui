@@ -51,6 +51,7 @@ interface SettingsState {
   viewCountServiceKey: string
   galleryLayoutMode: GalleryLayoutMode
   ratingsCacheBuildProgress: number | null
+  ratingsCacheVersion: number
   ratingBaseInc: number
   ratingLoserDec: number
   ratingStreakThreshold: number
@@ -152,6 +153,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   searchAutoSubmit: loadBool('hydrus-search-auto-submit'),
   bookmarks: loadJson<Bookmark[]>('hydrus-bookmarks', []),
   ratingsCacheBuildProgress: null,
+  ratingsCacheVersion: 0,
   toggleDark: () => {
     const next = !get().darkMode
     document.documentElement.classList.toggle('dark', next)
@@ -289,5 +291,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       cache.set(id, ratings)
     }
     saveRatingsCacheToStorage(cache)
+    set({ ratingsCacheVersion: get().ratingsCacheVersion + 1 })
   },
 }))

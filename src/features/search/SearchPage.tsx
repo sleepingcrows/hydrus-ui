@@ -83,6 +83,19 @@ export function SearchPage({ presetTags, initialTags, initialSortType, initialSo
   const gridRef = useRef<HTMLDivElement | null>(null)
   const [revealedIds, setRevealedIds] = useState<Set<number>>(new Set())
   const [dimensionMap, setDimensionMap] = useState<Map<number, { width: number; height: number }>>(new Map())
+  const [, forceRerender] = useState(0)
+  const ratingsCacheVersionRef = useRef(useSettingsStore.getState().ratingsCacheVersion)
+  useEffect(() => {
+    return useSettingsStore.subscribe((s) => {
+      if (s.ratingsCacheVersion !== ratingsCacheVersionRef.current) {
+        ratingsCacheVersionRef.current = s.ratingsCacheVersion
+        ratingsCacheRef.current.clear()
+        const stored = useSettingsStore.getState().getRatingsCache()
+        if (stored) { for (const [fid, r] of stored) ratingsCacheRef.current.set(fid, r) }
+        forceRerender((n) => n + 1)
+      }
+    })
+  }, [])
   const ratingsCacheRef = useRef<Map<number, Record<string, number | boolean>>>(new Map())
   const numColsRef = useRef(1)
   const { isMobile } = useMobile()
