@@ -160,7 +160,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
     const serviceKey = useSettingsStore.getState().viewCountServiceKey
     if (!hash || !serviceKey) return
     const cache = viewCountCacheRef.current
-    const currentRaw = cache.get(hash) ?? (f?.ratings?.[serviceKey] as number | undefined) ?? 0
+    const currentRaw = cache.get(hash) ?? useSettingsStore.getState().getRatingsCache()?.get(f?.file_id ?? 0)?.[serviceKey] ?? (f?.ratings?.[serviceKey] as number | undefined) ?? 0
     const next = typeof currentRaw === 'number' ? currentRaw + 1 : 1
     cache.set(hash, next)
     setRating({ hash, rating_service_key: serviceKey, rating: next }).then(() => {
@@ -422,7 +422,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           const hash = file?.hash
           if (!hash) return null
           const cached = viewCountCacheRef.current.get(hash)
-          const vc = cached ?? file?.ratings?.[vcKey]
+          const vc = cached ?? useSettingsStore.getState().getRatingsCache()?.get(file?.file_id ?? 0)?.[vcKey] ?? file?.ratings?.[vcKey]
           if (vc == null || typeof vc !== 'number') return null
           return (
             <span className="text-sm ml-3 text-white/70 flex items-center gap-1">
