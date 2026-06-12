@@ -496,10 +496,13 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
           next.set(loserId, loserNew)
           return next
         })
-        const cacheUpdates: [number, Record<string, number | boolean>][] = []
-        cacheUpdates.push([winnerId, { ...((fileA.file_id === winnerId ? fileA : fileB).ratings ?? {}), [ratingServiceKey]: winnerNew }])
-        cacheUpdates.push([loserId, { ...((fileA.file_id === loserId ? fileA : fileB).ratings ?? {}), [ratingServiceKey]: loserNew }])
-        useSettingsStore.getState().addToRatingsCache(cacheUpdates)
+        const existingCache = useSettingsStore.getState().getRatingsCache()
+        const winnerBase = existingCache?.get(winnerId) ?? (fileA.file_id === winnerId ? fileA : fileB).ratings ?? {}
+        const loserBase = existingCache?.get(loserId) ?? (fileA.file_id === loserId ? fileA : fileB).ratings ?? {}
+        useSettingsStore.getState().addToRatingsCache([
+          [winnerId, { ...winnerBase, [ratingServiceKey]: winnerNew }],
+          [loserId, { ...loserBase, [ratingServiceKey]: loserNew }],
+        ])
       } catch (e) {
         console.error('Failed to set ratings:', e)
       }
