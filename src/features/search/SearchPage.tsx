@@ -696,8 +696,9 @@ const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' 
                     )}
                     <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded">{elo} ELO</span>
                     {(() => {
-                      if (!f) return null
-                      const stats = f.file_viewing_statistics ?? []
+                      const fv = files.get(id)
+                      if (!fv) return null
+                      const stats = fv.file_viewing_statistics ?? []
                       const vc = stats.find(s => s.canvas_type === 4)?.views ?? stats.find(s => s.canvas_type === 0)?.views ?? 0
                       if (vc <= 0) return null
                       return (
