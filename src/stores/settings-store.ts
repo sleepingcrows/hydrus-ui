@@ -7,7 +7,7 @@ const SMASH_PASS_TAGS_B_KEY = 'hydrus-smashpass-tags-b'
 const SMASH_PASS_DUAL_KEY = 'hydrus-smashpass-dual'
 const RATING_SERVICE_KEY = 'hydrus-rating-service-key'
 const LIKE_SERVICE_KEY = 'hydrus-like-service-key'
-const VIEW_COUNT_SERVICE_KEY = 'hydrus-view-count-service-key'
+
 const GALLERY_LAYOUT_KEY = 'hydrus-gallery-layout'
 const RATINGS_CACHE_KEY = 'hydrus-ratings-cache'
 const TERMINATED_MODE_KEY = 'hydrus-terminated-mode'
@@ -48,7 +48,6 @@ interface SettingsState {
   searchHistory: string[][]
   ratingServiceKey: string
   likeServiceKey: string
-  viewCountServiceKey: string
   galleryLayoutMode: GalleryLayoutMode
   ratingsCacheBuildProgress: number | null
   ratingsCacheVersion: number
@@ -75,7 +74,6 @@ interface SettingsState {
   addToSearchHistory: (tags: string[]) => void
   setRatingServiceKey: (key: string) => void
   setLikeServiceKey: (key: string) => void
-  setViewCountServiceKey: (key: string) => void
   setGalleryLayoutMode: (mode: GalleryLayoutMode) => void
   setRatingBaseInc: (n: number) => void
   setRatingLoserDec: (n: number) => void
@@ -139,7 +137,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   underdogBoostPct: loadNum('hydrus-rating-underdog-boost-pct', 75),
   ratingServiceKey: loadStr('hydrus-rating-service-key', ''),
   likeServiceKey: loadStr('hydrus-like-service-key', ''),
-  viewCountServiceKey: loadStr('hydrus-view-count-service-key', ''),
   galleryLayoutMode: (loadStr('hydrus-gallery-layout', 'grid') as GalleryLayoutMode),
   carouselFloatingPanel: localStorage.getItem(CAROUSEL_FLOATING_PANEL_KEY) !== null
     ? loadBool('hydrus-carousel-floating-panel')
@@ -206,10 +203,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setLikeServiceKey: (key) => {
     localStorage.setItem(LIKE_SERVICE_KEY, key)
     set({ likeServiceKey: key })
-  },
-  setViewCountServiceKey: (key) => {
-    localStorage.setItem(VIEW_COUNT_SERVICE_KEY, key)
-    set({ viewCountServiceKey: key })
   },
   setGalleryLayoutMode: (mode) => {
     localStorage.setItem(GALLERY_LAYOUT_KEY, mode)

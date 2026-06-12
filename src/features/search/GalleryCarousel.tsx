@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { getFileUrl, fetchFileMetadataByIds } from '../../api/search'
+import { getFileUrl } from '../../api/search'
 import type { FileMetadata } from '../../api/types'
 import { SERVICE_TYPE } from '../../api/types'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
 import { setRating } from '../../api/ratings'
+import { incrementFileViewtime } from '../../api/times'
 import { useMobile } from '../../hooks/use-mobile'
 import { FileRenderer } from '../../components/FileRenderer'
 import { TagEditor } from '../tags/TagEditor'
@@ -52,6 +53,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   const hashRef = useRef(file?.hash)
   hashRef.current = file?.hash
   const viewCountCacheRef = useRef<Map<string, number>>(new Map())
+  const countedViewsRef = useRef<Set<string>>(new Set())
   const likeKeyRef = useRef<string | undefined>(undefined)
   const configuredLikeKey = useSettingsStore.getState().likeServiceKey
   const services = useRatingServicesStore.getState().services
@@ -157,31 +159,12 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   useEffect(() => {
     const f = file
     const hash = f?.hash
-    const serviceKey = useSettingsStore.getState().viewCountServiceKey
-    if (!hash || !serviceKey) return
-    const cache = viewCountCacheRef.current
-    if (cache.has(hash)) {
-      const prev = cache.get(hash)!
-      const next = prev + 1
-      cache.set(hash, next)
-      setRating({ hash, rating_service_key: serviceKey, rating: next }).then(() => {
-        if (!f?.file_id) return
-        const existing = useSettingsStore.getState().getRatingsCache()?.get(f.file_id) ?? {}
-        useSettingsStore.getState().addToRatingsCache([[f.file_id, { ...existing, [serviceKey]: next }]])
-      })
-      return
-    }
-    if (!f?.file_id) return
-    fetchFileMetadataByIds([f.file_id]).then((meta) => {
-      const fresh = meta[0]?.ratings?.[serviceKey]
-      const raw = typeof fresh === 'number' ? fresh : 0
-      const next = raw + 1
-      cache.set(hash, next)
-      setRating({ hash, rating_service_key: serviceKey, rating: next }).then(() => {
-        const existing = useSettingsStore.getState().getRatingsCache()?.get(f.file_id) ?? {}
-        useSettingsStore.getState().addToRatingsCache([[f.file_id, { ...existing, [serviceKey]: next }]])
-      })
-    })
+    if (!hash) return
+    if (countedViewsRef.current.has(hash)) return
+    countedViewsRef.current.add(hash)
+    const existing = (f?.file_viewing_statistics ?? []).find(s => s.canvas_type === 4)?.views ?? 0
+    viewCountCacheRef.current.set(hash, existing + 1)
+    incrementFileViewtime({ hash, canvas_type: 4, views: 1, viewtime: 0 })
   }, [file?.hash])
 
   useEffect(() => {
@@ -430,13 +413,13 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           return <span className={`text-sm ml-3 ${rankColor}`}>{sortByRating && rank > 0 ? `${rank}${rankSuffix} · ` : ''}{elo} ELO</span>
         })()}
         {(() => {
-          const vcKey = useSettingsStore.getState().viewCountServiceKey
-          if (!vcKey) return null
           const hash = file?.hash
           if (!hash) return null
           const cached = viewCountCacheRef.current.get(hash)
-          const vc = cached ?? useSettingsStore.getState().getRatingsCache()?.get(file?.file_id ?? 0)?.[vcKey] ?? file?.ratings?.[vcKey]
-          if (vc == null || typeof vc !== 'number') return null
+          const stats = file?.file_viewing_statistics ?? []
+          const fromStats = stats.find(s => s.canvas_type === 4)?.views ?? stats.find(s => s.canvas_type === 0)?.views ?? 0
+          const vc = cached ?? fromStats
+          if (vc <= 0) return null
           return (
             <span className="text-sm ml-3 text-white/70 flex items-center gap-1">
               <svg viewBox="0 0 576 512" fill="currentColor" className="w-3 h-3">

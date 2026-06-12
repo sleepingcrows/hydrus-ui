@@ -696,10 +696,10 @@ const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' 
                     )}
                     <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded">{elo} ELO</span>
                     {(() => {
-                      const vcKey = useSettingsStore.getState().viewCountServiceKey
-                      if (!vcKey) return null
-                      const vc = cachedRatings?.[vcKey]
-                      if (vc == null || typeof vc !== 'number') return null
+                      if (!f) return null
+                      const stats = f.file_viewing_statistics ?? []
+                      const vc = stats.find(s => s.canvas_type === 4)?.views ?? stats.find(s => s.canvas_type === 0)?.views ?? 0
+                      if (vc <= 0) return null
                       return (
                         <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded flex items-center gap-0.5">
                           <svg viewBox="0 0 576 512" fill="currentColor" className="w-2.5 h-2.5">

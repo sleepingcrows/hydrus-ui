@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { searchFiles, fetchFileMetadata, fetchFileMetadataByIds, getFileUrl } from '../../api/search'
 import { setRating } from '../../api/ratings'
+import { incrementFileViewtime } from '../../api/times'
 import type { FileMetadata } from '../../api/types'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
@@ -94,25 +95,13 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
       }
     })
   }, [])
-  const countedHashesRef = useRef<Set<string>>(new Set())
+  const countedViewsRef = useRef<Set<string>>(new Set())
   useEffect(() => {
-    const serviceKey = useSettingsStore.getState().viewCountServiceKey
-    if (!serviceKey) return
     for (const f of [fileA, fileB]) {
-      if (!f?.hash || !f.file_id) continue
-      if (countedHashesRef.current.has(f.hash)) continue
-      countedHashesRef.current.add(f.hash)
-      const fileId = f.file_id
-      const hash = f.hash
-      fetchFileMetadataByIds([fileId]).then((meta) => {
-        const fresh = meta[0]?.ratings?.[serviceKey]
-        const raw = typeof fresh === 'number' ? fresh : 0
-        const next = raw + 1
-        setRating({ hash, rating_service_key: serviceKey, rating: next }).then(() => {
-          const existing = useSettingsStore.getState().getRatingsCache()?.get(fileId) ?? {}
-          useSettingsStore.getState().addToRatingsCache([[fileId, { ...existing, [serviceKey]: next }]])
-        })
-      })
+      if (!f?.hash) continue
+      if (countedViewsRef.current.has(f.hash)) continue
+      countedViewsRef.current.add(f.hash)
+      incrementFileViewtime({ hash: f.hash, canvas_type: 4, views: 1, viewtime: 0 })
     }
   }, [fileA?.hash, fileB?.hash])
   const isNumerical = false
@@ -862,10 +851,10 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
                     {rating}
                   </span>
                   {(() => {
-                    const vcKey = useSettingsStore.getState().viewCountServiceKey
-                    if (!vcKey || !fileA) return null
-                    const vc = ratingsLocalRef.current.get(fileA.file_id)?.[vcKey] ?? fileA?.ratings?.[vcKey]
-                    if (vc == null || typeof vc !== 'number') return null
+                    if (!fileA) return null
+                    const stats = fileA?.file_viewing_statistics ?? []
+                    const vc = stats.find(s => s.canvas_type === 4)?.views ?? stats.find(s => s.canvas_type === 0)?.views ?? 0
+                    if (vc <= 0) return null
                     return (
                       <span className="bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
                         <svg viewBox="0 0 576 512" fill="currentColor" className="w-2.5 h-2.5">
@@ -930,10 +919,10 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
                     {rating}
                   </span>
                   {(() => {
-                    const vcKey = useSettingsStore.getState().viewCountServiceKey
-                    if (!vcKey || !fileB) return null
-                    const vc = ratingsLocalRef.current.get(fileB.file_id)?.[vcKey] ?? fileB?.ratings?.[vcKey]
-                    if (vc == null || typeof vc !== 'number') return null
+                    if (!fileB) return null
+                    const stats = fileB?.file_viewing_statistics ?? []
+                    const vc = stats.find(s => s.canvas_type === 4)?.views ?? stats.find(s => s.canvas_type === 0)?.views ?? 0
+                    if (vc <= 0) return null
                     return (
                       <span className="bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
                         <svg viewBox="0 0 576 512" fill="currentColor" className="w-2.5 h-2.5">

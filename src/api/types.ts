@@ -20,6 +20,13 @@ export const ServicesResponseSchema = z.object({
 })
 export type ServicesResponse = z.infer<typeof ServicesResponseSchema>
 
+export const FileViewingStatisticsSchema = z.object({
+  canvas_type: z.number(),
+  views: z.number(),
+  viewtime: z.number(),
+})
+export type FileViewingStatistics = z.infer<typeof FileViewingStatisticsSchema>
+
 export const FileMetadataSchema = z.object({
   file_id: z.number(),
   hash: z.string(),
@@ -43,6 +50,7 @@ export const FileMetadataSchema = z.object({
   ratings: z.record(z.string(), z.union([z.number(), z.boolean(), z.null()])).optional(),
   time_imported: z.number().optional(),
   file_urls: z.array(z.string()).optional(),
+  file_viewing_statistics: z.array(FileViewingStatisticsSchema).optional(),
 })
 export type FileMetadata = z.infer<typeof FileMetadataSchema>
 

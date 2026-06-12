@@ -22,7 +22,6 @@ export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: strin
   const allServices = useRatingServicesStore((s) => s.services)
   const likeKey = configuredLikeKey || allServices.find((svc) => svc.type === SERVICE_TYPE.LIKE_DISLIKE_RATING)?.service_key
   const ratingKey = configuredRatingKey || allServices.find((svc) => svc.type === SERVICE_TYPE.INC_DEC_RATING)?.service_key
-  const viewCountKey = useSettingsStore((s) => s.viewCountServiceKey)
   const [sections, setSections] = useState<SectionData[]>([])
   const [galleryIndex, setGalleryIndex] = useState<{ section: number; fileIdx: number } | null>(null)
   const fetchIdRef = useRef(0)
@@ -141,8 +140,9 @@ export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: strin
                 {(() => {
                   const cachedRecord = ratingsLocalRef.current.get(f.file_id)
                   const hasElo = ratingKey && (cachedRecord?.[ratingKey] ?? f.ratings?.[ratingKey]) != null
-                  const hasVc = viewCountKey && ((cachedRecord?.[viewCountKey] ?? f.ratings?.[viewCountKey]) != null && typeof (cachedRecord?.[viewCountKey] ?? f.ratings?.[viewCountKey]) === 'number')
-                  if (!hasElo && !hasVc) return null
+                  const stats = f.file_viewing_statistics ?? []
+                  const vc = stats.find(s => s.canvas_type === 4)?.views ?? stats.find(s => s.canvas_type === 0)?.views ?? 0
+                  if (!hasElo && vc <= 0) return null
                   return (
                   <div className="absolute bottom-1 left-1 flex flex-col items-start gap-0.5">
                     {(() => {
@@ -150,18 +150,14 @@ export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: strin
                       if (ratingKey && elo != null) return <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded font-mono">{Number(elo)} ELO</span>
                       return null
                     })()}
-                    {(() => {
-                      const vc = cachedRecord?.[viewCountKey] ?? f.ratings?.[viewCountKey]
-                      if (viewCountKey && vc != null && typeof vc === 'number') return (
-                        <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded flex items-center gap-0.5">
-                          <svg viewBox="0 0 576 512" fill="currentColor" className="w-2.5 h-2.5">
-                            <path d="M288 80c-65.2 0-118.8 29.6-159.9 67.7C89.6 183.5 63 226 49.4 256c13.6 30 40.2 72.5 78.7 108.3C169.2 402.4 222.8 432 288 432s118.8-29.6 159.9-67.7C486.4 328.5 513 286 526.6 256c-13.6-30-40.2-72.5-78.7-108.3C406.8 109.6 353.2 80 288 80zM288 368c-61.9 0-112-50.1-112-112s50.1-112 112-112 112 50.1 112 112-50.1 112-112 112zm0-176c-35.3 0-64 28.7-64 64s28.7 64 64 64 64-28.7 64-64-28.7-64-64-64z"/>
-                          </svg>
-                          {Number(vc).toLocaleString()}
-                        </span>
-                      )
-                      return null
-                    })()}
+                    {vc > 0 && (
+                      <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded flex items-center gap-0.5">
+                        <svg viewBox="0 0 576 512" fill="currentColor" className="w-2.5 h-2.5">
+                          <path d="M288 80c-65.2 0-118.8 29.6-159.9 67.7C89.6 183.5 63 226 49.4 256c13.6 30 40.2 72.5 78.7 108.3C169.2 402.4 222.8 432 288 432s118.8-29.6 159.9-67.7C486.4 328.5 513 286 526.6 256c-13.6-30-40.2-72.5-78.7-108.3C406.8 109.6 353.2 80 288 80zM288 368c-61.9 0-112-50.1-112-112s50.1-112 112-112 112 50.1 112 112-50.1 112-112 112zm0-176c-35.3 0-64 28.7-64 64s28.7 64 64 64 64-28.7 64-64-28.7-64-64-64z"/>
+                        </svg>
+                        {vc.toLocaleString()}
+                      </span>
+                    )}
                   </div>
                   )
                 })()}

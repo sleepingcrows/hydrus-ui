@@ -7,7 +7,6 @@ export interface ExportData {
   settings: {
     ratingServiceKey: string
     likeServiceKey: string
-    viewCountServiceKey: string
     ratingBaseInc: number
     ratingLoserDec: number
     ratingStreakThreshold: number
