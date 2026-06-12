@@ -419,7 +419,10 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
         {(() => {
           const vcKey = useSettingsStore.getState().viewCountServiceKey
           if (!vcKey) return null
-          const vc = file?.ratings?.[vcKey]
+          const hash = file?.hash
+          if (!hash) return null
+          const cached = viewCountCacheRef.current.get(hash)
+          const vc = cached ?? file?.ratings?.[vcKey]
           if (vc == null || typeof vc !== 'number') return null
           return (
             <span className="text-sm ml-3 text-white/70 flex items-center gap-1">

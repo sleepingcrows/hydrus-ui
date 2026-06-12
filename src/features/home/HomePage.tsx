@@ -26,6 +26,20 @@ export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: strin
   const [sections, setSections] = useState<SectionData[]>([])
   const [galleryIndex, setGalleryIndex] = useState<{ section: number; fileIdx: number } | null>(null)
   const fetchIdRef = useRef(0)
+  const [, forceRerender] = useState(0)
+  const ratingsCacheVersionRef = useRef(useSettingsStore.getState().ratingsCacheVersion)
+  const ratingsLocalRef = useRef<Map<number, Record<string, number | boolean>>>(new Map())
+  useEffect(() => {
+    return useSettingsStore.subscribe((s) => {
+      if (s.ratingsCacheVersion !== ratingsCacheVersionRef.current) {
+        ratingsCacheVersionRef.current = s.ratingsCacheVersion
+        ratingsLocalRef.current.clear()
+        const stored = useSettingsStore.getState().getRatingsCache()
+        if (stored) { for (const [fid, r] of stored) ratingsLocalRef.current.set(fid, r) }
+        forceRerender((n) => n + 1)
+      }
+    })
+  }, [])
 
   useEffect(() => {
     const id = ++fetchIdRef.current
@@ -124,21 +138,25 @@ export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: strin
                     <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                   </div>
                 )}
-                {(ratingKey && f.ratings?.[ratingKey] != null) || (viewCountKey && f.ratings?.[viewCountKey] != null) ? (
+                {(ratingKey && (f.ratings?.[ratingKey] ?? ratingsLocalRef.current.get(f.file_id)?.[ratingKey]) != null) || (viewCountKey && (f.ratings?.[viewCountKey] ?? ratingsLocalRef.current.get(f.file_id)?.[viewCountKey]) != null) ? (
                   <div className="absolute bottom-1 left-1 flex flex-col items-start gap-0.5">
-                    {ratingKey && f.ratings?.[ratingKey] != null && (
-                      <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded font-mono">
-                        {Number(f.ratings[ratingKey])} ELO
-                      </span>
-                    )}
-                    {viewCountKey && f.ratings?.[viewCountKey] != null && typeof f.ratings[viewCountKey] === 'number' && (
-                      <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded flex items-center gap-0.5">
-                        <svg viewBox="0 0 576 512" fill="currentColor" className="w-2.5 h-2.5">
-                          <path d="M288 80c-65.2 0-118.8 29.6-159.9 67.7C89.6 183.5 63 226 49.4 256c13.6 30 40.2 72.5 78.7 108.3C169.2 402.4 222.8 432 288 432s118.8-29.6 159.9-67.7C486.4 328.5 513 286 526.6 256c-13.6-30-40.2-72.5-78.7-108.3C406.8 109.6 353.2 80 288 80zM288 368c-61.9 0-112-50.1-112-112s50.1-112 112-112 112 50.1 112 112-50.1 112-112 112zm0-176c-35.3 0-64 28.7-64 64s28.7 64 64 64 64-28.7 64-64-28.7-64-64-64z"/>
-                        </svg>
-                        {Number(f.ratings[viewCountKey]).toLocaleString()}
-                      </span>
-                    )}
+                    {(() => {
+                      const elo = f.ratings?.[ratingKey] ?? ratingsLocalRef.current.get(f.file_id)?.[ratingKey]
+                      if (ratingKey && elo != null) return <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded font-mono">{Number(elo)} ELO</span>
+                      return null
+                    })()}
+                    {(() => {
+                      const vc = f.ratings?.[viewCountKey] ?? ratingsLocalRef.current.get(f.file_id)?.[viewCountKey]
+                      if (viewCountKey && vc != null && typeof vc === 'number') return (
+                        <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded flex items-center gap-0.5">
+                          <svg viewBox="0 0 576 512" fill="currentColor" className="w-2.5 h-2.5">
+                            <path d="M288 80c-65.2 0-118.8 29.6-159.9 67.7C89.6 183.5 63 226 49.4 256c13.6 30 40.2 72.5 78.7 108.3C169.2 402.4 222.8 432 288 432s118.8-29.6 159.9-67.7C486.4 328.5 513 286 526.6 256c-13.6-30-40.2-72.5-78.7-108.3C406.8 109.6 353.2 80 288 80zM288 368c-61.9 0-112-50.1-112-112s50.1-112 112-112 112 50.1 112 112-50.1 112-112 112zm0-176c-35.3 0-64 28.7-64 64s28.7 64 64 64 64-28.7 64-64-28.7-64-64-64z"/>
+                          </svg>
+                          {Number(vc).toLocaleString()}
+                        </span>
+                      )
+                      return null
+                    })()}
                   </div>
                 ) : null}
                 {s.thumbnails.has(f.file_id) ? (
