@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { getFileUrl } from '../../api/search'
 import type { FileMetadata } from '../../api/types'
+import { getViewCount } from '../../api/types'
 import { SERVICE_TYPE } from '../../api/types'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
@@ -413,12 +414,9 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           return <span className={`text-sm ml-3 ${rankColor}`}>{sortByRating && rank > 0 ? `${rank}${rankSuffix} · ` : ''}{elo} ELO</span>
         })()}
         {(() => {
-          const hash = file?.hash
-          if (!hash) return null
-          const cached = viewCountCacheRef.current.get(hash)
-          const stats = file?.file_viewing_statistics ?? []
-          const fromStats = stats.find(s => s.canvas_type === 4)?.views ?? stats.find(s => s.canvas_type === 0)?.views ?? 0
-          const vc = cached ?? fromStats
+          if (!file) return null
+          const cached = file?.hash ? viewCountCacheRef.current.get(file.hash) : undefined
+          const vc = cached ?? getViewCount(file)
           if (vc <= 0) return null
           return (
             <span className="text-sm ml-3 text-white/70 flex items-center gap-1">

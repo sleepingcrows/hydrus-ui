@@ -4,6 +4,7 @@ import { useSettingsStore, type Bookmark } from '../../stores/settings-store'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { SERVICE_TYPE } from '../../api/types'
 import type { FileMetadata } from '../../api/types'
+import { getViewCount } from '../../api/types'
 import { GalleryCarousel } from '../search/GalleryCarousel'
 
 const DISPLAY_LIMIT = 50
@@ -140,8 +141,7 @@ export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: strin
                 {(() => {
                   const cachedRecord = ratingsLocalRef.current.get(f.file_id)
                   const hasElo = ratingKey && (cachedRecord?.[ratingKey] ?? f.ratings?.[ratingKey]) != null
-                  const stats = f.file_viewing_statistics ?? []
-                  const vc = stats.find(s => s.canvas_type === 4)?.views ?? stats.find(s => s.canvas_type === 0)?.views ?? 0
+                  const vc = getViewCount(f)
                   if (!hasElo && vc <= 0) return null
                   return (
                   <div className="absolute bottom-1 left-1 flex flex-col items-start gap-0.5">

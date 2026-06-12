@@ -3,6 +3,7 @@ import { searchFiles, fetchFileMetadata, fetchFileMetadataByIds, getFileUrl } fr
 import { setRating } from '../../api/ratings'
 import { incrementFileViewtime } from '../../api/times'
 import type { FileMetadata } from '../../api/types'
+import { getViewCount } from '../../api/types'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
 import { useMobile } from '../../hooks/use-mobile'
@@ -852,8 +853,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
                   </span>
                   {(() => {
                     if (!fileA) return null
-                    const stats = fileA?.file_viewing_statistics ?? []
-                    const vc = stats.find(s => s.canvas_type === 4)?.views ?? stats.find(s => s.canvas_type === 0)?.views ?? 0
+                    const vc = getViewCount(fileA)
                     if (vc <= 0) return null
                     return (
                       <span className="bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
@@ -920,8 +920,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
                   </span>
                   {(() => {
                     if (!fileB) return null
-                    const stats = fileB?.file_viewing_statistics ?? []
-                    const vc = stats.find(s => s.canvas_type === 4)?.views ?? stats.find(s => s.canvas_type === 0)?.views ?? 0
+                    const vc = getViewCount(fileB)
                     if (vc <= 0) return null
                     return (
                       <span className="bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">

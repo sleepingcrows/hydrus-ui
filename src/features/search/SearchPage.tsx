@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { searchFiles, fetchFileMetadata, fetchFileMetadataByIds, getThumbnailUrl } from '../../api/search'
 import type { FileMetadata } from '../../api/types'
+import { getViewCount } from '../../api/types'
 import { TagSearch } from './TagSearch'
 import { FILE_SORT_TYPES, SERVICE_TYPE } from '../../api/types'
 import { GalleryCarousel } from './GalleryCarousel'
@@ -698,8 +699,7 @@ const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' 
                     {(() => {
                       const fv = files.get(id)
                       if (!fv) return null
-                      const stats = fv.file_viewing_statistics ?? []
-                      const vc = stats.find(s => s.canvas_type === 4)?.views ?? stats.find(s => s.canvas_type === 0)?.views ?? 0
+                      const vc = getViewCount(fv)
                       if (vc <= 0) return null
                       return (
                         <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded flex items-center gap-0.5">
