@@ -682,6 +682,20 @@ const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' 
                       </span>
                     )}
                     <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded">{elo} ELO</span>
+                    {(() => {
+                      const vcKey = useSettingsStore.getState().viewCountServiceKey
+                      if (!vcKey) return null
+                      const vc = cachedRatings?.[vcKey]
+                      if (vc == null || typeof vc !== 'number') return null
+                      return (
+                        <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded flex items-center gap-0.5">
+                          <svg viewBox="0 0 576 512" fill="currentColor" className="w-2.5 h-2.5">
+                            <path d="M288 80c-65.2 0-118.8 29.6-159.9 67.7C89.6 183.5 63 226 49.4 256c13.6 30 40.2 72.5 78.7 108.3C169.2 402.4 222.8 432 288 432s118.8-29.6 159.9-67.7C486.4 328.5 513 286 526.6 256c-13.6-30-40.2-72.5-78.7-108.3C406.8 109.6 353.2 80 288 80zM288 368c-61.9 0-112-50.1-112-112s50.1-112 112-112 112 50.1 112 112-50.1 112-112 112zm0-176c-35.3 0-64 28.7-64 64s28.7 64 64 64 64-28.7 64-64-28.7-64-64-64z"/>
+                          </svg>
+                          {vc.toLocaleString()}
+                        </span>
+                      )
+                    })()}
                   </div>
                 )
               })()}
