@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getFileUrl } from '../../api/search'
+import { getFileUrl, fetchFileMetadataByIds } from '../../api/search'
 import type { FileMetadata } from '../../api/types'
 import { SERVICE_TYPE } from '../../api/types'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
@@ -160,14 +160,27 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
     const serviceKey = useSettingsStore.getState().viewCountServiceKey
     if (!hash || !serviceKey) return
     const cache = viewCountCacheRef.current
-    const currentRaw = cache.get(hash) ?? useSettingsStore.getState().getRatingsCache()?.get(f?.file_id ?? 0)?.[serviceKey] ?? (f?.ratings?.[serviceKey] as number | undefined) ?? 0
-    const next = typeof currentRaw === 'number' ? currentRaw + 1 : 1
-    cache.set(hash, next)
-    setRating({ hash, rating_service_key: serviceKey, rating: next }).then(() => {
-      if (!f?.file_id) return
-      const existingCache = useSettingsStore.getState().getRatingsCache()
-      const existing = existingCache?.get(f.file_id) ?? {}
-      useSettingsStore.getState().addToRatingsCache([[f.file_id, { ...existing, [serviceKey]: next }]])
+    if (cache.has(hash)) {
+      const prev = cache.get(hash)!
+      const next = prev + 1
+      cache.set(hash, next)
+      setRating({ hash, rating_service_key: serviceKey, rating: next }).then(() => {
+        if (!f?.file_id) return
+        const existing = useSettingsStore.getState().getRatingsCache()?.get(f.file_id) ?? {}
+        useSettingsStore.getState().addToRatingsCache([[f.file_id, { ...existing, [serviceKey]: next }]])
+      })
+      return
+    }
+    if (!f?.file_id) return
+    fetchFileMetadataByIds([f.file_id]).then((meta) => {
+      const fresh = meta[0]?.ratings?.[serviceKey]
+      const raw = typeof fresh === 'number' ? fresh : 0
+      const next = raw + 1
+      cache.set(hash, next)
+      setRating({ hash, rating_service_key: serviceKey, rating: next }).then(() => {
+        const existing = useSettingsStore.getState().getRatingsCache()?.get(f.file_id) ?? {}
+        useSettingsStore.getState().addToRatingsCache([[f.file_id, { ...existing, [serviceKey]: next }]])
+      })
     })
   }, [file?.hash])
 

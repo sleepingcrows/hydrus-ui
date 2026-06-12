@@ -99,16 +99,19 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
     const serviceKey = useSettingsStore.getState().viewCountServiceKey
     if (!serviceKey) return
     for (const f of [fileA, fileB]) {
-      if (!f?.hash) continue
+      if (!f?.hash || !f.file_id) continue
       if (countedHashesRef.current.has(f.hash)) continue
       countedHashesRef.current.add(f.hash)
-      const raw = ratingsLocalRef.current.get(f.file_id)?.[serviceKey] ?? f.ratings?.[serviceKey] as number | undefined ?? 0
-      const next = typeof raw === 'number' ? raw + 1 : 1
-      setRating({ hash: f.hash, rating_service_key: serviceKey, rating: next }).then(() => {
-        if (!f.file_id) return
-        const existingCache = useSettingsStore.getState().getRatingsCache()
-        const existing = existingCache?.get(f.file_id) ?? {}
-        useSettingsStore.getState().addToRatingsCache([[f.file_id, { ...existing, [serviceKey]: next }]])
+      const fileId = f.file_id
+      const hash = f.hash
+      fetchFileMetadataByIds([fileId]).then((meta) => {
+        const fresh = meta[0]?.ratings?.[serviceKey]
+        const raw = typeof fresh === 'number' ? fresh : 0
+        const next = raw + 1
+        setRating({ hash, rating_service_key: serviceKey, rating: next }).then(() => {
+          const existing = useSettingsStore.getState().getRatingsCache()?.get(fileId) ?? {}
+          useSettingsStore.getState().addToRatingsCache([[fileId, { ...existing, [serviceKey]: next }]])
+        })
       })
     }
   }, [fileA?.hash, fileB?.hash])
