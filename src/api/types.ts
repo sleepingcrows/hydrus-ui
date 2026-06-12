@@ -122,17 +122,21 @@ export function isRatingService(s: Service): s is RatingService {
 
 const VIEW_COUNT_LEGACY_KEY = 'hydrus-view-count-service-key'
 
+export function getLegacyViewCountKey(): string | null {
+  if (typeof localStorage === 'undefined') return null
+  return localStorage.getItem(VIEW_COUNT_LEGACY_KEY) ?? null
+}
+
 export function getViewCount(file: FileMetadata): number {
   const stats = file.file_viewing_statistics ?? []
   const native = stats.find(s => s.canvas_type === 4)?.views
     ?? stats.find(s => s.canvas_type === 0)?.views
     ?? 0
-  if (native > 0) return native
-  if (typeof localStorage === 'undefined') return 0
-  const legacyKey = localStorage.getItem(VIEW_COUNT_LEGACY_KEY)
-  if (!legacyKey) return 0
+  const legacyKey = getLegacyViewCountKey()
+  if (!legacyKey) return native
   const legacy = file.ratings?.[legacyKey]
-  return typeof legacy === 'number' ? legacy : 0
+  const legacyVal = typeof legacy === 'number' ? legacy : 0
+  return Math.max(native, legacyVal)
 }
 
 export interface TagRatingRecord {

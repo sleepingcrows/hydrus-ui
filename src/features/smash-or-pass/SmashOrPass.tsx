@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { searchFiles, fetchFileMetadata, fetchFileMetadataByIds, getFileUrl } from '../../api/search'
 import { setRating } from '../../api/ratings'
-import { incrementFileViewtime } from '../../api/times'
+import { incrementFileViewtime, setFileViewtime } from '../../api/times'
 import type { FileMetadata } from '../../api/types'
-import { getViewCount } from '../../api/types'
+import { getViewCount, getLegacyViewCountKey } from '../../api/types'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
 import { useMobile } from '../../hooks/use-mobile'
@@ -97,12 +97,24 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
     })
   }, [])
   const countedViewsRef = useRef<Set<string>>(new Set())
+  const viewCountCacheRef = useRef<Map<string, number>>(new Map())
   useEffect(() => {
     for (const f of [fileA, fileB]) {
       if (!f?.hash) continue
       if (countedViewsRef.current.has(f.hash)) continue
       countedViewsRef.current.add(f.hash)
-      incrementFileViewtime({ hash: f.hash, canvas_type: 4, views: 1, viewtime: 0 })
+
+      const current = getViewCount(f)
+      const legacyKey = getLegacyViewCountKey()
+      const hasLegacy = legacyKey && f.ratings?.[legacyKey] != null && typeof f.ratings[legacyKey] === 'number'
+
+      if (hasLegacy) {
+        const legacyVal = f.ratings[legacyKey] as number
+        setFileViewtime({ hash: f.hash, canvas_type: 4, views: legacyVal + 1, viewtime: 0 })
+      } else {
+        incrementFileViewtime({ hash: f.hash, canvas_type: 4, views: 1, viewtime: 0 })
+      }
+      viewCountCacheRef.current.set(f.hash, current + 1)
     }
   }, [fileA?.hash, fileB?.hash])
   const isNumerical = false
@@ -853,7 +865,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
                   </span>
                   {(() => {
                     if (!fileA) return null
-                    const vc = getViewCount(fileA)
+                    const vc = fileA.hash ? viewCountCacheRef.current.get(fileA.hash) ?? getViewCount(fileA) : getViewCount(fileA)
                     if (vc <= 0) return null
                     return (
                       <span className="bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
@@ -920,7 +932,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
                   </span>
                   {(() => {
                     if (!fileB) return null
-                    const vc = getViewCount(fileB)
+                    const vc = fileB.hash ? viewCountCacheRef.current.get(fileB.hash) ?? getViewCount(fileB) : getViewCount(fileB)
                     if (vc <= 0) return null
                     return (
                       <span className="bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
