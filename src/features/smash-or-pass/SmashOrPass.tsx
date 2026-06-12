@@ -94,16 +94,16 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
       }
     })
   }, [])
-  const viewCountCacheRef = useRef<Map<string, number>>(new Map())
+  const countedHashesRef = useRef<Set<string>>(new Set())
   useEffect(() => {
     const serviceKey = useSettingsStore.getState().viewCountServiceKey
     if (!serviceKey) return
     for (const f of [fileA, fileB]) {
       if (!f?.hash) continue
-      const cache = viewCountCacheRef.current
-      const raw = cache.get(f.hash) ?? (f.ratings?.[serviceKey] as number | undefined) ?? 0
+      if (countedHashesRef.current.has(f.hash)) continue
+      countedHashesRef.current.add(f.hash)
+      const raw = ratingsLocalRef.current.get(f.file_id)?.[serviceKey] ?? f.ratings?.[serviceKey] as number | undefined ?? 0
       const next = typeof raw === 'number' ? raw + 1 : 1
-      cache.set(f.hash, next)
       setRating({ hash: f.hash, rating_service_key: serviceKey, rating: next }).then(() => {
         if (!f.file_id) return
         const existingCache = useSettingsStore.getState().getRatingsCache()
