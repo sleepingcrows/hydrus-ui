@@ -155,14 +155,20 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   }, [])
 
   useEffect(() => {
-    const hash = file?.hash
+    const f = file
+    const hash = f?.hash
     const serviceKey = useSettingsStore.getState().viewCountServiceKey
     if (!hash || !serviceKey) return
     const cache = viewCountCacheRef.current
-    const currentRaw = cache.get(hash) ?? (file?.ratings?.[serviceKey] as number | undefined) ?? 0
+    const currentRaw = cache.get(hash) ?? (f?.ratings?.[serviceKey] as number | undefined) ?? 0
     const next = typeof currentRaw === 'number' ? currentRaw + 1 : 1
     cache.set(hash, next)
-    setRating({ hash, rating_service_key: serviceKey, rating: next })
+    setRating({ hash, rating_service_key: serviceKey, rating: next }).then(() => {
+      if (!f?.file_id) return
+      const existingCache = useSettingsStore.getState().getRatingsCache()
+      const existing = existingCache?.get(f.file_id) ?? {}
+      useSettingsStore.getState().addToRatingsCache([[f.file_id, { ...existing, [serviceKey]: next }]])
+    })
   }, [file?.hash])
 
   useEffect(() => {
