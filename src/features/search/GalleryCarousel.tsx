@@ -51,6 +51,7 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   const file = files[index]
   const hashRef = useRef(file?.hash)
   hashRef.current = file?.hash
+  const viewCountCacheRef = useRef<Map<string, number>>(new Map())
   const likeKeyRef = useRef<string | undefined>(undefined)
   const configuredLikeKey = useSettingsStore.getState().likeServiceKey
   const services = useRatingServicesStore.getState().services
@@ -152,6 +153,17 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
       for (const url of urlCacheRef.current.values()) URL.revokeObjectURL(url)
     }
   }, [])
+
+  useEffect(() => {
+    const hash = file?.hash
+    const serviceKey = useSettingsStore.getState().viewCountServiceKey
+    if (!hash || !serviceKey) return
+    const cache = viewCountCacheRef.current
+    const currentRaw = cache.get(hash) ?? (file?.ratings?.[serviceKey] as number | undefined) ?? 0
+    const next = typeof currentRaw === 'number' ? currentRaw + 1 : 1
+    cache.set(hash, next)
+    setRating({ hash, rating_service_key: serviceKey, rating: next })
+  }, [file?.hash])
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -397,6 +409,20 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
           const rankSuffix = rank % 10 === 1 && rank % 100 !== 11 ? 'st' : rank % 10 === 2 && rank % 100 !== 12 ? 'nd' : rank % 10 === 3 && rank % 100 !== 13 ? 'rd' : 'th'
           const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' : rank === 3 ? 'text-amber-600' : ''
           return <span className={`text-sm ml-3 ${rankColor}`}>{sortByRating && rank > 0 ? `${rank}${rankSuffix} · ` : ''}{elo} ELO</span>
+        })()}
+        {(() => {
+          const vcKey = useSettingsStore.getState().viewCountServiceKey
+          if (!vcKey) return null
+          const vc = file?.ratings?.[vcKey]
+          if (vc == null || typeof vc !== 'number') return null
+          return (
+            <span className="text-sm ml-3 text-white/70 flex items-center gap-1">
+              <svg viewBox="0 0 576 512" fill="currentColor" className="w-3 h-3">
+                <path d="M288 80c-65.2 0-118.8 29.6-159.9 67.7C89.6 183.5 63 226 49.4 256c13.6 30 40.2 72.5 78.7 108.3C169.2 402.4 222.8 432 288 432s118.8-29.6 159.9-67.7C486.4 328.5 513 286 526.6 256c-13.6-30-40.2-72.5-78.7-108.3C406.8 109.6 353.2 80 288 80zM288 368c-61.9 0-112-50.1-112-112s50.1-112 112-112 112 50.1 112 112-50.1 112-112 112zm0-176c-35.3 0-64 28.7-64 64s28.7 64 64 64 64-28.7 64-64-28.7-64-64-64z"/>
+              </svg>
+              {vc.toLocaleString()}
+            </span>
+          )
         })()}
         {(() => {
           const key = likeKeyRef.current

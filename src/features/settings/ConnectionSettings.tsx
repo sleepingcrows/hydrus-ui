@@ -17,6 +17,7 @@ async function applyImportData(data: import('../../utils/qr-io').ExportData) {
   const set = data.settings
   if (set.ratingServiceKey !== undefined) s.setRatingServiceKey(set.ratingServiceKey)
   if (set.likeServiceKey !== undefined) s.setLikeServiceKey(set.likeServiceKey)
+  if (set.viewCountServiceKey !== undefined) s.setViewCountServiceKey(set.viewCountServiceKey)
   if (set.ratingBaseInc !== undefined) s.setRatingBaseInc(set.ratingBaseInc)
   if (set.ratingLoserDec !== undefined) s.setRatingLoserDec(set.ratingLoserDec)
   if (set.ratingStreakThreshold !== undefined) s.setRatingStreakThreshold(set.ratingStreakThreshold)
@@ -263,6 +264,24 @@ export function ConnectionSettings() {
         </select>
       </div>
 
+      <div className="mt-3">
+        <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">View count service (inc/dec rating)</label>
+        <select
+          className="w-full border dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono"
+          value={useSettingsStore((s) => s.viewCountServiceKey)}
+          onChange={(e) => useSettingsStore.getState().setViewCountServiceKey(e.target.value)}
+        >
+          <option value="">Disabled (no view tracking)</option>
+          {useRatingServicesStore((s) => s.services)
+            .filter((svc) => svc.type === SERVICE_TYPE.INC_DEC_RATING)
+            .map((svc) => (
+              <option key={svc.service_key} value={svc.service_key}>
+                {svc.name} - {svc.service_key}
+              </option>
+            ))}
+        </select>
+      </div>
+
       {connected && (
         <div className="mt-4">
           <button
@@ -320,7 +339,7 @@ export function ConnectionSettings() {
                 bookmarks: s.bookmarks.map((b) => ({ name: b.name, tags: b.tags, sortType: b.sortType, sortAsc: b.sortAsc, limit: b.limit })),
                 searchHistory: s.searchHistory,
                 settings: {
-                  ratingServiceKey: s.ratingServiceKey, likeServiceKey: s.likeServiceKey,
+                  ratingServiceKey: s.ratingServiceKey, likeServiceKey: s.likeServiceKey, viewCountServiceKey: s.viewCountServiceKey,
                   ratingBaseInc: s.ratingBaseInc, ratingLoserDec: s.ratingLoserDec,
                   ratingStreakThreshold: s.ratingStreakThreshold, ratingStreakBonus: s.ratingStreakBonus,
                   underdogThreshold: s.underdogThreshold, underdogMinGap: s.underdogMinGap, underdogBoostPct: s.underdogBoostPct,
