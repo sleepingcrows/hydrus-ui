@@ -80,6 +80,20 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
   const configuredKey = useSettingsStore((s) => s.ratingServiceKey)
   const services = useRatingServicesStore((s) => s.services)
   const ratingServiceKey = (configuredKey || services.find((rs) => rs.type === SERVICE_TYPE.INC_DEC_RATING)?.service_key) ?? null
+  const [, forceRerender] = useState(0)
+  const ratingsCacheVerRef = useRef(useSettingsStore.getState().ratingsCacheVersion)
+  const ratingsLocalRef = useRef<Map<number, Record<string, number | boolean>>>(new Map())
+  useEffect(() => {
+    return useSettingsStore.subscribe((s) => {
+      if (s.ratingsCacheVersion !== ratingsCacheVerRef.current) {
+        ratingsCacheVerRef.current = s.ratingsCacheVersion
+        ratingsLocalRef.current.clear()
+        const stored = useSettingsStore.getState().getRatingsCache()
+        if (stored) { for (const [fid, r] of stored) ratingsLocalRef.current.set(fid, r) }
+        forceRerender((n) => n + 1)
+      }
+    })
+  }, [])
   const isNumerical = false
   const { isMobile, orientation } = useMobile()
   const smashFloatingPanel = useSettingsStore((s) => s.smashFloatingPanel)
@@ -825,8 +839,8 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
                   </span>
                   {(() => {
                     const vcKey = useSettingsStore.getState().viewCountServiceKey
-                    if (!vcKey) return null
-                    const vc = fileA?.ratings?.[vcKey]
+                    if (!vcKey || !fileA) return null
+                    const vc = ratingsLocalRef.current.get(fileA.file_id)?.[vcKey] ?? fileA?.ratings?.[vcKey]
                     if (vc == null || typeof vc !== 'number') return null
                     return (
                       <span className="bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
@@ -893,8 +907,8 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
                   </span>
                   {(() => {
                     const vcKey = useSettingsStore.getState().viewCountServiceKey
-                    if (!vcKey) return null
-                    const vc = fileB?.ratings?.[vcKey]
+                    if (!vcKey || !fileB) return null
+                    const vc = ratingsLocalRef.current.get(fileB.file_id)?.[vcKey] ?? fileB?.ratings?.[vcKey]
                     if (vc == null || typeof vc !== 'number') return null
                     return (
                       <span className="bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">

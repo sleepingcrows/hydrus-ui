@@ -138,15 +138,20 @@ export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: strin
                     <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                   </div>
                 )}
-                {(ratingKey && (f.ratings?.[ratingKey] ?? ratingsLocalRef.current.get(f.file_id)?.[ratingKey]) != null) || (viewCountKey && (f.ratings?.[viewCountKey] ?? ratingsLocalRef.current.get(f.file_id)?.[viewCountKey]) != null) ? (
+                {(() => {
+                  const cachedRecord = ratingsLocalRef.current.get(f.file_id)
+                  const hasElo = ratingKey && (cachedRecord?.[ratingKey] ?? f.ratings?.[ratingKey]) != null
+                  const hasVc = viewCountKey && ((cachedRecord?.[viewCountKey] ?? f.ratings?.[viewCountKey]) != null && typeof (cachedRecord?.[viewCountKey] ?? f.ratings?.[viewCountKey]) === 'number')
+                  if (!hasElo && !hasVc) return null
+                  return (
                   <div className="absolute bottom-1 left-1 flex flex-col items-start gap-0.5">
                     {(() => {
-                      const elo = f.ratings?.[ratingKey] ?? ratingsLocalRef.current.get(f.file_id)?.[ratingKey]
+                      const elo = cachedRecord?.[ratingKey] ?? f.ratings?.[ratingKey]
                       if (ratingKey && elo != null) return <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded font-mono">{Number(elo)} ELO</span>
                       return null
                     })()}
                     {(() => {
-                      const vc = f.ratings?.[viewCountKey] ?? ratingsLocalRef.current.get(f.file_id)?.[viewCountKey]
+                      const vc = cachedRecord?.[viewCountKey] ?? f.ratings?.[viewCountKey]
                       if (viewCountKey && vc != null && typeof vc === 'number') return (
                         <span className="bg-black/60 text-white text-[10px] leading-tight px-1 rounded flex items-center gap-0.5">
                           <svg viewBox="0 0 576 512" fill="currentColor" className="w-2.5 h-2.5">
@@ -158,7 +163,8 @@ export function HomePage({ onSearchBookmark }: { onSearchBookmark?: (tags: strin
                       return null
                     })()}
                   </div>
-                ) : null}
+                  )
+                })()}
                 {s.thumbnails.has(f.file_id) ? (
                   <img src={s.thumbnails.get(f.file_id)} alt="" className="w-full h-full object-cover" />
                 ) : (
