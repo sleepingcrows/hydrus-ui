@@ -165,10 +165,7 @@ export function isRatingService(s: Service): s is RatingService {
 }
 
 export function getViewCount(file: FileMetadata): number {
-  const stats = file.file_viewing_statistics ?? []
-  return stats.find(s => s.canvas_type === 4)?.views
-    ?? stats.find(s => s.canvas_type === 0)?.views
-    ?? 0
+  return (file.file_viewing_statistics ?? []).reduce((sum, s) => sum + s.views, 0)
 }
 
 export interface TagRatingRecord {
