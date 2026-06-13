@@ -84,8 +84,10 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
   const roundRef = useRef(0)
 
   const configuredKey = useSettingsStore((s) => s.ratingServiceKey)
+  const configuredLikeKey = useSettingsStore((s) => s.likeServiceKey)
   const services = useRatingServicesStore((s) => s.services)
   const ratingServiceKey = (configuredKey || services.find((rs) => rs.type === SERVICE_TYPE.INC_DEC_RATING)?.service_key) ?? null
+  const likeServiceKey = configuredLikeKey || (services.find((s) => s.type === SERVICE_TYPE.LIKE_DISLIKE_RATING)?.service_key ?? null)
   const [, forceRerender] = useState(0)
   const ratingsCacheVerRef = useRef(useSettingsStore.getState().ratingsCacheVersion)
   const ratingsLocalRef = useRef<Map<number, Record<string, number | boolean>>>(new Map())
@@ -768,11 +770,75 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
     loadMatch()
   }
 
+  async function reject(side: 'left' | 'right') {
+    if (!likeServiceKey || !votingOpen && !endState) return
+    const file = side === 'left' ? fileA : fileB
+    if (!file) return
+    const round = ++roundRef.current
+    setRating({ file_id: file.file_id, rating_service_key: likeServiceKey, rating: false })
+    if (smashPassDualMode) {
+      const ref = side === 'left' ? queueIndexRefA : queueIndexRefB
+      const fileIds = side === 'left' ? fileIdsRefA : fileIdsRefB
+      const hashes = side === 'left' ? hashesRefA : hashesRefB
+      const setLoadingSide = side === 'left' ? setLoadingA : setLoadingB
+      const setFadingSide = side === 'left' ? setFadingA : setFadingB
+      const setFileSide = side === 'left' ? setFileA : setFileB
+      const setUrlSide = side === 'left' ? setUrlA : setUrlB
+      const setRemaining = side === 'left' ? setQueueRemainingA : setQueueRemainingB
+      setFadingSide(true)
+      setLoadingSide(true)
+      ref.current++
+      const found = await findNextSupported(ref.current, fileIds.current, hashes.current, [file?.hash])
+      ref.current = found.index
+      const next = found.file
+      setRemaining(Math.max(0, fileIds.current.length - ref.current))
+      if (roundRef.current !== round) return
+      if (next) {
+        setFileSide(next)
+        getFileUrl(next.hash).then((u) => {
+          if (roundRef.current !== round) return
+          if (u) setUrlSide(u)
+          setLoadingSide(false)
+          setTimeout(() => { if (roundRef.current === round) setFadingSide(false) }, 150)
+        }).catch(() => { if (roundRef.current !== round) return; setLoadingSide(false); setFadingSide(false) })
+      } else {
+        setLoadingSide(false); setFadingSide(false)
+      }
+    } else {
+      const setLoadingSide = side === 'left' ? setLoadingA : setLoadingB
+      const setFadingSide = side === 'left' ? setFadingA : setFadingB
+      const setFileSide = side === 'left' ? setFileA : setFileB
+      const setUrlSide = side === 'left' ? setUrlA : setUrlB
+      setFadingSide(true)
+      setLoadingSide(true)
+      queueIndexRef.current++
+      const skip = [file?.hash, fileA?.hash, fileB?.hash].filter((h): h is string => !!h)
+      const found = await findNextSupported(queueIndexRef.current, fileIdsRef.current, hashesRef.current, skip)
+      queueIndexRef.current = found.index
+      const next = found.file
+      setQueueRemaining(Math.max(0, fileIdsRef.current.length - queueIndexRef.current))
+      if (roundRef.current !== round) return
+      if (next) {
+        setFileSide(next)
+        getFileUrl(next.hash).then((u) => {
+          if (roundRef.current !== round) return
+          if (u) setUrlSide(u)
+          setLoadingSide(false)
+          setTimeout(() => { if (roundRef.current === round) setFadingSide(false) }, 150)
+        }).catch(() => { if (roundRef.current !== round) return; setLoadingSide(false); setFadingSide(false) })
+      } else {
+        setLoadingSide(false); setFadingSide(false)
+      }
+    }
+  }
+
   function handleKeyDown(e: globalThis.KeyboardEvent) {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return
     if (e.key === 'ArrowLeft' || e.key === 'a') { e.preventDefault(); decide('left') }
     else if (e.key === 'ArrowRight' || e.key === 'd') { e.preventDefault(); decide('right') }
     else if (e.key === ' ' || e.key === 's') { e.preventDefault(); decide('draw') }
+    else if (e.key === 'z') { e.preventDefault(); reject('left') }
+    else if (e.key === 'x') { e.preventDefault(); reject('right') }
   }
 
   useEffect(() => {
@@ -952,12 +1018,23 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
                     )
                   })()}
                   {(!isMobile || !smashFloatingPanel) && (
-                  <button
-                    className="bg-black/50 hover:bg-black hover:border active:bg-gray-900 active:border-green-400 hover:border-green-500 border border-transparent text-white text-xs min-h-[44px] min-w-[44px] px-2 py-0.5 rounded cursor-pointer transition-colors"
-                    onClick={e => { e.stopPropagation(); votingOpen && decide('left') }}
-                  >
-                    ← / A
-                  </button>
+                  <div className="flex gap-1">
+                    <button
+                      className="bg-black/50 hover:bg-black hover:border active:bg-gray-900 active:border-green-400 hover:border-green-500 border border-transparent text-white text-xs min-h-[44px] min-w-[44px] px-2 py-0.5 rounded cursor-pointer transition-colors"
+                      onClick={e => { e.stopPropagation(); votingOpen && decide('left') }}
+                    >
+                      ← / A
+                    </button>
+                    {likeServiceKey && (
+                    <button
+                      className="bg-black/50 hover:bg-red-900 hover:border-red-500 active:bg-red-950 active:border-red-400 border border-transparent text-red-400 text-xs min-h-[44px] min-w-[44px] px-2 py-0.5 rounded cursor-pointer transition-colors"
+                      onClick={e => { e.stopPropagation(); votingOpen && reject('left') }}
+                      title="Reject (z)"
+                    >
+                      ✕
+                    </button>
+                    )}
+                  </div>
                   )}
                 </div>
               )
@@ -1019,12 +1096,23 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
                     )
                   })()}
                   {(!isMobile || !smashFloatingPanel) && (
-                  <button
-                    className="bg-black/50 hover:bg-black hover:border active:bg-gray-900 active:border-green-400 hover:border-green-500 border border-transparent text-white text-xs min-h-[44px] min-w-[44px] px-2 py-0.5 rounded cursor-pointer transition-colors"
-                    onClick={e => { e.stopPropagation(); votingOpen && decide('right') }}
-                  >
-                    → / D
-                  </button>
+                  <div className="flex gap-1">
+                    <button
+                      className="bg-black/50 hover:bg-black hover:border active:bg-gray-900 active:border-green-400 hover:border-green-500 border border-transparent text-white text-xs min-h-[44px] min-w-[44px] px-2 py-0.5 rounded cursor-pointer transition-colors"
+                      onClick={e => { e.stopPropagation(); votingOpen && decide('right') }}
+                    >
+                      → / D
+                    </button>
+                    {likeServiceKey && (
+                    <button
+                      className="bg-black/50 hover:bg-red-900 hover:border-red-500 active:bg-red-950 active:border-red-400 border border-transparent text-red-400 text-xs min-h-[44px] min-w-[44px] px-2 py-0.5 rounded cursor-pointer transition-colors"
+                      onClick={e => { e.stopPropagation(); votingOpen && reject('right') }}
+                      title="Reject (x)"
+                    >
+                      ✕
+                    </button>
+                    )}
+                  </div>
                   )}
                 </div>
               )
@@ -1051,6 +1139,11 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
           <span className="text-green-400">{isMobile && orientation === 'portrait' ? 'Tap top' : '← / A'}</span> {isMobile && orientation === 'portrait' ? 'choose left' : 'choose left'}
           <span className="text-yellow-400">{isMobile && orientation === 'portrait' ? 'Tap center' : 'Space / S'}</span> draw
           <span className="text-green-400">{isMobile && orientation === 'portrait' ? 'Tap bottom' : '→ / D'}</span> {isMobile && orientation === 'portrait' ? 'choose right' : 'choose right'}
+          {likeServiceKey && (
+            <>
+              {' · '}<span className="text-red-400">Z</span> reject left{' · '}<span className="text-red-400">X</span> reject right
+            </>
+          )}
         </div>
       )}
 
@@ -1063,6 +1156,16 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
           >
             A
           </button>
+          {likeServiceKey && (
+          <button
+            className="w-14 h-14 bg-gray-600/80 hover:bg-red-700 active:bg-red-800 text-red-300 text-xs font-bold rounded-2xl shadow-lg flex items-center justify-center transition-colors"
+            onClick={() => reject('left')}
+            aria-label="Reject left"
+            title="Reject (z)"
+          >
+            ✕
+          </button>
+          )}
           <button
             className="w-14 h-14 bg-yellow-600/80 hover:bg-yellow-600 active:bg-yellow-700 text-white text-xs font-bold rounded-2xl shadow-lg flex items-center justify-center transition-colors"
             onClick={() => decide('draw')}
@@ -1070,6 +1173,16 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
           >
             Draw
           </button>
+          {likeServiceKey && (
+          <button
+            className="w-14 h-14 bg-gray-600/80 hover:bg-red-700 active:bg-red-800 text-red-300 text-xs font-bold rounded-2xl shadow-lg flex items-center justify-center transition-colors"
+            onClick={() => reject('right')}
+            aria-label="Reject right"
+            title="Reject (x)"
+          >
+            ✕
+          </button>
+          )}
           <button
             className="w-14 h-14 bg-red-600/80 hover:bg-red-600 active:bg-red-700 text-white text-xs font-bold rounded-2xl shadow-lg flex items-center justify-center transition-colors"
             onClick={() => decide('right')}
