@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell,
-  AreaChart, Area, ScatterChart, Scatter, Legend,
+  AreaChart, Area,
 } from 'recharts'
 import { useSettingsStore } from '../../stores/settings-store'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
@@ -19,9 +19,33 @@ interface CorrelationPoint {
   views: number
 }
 
+interface ViewBucket {
+  label: string
+  minViews: number
+  avgElo: number
+  count: number
+}
+
+const VIEW_BUCKETS: { label: string; min: number; max: number }[] = [
+  { label: '0', min: 0, max: 0 },
+  { label: '1-2', min: 1, max: 2 },
+  { label: '3-5', min: 3, max: 5 },
+  { label: '6-10', min: 6, max: 10 },
+  { label: '11-20', min: 11, max: 20 },
+  { label: '21-50', min: 21, max: 50 },
+  { label: '51-100', min: 51, max: 100 },
+  { label: '101-200', min: 101, max: 200 },
+  { label: '201-500', min: 201, max: 500 },
+  { label: '501-1K', min: 501, max: 1000 },
+  { label: '1K-2K', min: 1001, max: 2000 },
+  { label: '2K-5K', min: 2001, max: 5000 },
+  { label: '5K-10K', min: 5001, max: 10000 },
+  { label: '10K+', min: 10001, max: Infinity },
+]
+
 export function EloGraph() {
   const [data, setData] = useState<EloPoint[]>([])
-  const [correlationData, setCorrelationData] = useState<CorrelationPoint[]>([])
+  const [correlationData, setCorrelationData] = useState<ViewBucket[]>([])
   const [loading, setLoading] = useState(false)
   const [source, setSource] = useState<'cache' | 'leaderboard'>('cache')
   const [viewState, setViewState] = useState<'distribution' | 'correlation'>('distribution')
@@ -78,7 +102,7 @@ export function EloGraph() {
       })
       const ids = result.file_ids || []
       const dist = new Map<number, number>()
-      const corr: CorrelationPoint[] = []
+      const buckets = VIEW_BUCKETS.map((b) => ({ ...b, eloSum: 0, count: 0 }))
 
       for (let i = 0; i < ids.length; i += 500) {
         const chunk = ids.slice(i, i + 500)
@@ -89,7 +113,9 @@ export function EloGraph() {
             if (typeof elo === 'number') {
               const binned = binSize > 1 ? Math.floor(elo / binSize) * binSize : elo
               dist.set(binned, (dist.get(binned) || 0) + 1)
-              corr.push({ elo, views: getViewCount(f) })
+              const views = getViewCount(f)
+              const bucket = buckets.find((b) => views >= b.min && views <= b.max)
+              if (bucket) { bucket.eloSum += elo; bucket.count++ }
             }
           }
         }
@@ -101,7 +127,11 @@ export function EloGraph() {
           .map(([elo, count]) => ({ elo, count }))
           .sort((a, b) => a.elo - b.elo)
       )
-      setCorrelationData(corr)
+      setCorrelationData(
+        buckets
+          .filter((b) => b.count > 0)
+          .map((b) => ({ label: b.label, minViews: b.min, avgElo: Math.round(b.eloSum / b.count), count: b.count }))
+      )
     } catch (e) {
       console.error('Failed to load ELO distribution:', e)
     } finally {
@@ -131,17 +161,22 @@ export function EloGraph() {
         )
       }
       return (
-        <div className="w-full" style={{ height: 600 }}>
-          <ResponsiveContainer width="100%" height={600}>
-            <ScatterChart margin={{ top: 10, right: 30, left: 10, bottom: 50 }}>
+        <div className="w-full" style={{ height: 450 }}>
+          <ResponsiveContainer width="100%" height={450}>
+            <BarChart data={correlationData} margin={{ top: 10, right: 20, left: 0, bottom: 50 }}>
               <CartesianGrid strokeDasharray="2 5" stroke={darkMode ? '#374151' : '#d1d5db'} strokeWidth={0.5} />
-              <XAxis dataKey="views" name="Views" stroke={darkMode ? '#6b7280' : '#9ca3af'} tick={{ fill: darkMode ? '#9ca3af' : '#6b7280', fontSize: 11 }} label={{ value: 'Total Views', position: 'insideBottom', offset: -20, fontSize: 12, fill: darkMode ? '#9ca3af' : '#6b7280' }} />
-              <YAxis dataKey="elo" name="ELO" stroke={darkMode ? '#6b7280' : '#9ca3af'} tick={{ fill: darkMode ? '#9ca3af' : '#6b7280', fontSize: 11 }} label={{ value: 'ELO Rating', angle: -90, position: 'insideLeft', offset: 10, fontSize: 12, fill: darkMode ? '#9ca3af' : '#6b7280' }} />
-              <Tooltip contentStyle={{ fontSize: 12, backgroundColor: darkMode ? '#1f2937' : '#fff', border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`, color: darkMode ? '#e5e7eb' : '#111827' }} formatter={(value: number, name: string) => [value, name]} />
-              <Legend verticalAlign="bottom" height={36} />
-              <Scatter name="Files" data={correlationData} fill="#3b82f6" opacity={0.6} />
-            </ScatterChart>
+              <XAxis dataKey="label" stroke={darkMode ? '#6b7280' : '#9ca3af'} tick={{ fill: darkMode ? '#9ca3af' : '#6b7280', fontSize: 10 }} angle={-30} textAnchor="end" height={60} label={{ value: 'Total Views', position: 'insideBottom', offset: -30, fontSize: 12, fill: darkMode ? '#9ca3af' : '#6b7280' }} />
+              <YAxis stroke={darkMode ? '#6b7280' : '#9ca3af'} tick={{ fill: darkMode ? '#9ca3af' : '#6b7280', fontSize: 11 }} label={{ value: 'Avg ELO Rating', angle: -90, position: 'insideLeft', offset: 10, fontSize: 12, fill: darkMode ? '#9ca3af' : '#6b7280' }} />
+              <Tooltip contentStyle={{ fontSize: 12, backgroundColor: darkMode ? '#1f2937' : '#fff', border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`, color: darkMode ? '#e5e7eb' : '#111827' }} formatter={(value: number, name: string) => {
+                if (name === 'avgElo') return [value, 'Avg ELO']
+                return [value, 'Files']
+              }} labelFormatter={(label: string) => `Views: ${label}`} />
+              <Bar dataKey="avgElo" radius={[2, 2, 0, 0]} fill="#3b82f6" />
+            </BarChart>
           </ResponsiveContainer>
+          <div className="text-xs text-gray-500 text-center mt-1">
+            {correlationData.reduce((s, b) => s + b.count, 0)} files bucketed into {correlationData.length} view ranges
+          </div>
         </div>
       )
     }
