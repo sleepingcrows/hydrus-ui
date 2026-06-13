@@ -26,22 +26,7 @@ interface ViewBucket {
   count: number
 }
 
-const VIEW_BUCKETS: { label: string; min: number; max: number }[] = [
-  { label: '0', min: 0, max: 0 },
-  { label: '1-2', min: 1, max: 2 },
-  { label: '3-5', min: 3, max: 5 },
-  { label: '6-10', min: 6, max: 10 },
-  { label: '11-20', min: 11, max: 20 },
-  { label: '21-50', min: 21, max: 50 },
-  { label: '51-100', min: 51, max: 100 },
-  { label: '101-200', min: 101, max: 200 },
-  { label: '201-500', min: 201, max: 500 },
-  { label: '501-1K', min: 501, max: 1000 },
-  { label: '1K-2K', min: 1001, max: 2000 },
-  { label: '2K-5K', min: 2001, max: 5000 },
-  { label: '5K-10K', min: 5001, max: 10000 },
-  { label: '10K+', min: 10001, max: Infinity },
-]
+const BUCKET_COUNT = 10
 
 export function EloGraph() {
   const [data, setData] = useState<EloPoint[]>([])
@@ -102,7 +87,7 @@ export function EloGraph() {
       })
       const ids = result.file_ids || []
       const dist = new Map<number, number>()
-      const buckets = VIEW_BUCKETS.map((b) => ({ ...b, eloSum: 0, count: 0 }))
+      const rawCorr: CorrelationPoint[] = []
 
       for (let i = 0; i < ids.length; i += 500) {
         const chunk = ids.slice(i, i + 500)
@@ -113,9 +98,7 @@ export function EloGraph() {
             if (typeof elo === 'number') {
               const binned = binSize > 1 ? Math.floor(elo / binSize) * binSize : elo
               dist.set(binned, (dist.get(binned) || 0) + 1)
-              const views = getViewCount(f)
-              const bucket = buckets.find((b) => views >= b.min && views <= b.max)
-              if (bucket) { bucket.eloSum += elo; bucket.count++ }
+              rawCorr.push({ elo, views: getViewCount(f) })
             }
           }
         }
@@ -127,6 +110,21 @@ export function EloGraph() {
           .map(([elo, count]) => ({ elo, count }))
           .sort((a, b) => a.elo - b.elo)
       )
+
+      const minViews = rawCorr.reduce((m, p) => Math.min(m, p.views), Infinity)
+      const maxViews = rawCorr.reduce((m, p) => Math.max(m, p.views), -Infinity)
+      const range = Math.max(1, maxViews - minViews)
+      const bucketSize = range / BUCKET_COUNT
+      const buckets = Array.from({ length: BUCKET_COUNT }, (_, i) => {
+        const lo = Math.floor(minViews + i * bucketSize)
+        const hi = Math.ceil(minViews + (i + 1) * bucketSize - 1)
+        return { label: hi > lo ? `${lo}-${hi}` : String(lo), min: lo, max: hi, eloSum: 0, count: 0 }
+      })
+      for (const p of rawCorr) {
+        const idx = Math.min(buckets.length - 1, Math.floor((p.views - minViews) / bucketSize))
+        const b = buckets[idx]
+        b.eloSum += p.elo; b.count++
+      }
       setCorrelationData(
         buckets
           .filter((b) => b.count > 0)
