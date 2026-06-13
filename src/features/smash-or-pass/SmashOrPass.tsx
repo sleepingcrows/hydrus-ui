@@ -248,7 +248,8 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
     while (index < fileIds.length) {
       const file = await loadFileByIndex(index, fileIds, hashes)
       if (!file) break
-      if (isUnsupportedMime(file.mime) || (skipHashes && skipHashes.includes(file.hash))) {
+      const isDisliked = likeServiceKey && file.ratings?.[likeServiceKey] === false
+      if (isUnsupportedMime(file.mime) || isDisliked || (skipHashes && skipHashes.includes(file.hash))) {
         index++
         continue
       }
