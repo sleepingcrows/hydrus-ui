@@ -100,7 +100,8 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
   useEffect(() => {
     for (const f of [fileA, fileB]) {
       if (!f?.hash) continue
-      const current = viewCountCacheRef.current.get(f.hash) ?? getViewCount(f)
+      if (viewCountCacheRef.current.has(f.hash)) continue
+      const current = getViewCount(f)
       viewCountCacheRef.current.set(f.hash, current + 1)
       incrementFileViewtime({ hash: f.hash, canvas_type: 4, views: 1, viewtime: 0 })
     }
