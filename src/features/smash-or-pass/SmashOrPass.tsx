@@ -584,7 +584,33 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
             }, delay)
           }).catch(() => { if (roundRef.current !== thisRound) return; setLoadingB(false); setFadingB(false) })
         } else {
-          setLoadingB(false); setFadingB(false)
+          await fillQueueB()
+          queueIndexRefB.current = 0
+          setQueueRemainingB(fileIdsRefB.current.length)
+          const retry = await findNextSupported(0, fileIdsRefB.current, hashesRefB.current, [fileA.hash])
+          if (roundRef.current !== thisRound) return
+          if (retry.file) {
+            const nb = retry.file
+            setFileB(nb)
+            queueIndexRefB.current = retry.index + 1
+            if (!ratingsRef.current.has(nb.file_id)) ratingsRef.current.set(nb.file_id, createRating())
+            if (ratingServiceKey) {
+              const v = nb.ratings?.[ratingServiceKey]
+              setSyncedRatings((prev) => { const n = new Map(prev); n.set(nb.file_id, typeof v === 'number' ? v : 0); return n })
+            }
+            getFileUrl(nb.hash).then((u) => {
+              if (roundRef.current !== thisRound) return
+              if (u) setUrlB(u)
+              const delay = useSettingsStore.getState().terminatedMode ? 750 : 0
+              setTimeout(() => {
+                setLoadingB(false)
+                setTimeout(() => { if (roundRef.current === thisRound) setFadingB(false) }, 150)
+              }, delay)
+            }).catch(() => { if (roundRef.current !== thisRound) return; setLoadingB(false); setFadingB(false) })
+          } else {
+            setFileA(null); setFileB(null); setUrlA(null); setUrlB(null)
+            setLoadingB(false); setFadingB(false); setLoading(false)
+          }
         }
       } else if (winner === 'right') {
         setFadingA(true)
@@ -612,7 +638,33 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
             }, delay)
           }).catch(() => { if (roundRef.current !== thisRound) return; setLoadingA(false); setFadingA(false) })
         } else {
-          setLoadingA(false); setFadingA(false)
+          await fillQueueA()
+          queueIndexRefA.current = 0
+          setQueueRemainingA(fileIdsRefA.current.length)
+          const retry = await findNextSupported(0, fileIdsRefA.current, hashesRefA.current, [fileB.hash])
+          if (roundRef.current !== thisRound) return
+          if (retry.file) {
+            const na = retry.file
+            setFileA(na)
+            queueIndexRefA.current = retry.index + 1
+            if (!ratingsRef.current.has(na.file_id)) ratingsRef.current.set(na.file_id, createRating())
+            if (ratingServiceKey) {
+              const v = na.ratings?.[ratingServiceKey]
+              setSyncedRatings((prev) => { const n = new Map(prev); n.set(na.file_id, typeof v === 'number' ? v : 0); return n })
+            }
+            getFileUrl(na.hash).then((u) => {
+              if (roundRef.current !== thisRound) return
+              if (u) setUrlA(u)
+              const delay = useSettingsStore.getState().terminatedMode ? 750 : 0
+              setTimeout(() => {
+                setLoadingA(false)
+                setTimeout(() => { if (roundRef.current === thisRound) setFadingA(false) }, 150)
+              }, delay)
+            }).catch(() => { if (roundRef.current !== thisRound) return; setLoadingA(false); setFadingA(false) })
+          } else {
+            setFileA(null); setFileB(null); setUrlA(null); setUrlB(null)
+            setLoadingA(false); setFadingA(false); setLoading(false)
+          }
         }
       } else {
         roundRef.current++
