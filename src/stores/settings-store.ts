@@ -250,6 +250,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
   hydrate: () => {
     if (loadBool('hydrus-dark-mode')) document.documentElement.classList.add('dark')
+    try { localStorage.removeItem('hydrus-view-count-service-key') } catch {}
   },
   rebuildRatingsCache: async (tags: string[]) => {
     set({ ratingsCacheBuildProgress: 0 })

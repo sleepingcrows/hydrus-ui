@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { searchFiles, fetchFileMetadata, fetchFileMetadataByIds, getFileUrl } from '../../api/search'
 import { setRating } from '../../api/ratings'
-import { incrementFileViewtime, setFileViewtime } from '../../api/times'
+import { incrementFileViewtime } from '../../api/times'
 import type { FileMetadata } from '../../api/types'
-import { getViewCount, getLegacyViewCountKey } from '../../api/types'
+import { getViewCount } from '../../api/types'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
 import { useMobile } from '../../hooks/use-mobile'
@@ -105,15 +105,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
       countedViewsRef.current.add(f.hash)
 
       const current = getViewCount(f)
-      const legacyKey = getLegacyViewCountKey()
-      const hasLegacy = legacyKey && f.ratings?.[legacyKey] != null && typeof f.ratings[legacyKey] === 'number'
-
-      if (hasLegacy) {
-        const legacyVal = f.ratings[legacyKey] as number
-        setFileViewtime({ hash: f.hash, canvas_type: 4, views: legacyVal + 1, viewtime: 0 })
-      } else {
-        incrementFileViewtime({ hash: f.hash, canvas_type: 4, views: 1, viewtime: 0 })
-      }
+      incrementFileViewtime({ hash: f.hash, canvas_type: 4, views: 1, viewtime: 0 })
       viewCountCacheRef.current.set(f.hash, current + 1)
     }
   }, [fileA?.hash, fileB?.hash])

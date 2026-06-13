@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { getFileUrl } from '../../api/search'
 import type { FileMetadata } from '../../api/types'
-import { getViewCount, getLegacyViewCountKey } from '../../api/types'
+import { getViewCount } from '../../api/types'
 import { SERVICE_TYPE } from '../../api/types'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
 import { setRating } from '../../api/ratings'
-import { incrementFileViewtime, setFileViewtime } from '../../api/times'
+import { incrementFileViewtime } from '../../api/times'
 import { useMobile } from '../../hooks/use-mobile'
 import { FileRenderer } from '../../components/FileRenderer'
 import { TagEditor } from '../tags/TagEditor'
@@ -158,22 +158,13 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   }, [])
 
   useEffect(() => {
-    const f = file
-    const hash = f?.hash
+    const hash = file?.hash
     if (!hash) return
     if (countedViewsRef.current.has(hash)) return
     countedViewsRef.current.add(hash)
 
-    const current = getViewCount(f)
-    const legacyKey = getLegacyViewCountKey()
-    const hasLegacy = legacyKey && f?.ratings?.[legacyKey] != null && typeof f.ratings[legacyKey] === 'number'
-
-    if (hasLegacy) {
-      const legacyVal = f.ratings[legacyKey] as number
-      setFileViewtime({ hash, canvas_type: 4, views: legacyVal + 1, viewtime: 0 })
-    } else {
-      incrementFileViewtime({ hash, canvas_type: 4, views: 1, viewtime: 0 })
-    }
+    const current = getViewCount(file)
+    incrementFileViewtime({ hash, canvas_type: 4, views: 1, viewtime: 0 })
     viewCountCacheRef.current.set(hash, current + 1)
   }, [file?.hash])
 
