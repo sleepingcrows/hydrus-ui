@@ -838,7 +838,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
     else if (e.key === 'ArrowRight' || e.key === 'd') { e.preventDefault(); decide('right') }
     else if (e.key === ' ' || e.key === 's') { e.preventDefault(); decide('draw') }
     else if (e.key === 'z') { e.preventDefault(); reject('left') }
-    else if (e.key === 'x') { e.preventDefault(); reject('right') }
+    else if (e.key === 'c') { e.preventDefault(); reject('right') }
   }
 
   useEffect(() => {
@@ -1029,7 +1029,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
                     <button
                       className="bg-black/50 hover:bg-red-900 hover:border-red-500 active:bg-red-950 active:border-red-400 border border-transparent text-red-400 text-xs min-h-[44px] min-w-[44px] px-2 py-0.5 rounded cursor-pointer transition-colors"
                       onClick={e => { e.stopPropagation(); votingOpen && reject('left') }}
-                      title="Reject (z)"
+                      title="Reject (Z)"
                     >
                       ✕
                     </button>
@@ -1107,7 +1107,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
                     <button
                       className="bg-black/50 hover:bg-red-900 hover:border-red-500 active:bg-red-950 active:border-red-400 border border-transparent text-red-400 text-xs min-h-[44px] min-w-[44px] px-2 py-0.5 rounded cursor-pointer transition-colors"
                       onClick={e => { e.stopPropagation(); votingOpen && reject('right') }}
-                      title="Reject (x)"
+                      title="Reject (C)"
                     >
                       ✕
                     </button>
@@ -1141,7 +1141,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
           <span className="text-green-400">{isMobile && orientation === 'portrait' ? 'Tap bottom' : '→ / D'}</span> {isMobile && orientation === 'portrait' ? 'choose right' : 'choose right'}
           {likeServiceKey && (
             <>
-              {' · '}<span className="text-red-400">Z</span> reject left{' · '}<span className="text-red-400">X</span> reject right
+              {' · '}<span className="text-red-400">Z</span> reject left{' · '}<span className="text-red-400">C</span> reject right
             </>
           )}
         </div>
@@ -1178,7 +1178,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
             className="w-14 h-14 bg-gray-600/80 hover:bg-red-700 active:bg-red-800 text-red-300 text-xs font-bold rounded-2xl shadow-lg flex items-center justify-center transition-colors"
             onClick={() => reject('right')}
             aria-label="Reject right"
-            title="Reject (x)"
+            title="Reject (C)"
           >
             ✕
           </button>
