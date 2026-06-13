@@ -102,15 +102,59 @@ export const RATING_SERVICE_TYPES: ReadonlySet<number> = new Set([
 
 // Hydrus API file_sort_type enum:
 // 0 file size, 1 duration, 2 import time, 3 filetype, 4 random,
-// 5 width, 6 height, 7 ratio, 8 num pixels, ...
+// 5 width, 6 height, 7 ratio, 8 num pixels, 9 tag count,
+// 10 media views, 11 viewtime, 12 bitrate, 13 has audio,
+// 14 modified time, 15 framerate, 16 frames, 18 last viewed,
+// 19 archive timestamp, 20 hash hex, 21 pixel hash, 22 blurhash
 export const FILE_SORT_TYPES = {
   FILE_SIZE: 0,
-  IMPORT_TIME: 2,
   DURATION: 1,
-  NUMBER_OF_PIXELS: 8,
-  HASH: 20,
+  IMPORT_TIME: 2,
+  FILETYPE: 3,
   RANDOM: 4,
+  WIDTH: 5,
+  HEIGHT: 6,
+  RATIO: 7,
+  NUMBER_OF_PIXELS: 8,
+  TAG_COUNT: 9,
+  MEDIA_VIEWS: 10,
+  VIEWTIME: 11,
+  BITRATE: 12,
+  HAS_AUDIO: 13,
+  MODIFIED_TIME: 14,
+  FRAMERATE: 15,
+  FRAMES: 16,
+  LAST_VIEWED: 18,
+  ARCHIVE_TIMESTAMP: 19,
+  HASH: 20,
+  PIXEL_HASH: 21,
+  BLURHASH: 22,
 } as const
+
+export const SORT_TYPE_LABELS: Record<number, string> = {
+  [FILE_SORT_TYPES.FILE_SIZE]: 'File Size',
+  [FILE_SORT_TYPES.DURATION]: 'Duration',
+  [FILE_SORT_TYPES.IMPORT_TIME]: 'Import Time',
+  [FILE_SORT_TYPES.FILETYPE]: 'File Type',
+  [FILE_SORT_TYPES.RANDOM]: 'Random',
+  [FILE_SORT_TYPES.WIDTH]: 'Width',
+  [FILE_SORT_TYPES.HEIGHT]: 'Height',
+  [FILE_SORT_TYPES.RATIO]: 'Ratio',
+  [FILE_SORT_TYPES.NUMBER_OF_PIXELS]: 'Pixels',
+  [FILE_SORT_TYPES.TAG_COUNT]: 'Tag Count',
+  [FILE_SORT_TYPES.MEDIA_VIEWS]: 'Media Views',
+  [FILE_SORT_TYPES.VIEWTIME]: 'Viewtime',
+  [FILE_SORT_TYPES.BITRATE]: 'Bitrate',
+  [FILE_SORT_TYPES.HAS_AUDIO]: 'Has Audio',
+  [FILE_SORT_TYPES.MODIFIED_TIME]: 'Modified Time',
+  [FILE_SORT_TYPES.FRAMERATE]: 'Framerate',
+  [FILE_SORT_TYPES.FRAMES]: 'Frames',
+  [FILE_SORT_TYPES.LAST_VIEWED]: 'Last Viewed',
+  [FILE_SORT_TYPES.ARCHIVE_TIMESTAMP]: 'Archive Timestamp',
+  [FILE_SORT_TYPES.HASH]: 'Hash',
+  [FILE_SORT_TYPES.PIXEL_HASH]: 'Pixel Hash',
+  [FILE_SORT_TYPES.BLURHASH]: 'Blurhash',
+}
 
 export interface RatingService extends Service {
   type: 6 | 7 | 22

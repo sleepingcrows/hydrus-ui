@@ -6,6 +6,7 @@ import { TagSearch } from './TagSearch'
 import { FILE_SORT_TYPES, SERVICE_TYPE } from '../../api/types'
 import { GalleryCarousel } from './GalleryCarousel'
 import { TagChip } from '../../components/TagChip'
+import { SortDropdown } from '../../components/SortDropdown'
 import { fetchServices } from '../../api/services'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { useSettingsStore } from '../../stores/settings-store'
@@ -552,24 +553,7 @@ export function SearchPage({ presetTags, initialTags, initialSortType, initialSo
                 <div className="pt-2 pb-1 space-y-2">
                   <TagSearch tags={tags} onTagsChange={handleTagsChange} onSubmit={doSearch} />
                   <div className="flex gap-2 items-center">
-                    <select
-                        className="text-sm border rounded px-2 py-1 min-h-[44px] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-600"
-                        value={sortType}
-                        onChange={(e) => setSortType(Number(e.target.value))}
-                      >
-                        <option value={FILE_SORT_TYPES.IMPORT_TIME}>Import Time</option>
-                        <option value={FILE_SORT_TYPES.FILE_SIZE}>File Size</option>
-                        <option value={FILE_SORT_TYPES.DURATION}>Duration</option>
-                        <option value={FILE_SORT_TYPES.NUMBER_OF_PIXELS}>Pixels</option>
-                        <option value={FILE_SORT_TYPES.RANDOM}>Random</option>
-                      </select>
-                      <button
-                        className="text-sm px-2 py-1 min-h-[44px] min-w-[44px] border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600"
-                        title={sortAsc ? 'Newest first' : 'Oldest first'}
-                        onClick={() => setSortAsc(!sortAsc)}
-                      >
-                        {sortAsc ? '\u2191' : '\u2193'}
-                      </button>
+                    <SortDropdown sortType={sortType} sortAsc={sortAsc} onSortTypeChange={setSortType} onSortAscChange={setSortAsc} />
                       <button
                         className="px-3 py-1 min-h-[44px] bg-blue-600 text-white rounded text-sm disabled:opacity-50 hover:bg-blue-700 active:bg-blue-800"
                         onClick={handleSearchSubmit}
@@ -587,24 +571,7 @@ export function SearchPage({ presetTags, initialTags, initialSortType, initialSo
                 <div className="flex-1 min-w-0">
                   <TagSearch tags={tags} onTagsChange={handleTagsChange} onSubmit={doSearch} />
                 </div>
-                <select
-                  className="text-sm border rounded px-2 py-1 min-h-[44px] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-600"
-                  value={sortType}
-                  onChange={(e) => setSortType(Number(e.target.value))}
-                >
-                  <option value={FILE_SORT_TYPES.IMPORT_TIME}>Import Time</option>
-                  <option value={FILE_SORT_TYPES.FILE_SIZE}>File Size</option>
-                  <option value={FILE_SORT_TYPES.DURATION}>Duration</option>
-                  <option value={FILE_SORT_TYPES.NUMBER_OF_PIXELS}>Pixels</option>
-                  <option value={FILE_SORT_TYPES.RANDOM}>Random</option>
-                </select>
-                <button
-                  className="text-sm px-2 py-1 min-h-[44px] min-w-[44px] border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600"
-                  title={sortAsc ? 'Newest first' : 'Oldest first'}
-                  onClick={() => setSortAsc(!sortAsc)}
-                >
-                  {sortAsc ? '\u2191' : '\u2193'}
-                </button>
+                <SortDropdown sortType={sortType} sortAsc={sortAsc} onSortTypeChange={setSortType} onSortAscChange={setSortAsc} />
                 <button
                   className="px-3 py-1 min-h-[44px] bg-blue-600 text-white rounded text-sm disabled:opacity-50 hover:bg-blue-700 active:bg-blue-800"
                   onClick={handleSearchSubmit}

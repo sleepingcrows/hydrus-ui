@@ -10,6 +10,7 @@ import { useMobile } from '../../hooks/use-mobile'
 import { rate, createRating, type TrueSkillRating } from './trueskill'
 import { insertTagRatingRecords, getAllFileRatings, upsertFileRating, clearAllRatings } from './tag-history'
 import { SERVICE_TYPE, FILE_SORT_TYPES } from '../../api/types'
+import { SortDropdown } from '../../components/SortDropdown'
 import { TagSearch } from '../search/TagSearch'
 import { FileRenderer, isUnsupportedMime } from '../../components/FileRenderer'
 
@@ -62,6 +63,8 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
   const [queueRemainingA, setQueueRemainingA] = useState(0)
   const [queueRemainingB, setQueueRemainingB] = useState(0)
   const [eloRanks, setEloRanks] = useState<Map<number, number>>(new Map())
+  const [sortType, setSortType] = useState<number>(FILE_SORT_TYPES.RANDOM)
+  const [sortAsc, setSortAsc] = useState(false)
 
   const fileIdsRef = useRef<number[]>([])
   const hashesRef = useRef<string[]>([])
@@ -156,8 +159,8 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
       const tags = custom.length > 0 ? custom : ['system:everything']
       const result = await searchFiles({
         tags,
-        file_sort_type: FILE_SORT_TYPES.RANDOM,
-        file_sort_asc: false,
+        file_sort_type: sortType,
+        file_sort_asc: sortAsc,
         return_hashes: true,
         file_limit: FILE_LIMIT,
       })
@@ -185,8 +188,8 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
       const tags = custom.length > 0 ? custom : ['system:everything']
       const result = await searchFiles({
         tags,
-        file_sort_type: FILE_SORT_TYPES.RANDOM,
-        file_sort_asc: false,
+        file_sort_type: sortType,
+        file_sort_asc: sortAsc,
         return_hashes: true,
         file_limit: FILE_LIMIT,
       })
@@ -208,8 +211,8 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
       const tags = custom.length > 0 ? custom : ['system:everything']
       const result = await searchFiles({
         tags,
-        file_sort_type: FILE_SORT_TYPES.RANDOM,
-        file_sort_asc: false,
+        file_sort_type: sortType,
+        file_sort_asc: sortAsc,
         return_hashes: true,
         file_limit: FILE_LIMIT,
       })
@@ -784,7 +787,10 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
             <TagSearch disableHistory tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
           )}
         </div>
-      )}
+      </div>
+      <div className="flex justify-center px-2 py-1">
+        <SortDropdown sortType={sortType} sortAsc={sortAsc} onSortTypeChange={setSortType} onSortAscChange={setSortAsc} />
+      </div>
       <div className={`flex justify-center ${isMobile ? 'gap-2 text-[10px]' : 'gap-6'} py-2 text-sm text-gray-500 flex-wrap`}>
         <span>Rounds <b className="text-green-400">{stats.wins}</b></span>
         {stats.streakA > 0 && <span>A Streak <b className={stats.streakA >= 10 ? 'text-lime-400' : stats.streakA >= 5 ? 'text-orange-400' : 'text-gray-400'}>{stats.streakA}</b></span>}
