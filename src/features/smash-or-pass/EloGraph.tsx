@@ -26,7 +26,7 @@ interface ViewBucket {
   count: number
 }
 
-const BUCKET_COUNT = 10
+
 
 export function EloGraph() {
   const [data, setData] = useState<EloPoint[]>([])
@@ -111,17 +111,17 @@ export function EloGraph() {
           .sort((a, b) => a.elo - b.elo)
       )
 
-      const minViews = rawCorr.reduce((m, p) => Math.min(m, p.views), Infinity)
-      const maxViews = rawCorr.reduce((m, p) => Math.max(m, p.views), -Infinity)
-      const range = Math.max(1, maxViews - minViews)
-      const bucketSize = range / BUCKET_COUNT
-      const buckets = Array.from({ length: BUCKET_COUNT }, (_, i) => {
-        const lo = Math.floor(minViews + i * bucketSize)
-        const hi = Math.ceil(minViews + (i + 1) * bucketSize - 1)
-        return { label: hi > lo ? `${lo}-${hi}` : String(lo), min: lo, max: hi, eloSum: 0, count: 0 }
+      const maxViews = rawCorr.reduce((m, p) => Math.max(m, p.views), 0)
+      const bucketStep = 10
+      const bucketCount = Math.ceil((maxViews + 1) / bucketStep)
+      const buckets = Array.from({ length: bucketCount }, (_, i) => {
+        const lo = i * bucketStep
+        const hi = i * bucketStep + bucketStep - 1
+        const label = lo === 0 ? '0' : hi > maxViews ? `${lo}+` : `${lo}-${hi}`
+        return { label, min: lo, max: hi, eloSum: 0, count: 0 }
       })
       for (const p of rawCorr) {
-        const idx = Math.min(buckets.length - 1, Math.floor((p.views - minViews) / bucketSize))
+        const idx = Math.min(buckets.length - 1, Math.floor(p.views / bucketStep))
         const b = buckets[idx]
         b.eloSum += p.elo; b.count++
       }
