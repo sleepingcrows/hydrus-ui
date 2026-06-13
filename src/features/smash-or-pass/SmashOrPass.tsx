@@ -415,7 +415,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
   }, [syncedRatings])
 
   async function decide(winner: 'left' | 'right' | 'draw') {
-    if (!fileA || !fileB) return
+    if (!fileA || !fileB || endState) return
 
     const ratingA = ratingsRef.current.get(fileA.file_id) || createRating()
     const ratingB = ratingsRef.current.get(fileB.file_id) || createRating()
