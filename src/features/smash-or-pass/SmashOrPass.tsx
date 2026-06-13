@@ -51,6 +51,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
   const [glowA, setGlowA] = useState(0)
   const [glowB, setGlowB] = useState(0)
   const [swipeDir, setSwipeDir] = useState<'up' | 'down' | 'right' | null>(null)
+  const [endState, setEndState] = useState<'a-wins' | 'b-wins' | null>(null)
 
   const smashPassTags = useSettingsStore((s) => s.smashPassTags)
   const setSmashPassTags = useSettingsStore((s) => s.setSmashPassTags)
@@ -608,7 +609,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
               }, delay)
             }).catch(() => { if (roundRef.current !== thisRound) return; setLoadingB(false); setFadingB(false) })
           } else {
-            setFileA(null); setFileB(null); setUrlA(null); setUrlB(null)
+            setEndState('a-wins')
             setLoadingB(false); setFadingB(false); setLoading(false)
           }
         }
@@ -662,7 +663,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
               }, delay)
             }).catch(() => { if (roundRef.current !== thisRound) return; setLoadingA(false); setFadingA(false) })
           } else {
-            setFileA(null); setFileB(null); setUrlA(null); setUrlB(null)
+            setEndState('b-wins')
             setLoadingA(false); setFadingA(false); setLoading(false)
           }
         }
@@ -754,6 +755,17 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
       setQueueRemaining(fileIdsRef.current.length)
       fillQueue().then(() => loadMatch())
     }
+  }
+
+  async function handleRequeue() {
+    setEndState(null)
+    setLoading(true)
+    setFileA(null); setFileB(null); setUrlA(null); setUrlB(null)
+    queueIndexRefA.current = 0; queueIndexRefB.current = 0
+    roundRef.current++
+    await Promise.all([fillQueueA(), fillQueueB()])
+    setQueueRemainingA(fileIdsRefA.current.length); setQueueRemainingB(fileIdsRefB.current.length)
+    loadMatch()
   }
 
   function handleKeyDown(e: globalThis.KeyboardEvent) {
@@ -874,12 +886,28 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
             </div>
           </div>
         )}
-        {!loading && (!fileA || !fileB) && (
+        {!loading && (!fileA || !fileB) && !endState && (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-4">
             <p className="text-lg">No more files!</p>
             <button className="px-4 py-2 min-h-[44px] bg-blue-600 text-white rounded hover:bg-blue-700 active:bg-blue-800" onClick={loadMatch}>
               Try Again
             </button>
+          </div>
+        )}
+        {endState && (
+          <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            <div className={`text-2xl font-bold ${endState === 'a-wins' ? 'text-green-400' : 'text-blue-400'}`}>
+              Queue {endState === 'a-wins' ? 'A' : 'B'} Wins!
+            </div>
+            <p className="text-sm text-gray-400">
+              Other queue has no matching files.
+            </p>
+            <div className="flex gap-3">
+              <button className="px-4 py-2 min-h-[44px] bg-blue-600 text-white rounded hover:bg-blue-700 active:bg-blue-800" onClick={handleRequeue}>
+                Requeue
+              </button>
+              <span className="text-xs text-gray-500 self-center">or change tags above</span>
+            </div>
           </div>
         )}
 
