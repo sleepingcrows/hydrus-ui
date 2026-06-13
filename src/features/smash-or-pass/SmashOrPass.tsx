@@ -787,7 +787,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
             <TagSearch disableHistory tags={smashPassTags} onTagsChange={(t) => { setSmashPassTags(t); setTagVersion((v) => v + 1) }} />
           )}
         </div>
-      </div>
+      )}
       <div className="flex justify-center px-2 py-1">
         <SortDropdown sortType={sortType} sortAsc={sortAsc} onSortTypeChange={setSortType} onSortAscChange={setSortAsc} />
       </div>
