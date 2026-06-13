@@ -96,17 +96,13 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
       }
     })
   }, [])
-  const countedViewsRef = useRef<Set<string>>(new Set())
   const viewCountCacheRef = useRef<Map<string, number>>(new Map())
   useEffect(() => {
     for (const f of [fileA, fileB]) {
       if (!f?.hash) continue
-      if (countedViewsRef.current.has(f.hash)) continue
-      countedViewsRef.current.add(f.hash)
-
-      const current = getViewCount(f)
-      incrementFileViewtime({ hash: f.hash, canvas_type: 4, views: 1, viewtime: 0 })
+      const current = viewCountCacheRef.current.get(f.hash) ?? getViewCount(f)
       viewCountCacheRef.current.set(f.hash, current + 1)
+      incrementFileViewtime({ hash: f.hash, canvas_type: 4, views: 1, viewtime: 0 })
     }
   }, [fileA?.hash, fileB?.hash])
   const isNumerical = false

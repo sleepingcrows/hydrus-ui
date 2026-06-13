@@ -54,7 +54,6 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   const hashRef = useRef(file?.hash)
   hashRef.current = file?.hash
   const viewCountCacheRef = useRef<Map<string, number>>(new Map())
-  const countedViewsRef = useRef<Set<string>>(new Set())
   const likeKeyRef = useRef<string | undefined>(undefined)
   const configuredLikeKey = useSettingsStore.getState().likeServiceKey
   const services = useRatingServicesStore.getState().services
@@ -160,12 +159,9 @@ export function GalleryCarousel({ files, initialIndex, onClose, hasMore, onReque
   useEffect(() => {
     const hash = file?.hash
     if (!hash) return
-    if (countedViewsRef.current.has(hash)) return
-    countedViewsRef.current.add(hash)
-
-    const current = getViewCount(file)
-    incrementFileViewtime({ hash, canvas_type: 4, views: 1, viewtime: 0 })
+    const current = viewCountCacheRef.current.get(hash) ?? getViewCount(file)
     viewCountCacheRef.current.set(hash, current + 1)
+    incrementFileViewtime({ hash, canvas_type: 4, views: 1, viewtime: 0 })
   }, [file?.hash])
 
   useEffect(() => {
