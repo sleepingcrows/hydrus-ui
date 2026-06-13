@@ -920,7 +920,7 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
         </div>
       )}
       <div className="flex justify-center px-2 py-1">
-        <SortDropdown sortType={sortType} sortAsc={sortAsc} onSortTypeChange={setSortType} onSortAscChange={setSortAsc} />
+        <SortDropdown sortType={sortType} sortAsc={sortAsc} onSortTypeChange={(t) => { setSortType(t); setTagVersion(v => v + 1) }} onSortAscChange={(a) => { setSortAsc(a); setTagVersion(v => v + 1) }} />
       </div>
       <div className={`flex justify-center ${isMobile ? 'gap-2 text-[10px]' : 'gap-6'} py-2 text-sm text-gray-500 flex-wrap`}>
         <span>Rounds <b className="text-green-400">{stats.wins}</b></span>
