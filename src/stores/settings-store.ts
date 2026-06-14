@@ -101,23 +101,42 @@ function loadNum(key: string, fallback: number): number { try { return Number(lo
 function loadBool(key: string): boolean { try { return localStorage.getItem(key) === 'true' } catch { return false } }
 function loadJson<T>(key: string, fallback: T): T { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fallback } catch { return fallback } }
 
+const MAX_CACHE_ENTRIES = 5000
+
+let inMemoryRatingsCache: Map<number, Record<string, number | boolean>> | null = null
+
 function loadRatingsCacheFromStorage(): Map<number, Record<string, number | boolean>> | null {
+  if (inMemoryRatingsCache) return inMemoryRatingsCache
   const raw = localStorage.getItem(RATINGS_CACHE_KEY)
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw)
-    return new Map(Object.entries(parsed).map(([k, v]) => [Number(k), v as Record<string, number | boolean>]))
+    const map = new Map(Object.entries(parsed).map(([k, v]) => [Number(k), v as Record<string, number | boolean>]))
+    inMemoryRatingsCache = map
+    return map
   } catch {
     return null
   }
 }
 
 function saveRatingsCacheToStorage(cache: Map<number, Record<string, number | boolean>>) {
+  inMemoryRatingsCache = cache
   const obj: Record<string, Record<string, number | boolean>> = {}
+  let count = 0
   for (const [k, v] of cache) {
     obj[k] = v
+    count++
+    if (count > MAX_CACHE_ENTRIES) break
   }
-  localStorage.setItem(RATINGS_CACHE_KEY, JSON.stringify(obj))
+  try {
+    localStorage.setItem(RATINGS_CACHE_KEY, JSON.stringify(obj))
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+      console.warn('Ratings cache exceeded localStorage quota — cache will not persist across sessions.')
+    } else {
+      throw e
+    }
+  }
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
