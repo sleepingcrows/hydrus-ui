@@ -118,6 +118,8 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
   const smashNavSide = useSettingsStore((s) => s.smashNavSide)
   const smashSwipeVote = useSettingsStore((s) => s.smashPassSwipeVote)
   const touchRef = useRef({ sx: 0, sy: 0, swiping: false })
+  const lastSwipeTimeRef = useRef(0)
+  const SWIPE_DEBOUNCE_MS = 600
 
   function handleTouchStart(e: React.TouchEvent) {
     if (!smashSwipeVote || !votingOpen) return
@@ -141,11 +143,14 @@ export function SmashOrPass({ smashSearchOpen = false, onSmashSearchToggle }: { 
     if (!touchRef.current.swiping) return
     touchRef.current.swiping = false
     setSwipeDir(null)
+    const now = Date.now()
+    if (now - lastSwipeTimeRef.current < SWIPE_DEBOUNCE_MS) return
     const dx = e.changedTouches[0].clientX - touchRef.current.sx
     const dy = e.changedTouches[0].clientY - touchRef.current.sy
     const absDx = Math.abs(dx), absDy = Math.abs(dy)
     const min = 50
     if (absDx < min && absDy < min) return
+    lastSwipeTimeRef.current = now
     if (absDy > absDx) {
       if (dy < 0) decide('left')
       else decide('right')
