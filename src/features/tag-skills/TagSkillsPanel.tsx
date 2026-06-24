@@ -116,10 +116,11 @@ export function TagSkillsPanel() {
       .map((c) => ({ fileId: c.fileId, predictedElo: c.predictedElo }))
     setStatusMsg(`Applying ratings to ${toApply.length} files...`)
     try {
-      await applyCandidateRatingsBatch(toApply, ratingServiceKey, (cur, total) => {
+      const confirmed = await applyCandidateRatingsBatch(toApply, ratingServiceKey, (cur, total) => {
         setProgress({ current: cur, total })
       })
-      setStatusMsg(`Applied ratings to ${toApply.length} files successfully`)
+      setCandidates((prev) => prev.filter((c) => !confirmed.includes(c.fileId)))
+      setStatusMsg(`Applied & verified ${confirmed.length} files, removed from list`)
       setSelected(new Set())
     } catch (e) {
       setStatusMsg(`Error applying: ${e instanceof Error ? e.message : 'Unknown error'}`)

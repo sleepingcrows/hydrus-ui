@@ -145,7 +145,7 @@ export async function applyCandidateRatingsBatch(
   candidates: { fileId: number; predictedElo: number }[],
   ratingServiceKey: string,
   onProgress?: (applied: number, total: number) => void,
-): Promise<void> {
+): Promise<number[]> {
   for (let i = 0; i < candidates.length; i++) {
     const c = candidates[i]
     await setRating({
@@ -155,4 +155,18 @@ export async function applyCandidateRatingsBatch(
     })
     onProgress?.(i + 1, candidates.length)
   }
+
+  const fileIds = candidates.map((c) => c.fileId)
+  const meta = await fetchFileMetadataByIds(fileIds)
+  const predictedMap = new Map(candidates.map((c) => [c.fileId, c.predictedElo]))
+  const confirmed: number[] = []
+
+  for (const file of meta) {
+    const predicted = predictedMap.get(file.file_id)
+    if (predicted !== undefined && file.ratings?.[ratingServiceKey] === predicted) {
+      confirmed.push(file.file_id)
+    }
+  }
+
+  return confirmed
 }
