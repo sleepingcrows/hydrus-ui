@@ -49,6 +49,7 @@ export function TagSkillsPanel() {
   const [minConfidence, setMinConfidence] = useState(0)
   const [sortBy, setSortBy] = useState<'confidence' | 'elo' | 'tags'>('confidence')
   const [statusMsg, setStatusMsg] = useState('')
+  const [searchEpoch, setSearchEpoch] = useState(0)
   const [previewFile, setPreviewFile] = useState<CandidateFile | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const previewUrlRef = useRef<string | null>(null)
@@ -91,6 +92,7 @@ export function TagSkillsPanel() {
       })
       setCandidates(results)
       setSelected(new Set())
+      setSearchEpoch((e) => e + 1)
       setPhase('candidates')
       setStatusMsg(`Found ${results.length} candidate files with predicted ELO ratings`)
     } catch (e) {
@@ -320,7 +322,7 @@ export function TagSkillsPanel() {
               <tbody>
                 {filteredCandidates.map((c) => (
                   <tr
-                    key={c.fileId}
+                    key={`${c.fileId}-${searchEpoch}`}
                     className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                   >
                     <td className="px-2 py-1.5">
