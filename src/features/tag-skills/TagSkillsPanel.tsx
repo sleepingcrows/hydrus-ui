@@ -6,30 +6,7 @@ import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { SERVICE_TYPE } from '../../api/types'
 import { TagSearch } from '../search/TagSearch'
 
-const thumbCache = new Map<string, string>()
-
-function CandidateThumbnail({ hash, alt, onClick }: { hash: string; alt: string; onClick?: () => void }) {
-  const cached = thumbCache.get(hash)
-  const [url, setUrl] = useState<string | null>(cached ?? null)
-  const [failed, setFailed] = useState(false)
-
-  useEffect(() => {
-    if (cached) return
-    let cancelled = false
-    getThumbnailUrl(hash).then((u) => {
-      if (cancelled) {
-        URL.revokeObjectURL(u)
-        return
-      }
-      thumbCache.set(hash, u)
-      setUrl(u)
-    }).catch(() => {
-      if (!cancelled) setFailed(true)
-    })
-    return () => { cancelled = true }
-  }, [hash, cached])
-
-  if (failed) return <div className="w-16 h-16 bg-gray-700 rounded flex items-center justify-center text-[10px] text-gray-500">N/A</div>
+function CandidateThumbnail({ url, alt, onClick }: { url: string | null; alt: string; onClick?: () => void }) {
   if (!url) return <div className="w-16 h-16 bg-gray-700 rounded animate-pulse" />
   return <img src={url} alt={alt} className="w-16 h-16 object-cover rounded cursor-pointer" onClick={onClick} />
 }
@@ -46,10 +23,12 @@ export function TagSkillsPanel() {
   const [minConfidence, setMinConfidence] = useState(0)
   const [sortBy, setSortBy] = useState<'confidence' | 'elo' | 'tags'>('confidence')
   const [statusMsg, setStatusMsg] = useState('')
-  const [searchEpoch, setSearchEpoch] = useState(0)
   const [previewFile, setPreviewFile] = useState<CandidateFile | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const previewUrlRef = useRef<string | null>(null)
+  const [thumbCache, setThumbCache] = useState<Map<string, string>>(new Map())
+  const thumbCacheRef = useRef(thumbCache)
+  thumbCacheRef.current = thumbCache
 
   const configuredKey = useSettingsStore((s) => s.ratingServiceKey)
   const services = useRatingServicesStore((s) => s.services)
@@ -89,7 +68,6 @@ export function TagSkillsPanel() {
       })
       setCandidates(results)
       setSelected(new Set())
-      setSearchEpoch((e) => e + 1)
       setPhase('candidates')
       setStatusMsg(`Found ${results.length} candidate files with predicted ELO ratings`)
     } catch (e) {
@@ -166,6 +144,34 @@ export function TagSkillsPanel() {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [previewFile])
+
+  useEffect(() => {
+    if (candidates.length === 0) return
+    let cancelled = false
+    const pending = candidates.filter((c) => !thumbCacheRef.current.has(c.hash))
+    if (pending.length === 0) return
+    Promise.all(pending.map(async (c) => {
+      const url = await getThumbnailUrl(c.hash)
+      return { hash: c.hash, url }
+    })).then((results) => {
+      if (cancelled) {
+        results.forEach((r) => URL.revokeObjectURL(r.url))
+        return
+      }
+      setThumbCache((prev) => {
+        const next = new Map(prev)
+        results.forEach((r) => next.set(r.hash, r.url))
+        return next
+      })
+    })
+    return () => { cancelled = true }
+  }, [candidates])
+
+  useEffect(() => {
+    return () => {
+      thumbCacheRef.current.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [])
 
   const filteredCandidates = candidates
     .filter((c) => c.confidenceScore >= minConfidence)
@@ -319,7 +325,7 @@ export function TagSkillsPanel() {
               <tbody>
                 {filteredCandidates.map((c) => (
                   <tr
-                    key={`${c.fileId}-${searchEpoch}`}
+                    key={c.fileId}
                     className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                   >
                     <td className="px-2 py-1.5">
@@ -331,7 +337,7 @@ export function TagSkillsPanel() {
                       />
                     </td>
                     <td className="px-2 py-1.5">
-                      <CandidateThumbnail hash={c.hash} alt={`file ${c.fileId}`} onClick={() => handleOpenPreview(c)} />
+                      <CandidateThumbnail url={thumbCache.get(c.hash) ?? null} alt={`file ${c.fileId}`} onClick={() => handleOpenPreview(c)} />
                     </td>
                     <td className="px-2 py-1.5 font-mono font-bold">
                       {c.predictedElo}
