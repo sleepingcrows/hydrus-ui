@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { getThumbnailUrl } from '../../api/search'
+import { getThumbnailUrl, getFileUrl } from '../../api/search'
 import { computeTagElos, findCandidateFiles, applyCandidateRatingsBatch, type TagElo, type CandidateFile } from './tag-skills'
 import { useSettingsStore } from '../../stores/settings-store'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { SERVICE_TYPE } from '../../api/types'
 import { TagSearch } from '../search/TagSearch'
 
-function CandidateThumbnail({ hash, alt }: { hash: string; alt: string }) {
+function CandidateThumbnail({ hash, alt, onClick }: { hash: string; alt: string; onClick?: () => void }) {
   const [url, setUrl] = useState<string | null>(null)
   const [failed, setFailed] = useState(false)
   const loadedRef = useRef(false)
@@ -21,9 +21,9 @@ function CandidateThumbnail({ hash, alt }: { hash: string; alt: string }) {
     }
   }, [hash])
 
-  if (failed) return <div className="w-12 h-12 bg-gray-700 rounded flex items-center justify-center text-[10px] text-gray-500">N/A</div>
-  if (!url) return <div className="w-12 h-12 bg-gray-700 rounded animate-pulse" />
-  return <img src={url} alt={alt} className="w-12 h-12 object-cover rounded" />
+  if (failed) return <div className="w-16 h-16 bg-gray-700 rounded flex items-center justify-center text-[10px] text-gray-500">N/A</div>
+  if (!url) return <div className="w-16 h-16 bg-gray-700 rounded animate-pulse" />
+  return <img src={url} alt={alt} className="w-16 h-16 object-cover rounded cursor-pointer" onClick={onClick} />
 }
 
 export function TagSkillsPanel() {
@@ -38,6 +38,9 @@ export function TagSkillsPanel() {
   const [minConfidence, setMinConfidence] = useState(0)
   const [sortBy, setSortBy] = useState<'confidence' | 'elo' | 'tags'>('confidence')
   const [statusMsg, setStatusMsg] = useState('')
+  const [previewFile, setPreviewFile] = useState<CandidateFile | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const previewUrlRef = useRef<string | null>(null)
 
   const configuredKey = useSettingsStore((s) => s.ratingServiceKey)
   const services = useRatingServicesStore((s) => s.services)
@@ -125,6 +128,33 @@ export function TagSkillsPanel() {
       setProgress(null)
     }
   }
+
+  async function handleOpenPreview(file: CandidateFile) {
+    setPreviewFile(file)
+    try {
+      const url = await getFileUrl(file.hash)
+      previewUrlRef.current = url
+      setPreviewUrl(url)
+    } catch {
+      setPreviewUrl(null)
+    }
+  }
+
+  function handleClosePreview() {
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+    previewUrlRef.current = null
+    setPreviewUrl(null)
+    setPreviewFile(null)
+  }
+
+  useEffect(() => {
+    if (!previewFile) return
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') handleClosePreview()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [previewFile])
 
   const filteredCandidates = candidates
     .filter((c) => c.confidenceScore >= minConfidence)
@@ -269,7 +299,7 @@ export function TagSkillsPanel() {
                       className="w-3.5 h-3.5"
                     />
                   </th>
-                  <th className="px-2 py-1.5 text-left w-16">File</th>
+                  <th className="px-2 py-1.5 text-left w-20">File</th>
                   <th className="px-2 py-1.5 text-left">Predicted ELO</th>
                   <th className="px-2 py-1.5 text-left">Confidence</th>
                   <th className="px-2 py-1.5 text-left">Tags</th>
@@ -290,7 +320,7 @@ export function TagSkillsPanel() {
                       />
                     </td>
                     <td className="px-2 py-1.5">
-                      <CandidateThumbnail hash={c.hash} alt={`file ${c.fileId}`} />
+                      <CandidateThumbnail hash={c.hash} alt={`file ${c.fileId}`} onClick={() => handleOpenPreview(c)} />
                     </td>
                     <td className="px-2 py-1.5 font-mono font-bold">
                       {c.predictedElo}
@@ -344,6 +374,31 @@ export function TagSkillsPanel() {
           {candidates.length > 0
             ? 'All candidates filtered out. Adjust min confidence or tag filter.'
             : 'No candidates found matching your filter.'}
+        </div>
+      )}
+
+      {/* Preview modal */}
+      {previewFile && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center cursor-pointer"
+          onClick={handleClosePreview}
+        >
+          {previewUrl ? (
+            <img
+              src={previewUrl}
+              alt={`Preview ${previewFile.fileId}`}
+              className="max-w-[95vw] max-h-[95vh] object-contain cursor-default"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <div className="text-gray-400 text-lg">Loading preview...</div>
+          )}
+          <button
+            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-white bg-black/50 rounded-full hover:bg-black/70 text-xl cursor-pointer z-10"
+            onClick={handleClosePreview}
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>
