@@ -11,6 +11,7 @@ import { HomePage } from './features/home/HomePage'
 import { SmashOrPass } from './features/smash-or-pass/SmashOrPass'
 import { TagAnalyticsPanel } from './features/smash-or-pass/TagAnalyticsPanel'
 import { EloGraph } from './features/smash-or-pass/EloGraph'
+import { TagSkillsPanel } from './features/tag-skills/TagSkillsPanel'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -23,7 +24,7 @@ export default function App() {
   const settingsHydrate = useSettingsStore((s) => s.hydrate)
   const ratingServicesHydrate = useRatingServicesStore((s) => s.load)
   const [tab, setTab] = useState<Tab>('search')
-  const [analyticsView, setAnalyticsView] = useState<'tag-preferences' | 'elo-graph'>('tag-preferences')
+  const [analyticsView, setAnalyticsView] = useState<'tag-preferences' | 'elo-graph' | 'tag-skills'>('tag-preferences')
   const [analyticsOpen, setAnalyticsOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const analyticsTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
@@ -117,7 +118,7 @@ export default function App() {
               )}
               <span className="flex-1 text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">
                 {tab === 'analytics'
-                  ? `Analytics – ${analyticsView === 'tag-preferences' ? 'Tag Preferences' : 'ELO Distribution'}`
+                  ? `Analytics – ${analyticsView === 'tag-preferences' ? 'Tag Preferences' : analyticsView === 'elo-graph' ? 'ELO Distribution' : 'Tag Skills'}`
                   : tabs.find((t) => t.id === tab)?.label ?? 'hydrus-ui'}
               </span>
               {menuOpen && (
@@ -164,6 +165,16 @@ export default function App() {
                           onClick={() => { setTab('analytics'); setAnalyticsView('elo-graph'); setMenuOpen(false) }}
                         >
                           ELO Distribution
+                        </button>
+                        <button
+                          className={`w-full text-left min-h-[44px] px-3 py-2 text-sm rounded ${
+                            tab === 'analytics' && analyticsView === 'tag-skills'
+                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-medium'
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700'
+                          }`}
+                          onClick={() => { setTab('analytics'); setAnalyticsView('tag-skills'); setMenuOpen(false) }}
+                        >
+                          Tag Skills
                         </button>
                       </div>
                     ) : (
@@ -221,6 +232,14 @@ export default function App() {
                         >
                           ELO Distribution
                         </button>
+                        <button
+                          className={`block w-full text-left min-h-[44px] px-3 py-1.5 text-sm whitespace-nowrap ${
+                            analyticsView === 'tag-skills' ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'
+                          }`}
+                          onClick={() => { setTab('analytics'); setAnalyticsView('tag-skills'); setAnalyticsOpen(false) }}
+                        >
+                          Tag Skills
+                        </button>
                       </div>
                     )}
                   </div>
@@ -248,6 +267,7 @@ export default function App() {
           {tab === 'favorites' && <SearchPage key="favorites" presetTags={favTags} title="Favorites" />}
           {tab === 'analytics' && analyticsView === 'tag-preferences' && <TagAnalyticsPanel />}
           {tab === 'analytics' && analyticsView === 'elo-graph' && <EloGraph />}
+          {tab === 'analytics' && analyticsView === 'tag-skills' && <TagSkillsPanel />}
           {tab === 'home' && <HomePage onSearchBookmark={(tags, sortType, sortAsc) => { setBookmarkSearch({ tags, sortType, sortAsc, key: Date.now() }); setTab('search') }} />}
           {tab === 'settings' && <ConnectionSettings />}
         </main>
