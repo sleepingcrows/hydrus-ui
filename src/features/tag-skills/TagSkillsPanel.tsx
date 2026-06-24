@@ -9,15 +9,26 @@ import { TagSearch } from '../search/TagSearch'
 function CandidateThumbnail({ hash, alt, onClick }: { hash: string; alt: string; onClick?: () => void }) {
   const [url, setUrl] = useState<string | null>(null)
   const [failed, setFailed] = useState(false)
-  const loadedRef = useRef(false)
   const urlRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (loadedRef.current) return
-    loadedRef.current = true
-    getThumbnailUrl(hash).then((u) => { urlRef.current = u; setUrl(u) }).catch(() => setFailed(true))
+    let cancelled = false
+    getThumbnailUrl(hash).then((u) => {
+      if (cancelled) {
+        URL.revokeObjectURL(u)
+        return
+      }
+      urlRef.current = u
+      setUrl(u)
+    }).catch(() => {
+      if (!cancelled) setFailed(true)
+    })
     return () => {
-      if (urlRef.current) URL.revokeObjectURL(urlRef.current)
+      cancelled = true
+      if (urlRef.current) {
+        URL.revokeObjectURL(urlRef.current)
+        urlRef.current = null
+      }
     }
   }, [hash])
 
