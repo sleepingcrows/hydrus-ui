@@ -6,31 +6,28 @@ import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { SERVICE_TYPE } from '../../api/types'
 import { TagSearch } from '../search/TagSearch'
 
+const thumbCache = new Map<string, string>()
+
 function CandidateThumbnail({ hash, alt, onClick }: { hash: string; alt: string; onClick?: () => void }) {
-  const [url, setUrl] = useState<string | null>(null)
+  const cached = thumbCache.get(hash)
+  const [url, setUrl] = useState<string | null>(cached ?? null)
   const [failed, setFailed] = useState(false)
-  const urlRef = useRef<string | null>(null)
 
   useEffect(() => {
+    if (cached) return
     let cancelled = false
     getThumbnailUrl(hash).then((u) => {
       if (cancelled) {
         URL.revokeObjectURL(u)
         return
       }
-      urlRef.current = u
+      thumbCache.set(hash, u)
       setUrl(u)
     }).catch(() => {
       if (!cancelled) setFailed(true)
     })
-    return () => {
-      cancelled = true
-      if (urlRef.current) {
-        URL.revokeObjectURL(urlRef.current)
-        urlRef.current = null
-      }
-    }
-  }, [hash])
+    return () => { cancelled = true }
+  }, [hash, cached])
 
   if (failed) return <div className="w-16 h-16 bg-gray-700 rounded flex items-center justify-center text-[10px] text-gray-500">N/A</div>
   if (!url) return <div className="w-16 h-16 bg-gray-700 rounded animate-pulse" />
