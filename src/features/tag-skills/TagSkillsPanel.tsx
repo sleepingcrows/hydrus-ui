@@ -7,8 +7,8 @@ import { SERVICE_TYPE } from '../../api/types'
 import { TagSearch } from '../search/TagSearch'
 
 function CandidateThumbnail({ url, alt, onClick }: { url: string | null; alt: string; onClick?: () => void }) {
-  if (!url) return <div className="w-16 h-16 bg-gray-700 rounded animate-pulse" />
-  return <img src={url} alt={alt} className="w-16 h-16 object-cover rounded cursor-pointer" onClick={onClick} />
+  if (!url) return <div className="w-24 h-24 bg-gray-700 rounded animate-pulse" />
+  return <img src={url} alt={alt} className="w-24 h-24 object-cover rounded cursor-pointer" onClick={onClick} />
 }
 
 export function TagSkillsPanel() {
