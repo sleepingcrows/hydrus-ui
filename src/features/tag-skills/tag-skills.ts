@@ -73,10 +73,10 @@ export async function findCandidateFiles(
   ratingServiceKey: string,
   onProgress?: (current: number, total: number) => void,
 ): Promise<CandidateFile[]> {
-  const tags = tagFilter.length > 0 ? tagFilter : ['system:everything']
+  const tags = [...(tagFilter.length > 0 ? tagFilter : ['system:everything']), 'system:limit = 64']
   const searchResult = await searchFiles({
     tags,
-    file_limit: 10000,
+    file_sort_type: 4,
     return_hashes: true,
   })
   const ids = searchResult.file_ids ?? []
