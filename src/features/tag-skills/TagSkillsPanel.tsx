@@ -340,9 +340,10 @@ export function TagSkillsPanel() {
                 {filteredCandidates.map((c) => (
                   <tr
                     key={c.fileId}
-                    className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
+                    onClick={() => toggleSelect(c.fileId)}
                   >
-                    <td className="px-2 py-1.5">
+                    <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selected.has(c.fileId)}
@@ -350,7 +351,7 @@ export function TagSkillsPanel() {
                         className="w-3.5 h-3.5"
                       />
                     </td>
-                    <td className="px-2 py-1.5 cursor-pointer" onClick={() => toggleSelect(c.fileId)}>
+                    <td className="px-2 py-1.5">
                       <CandidateThumbnail url={thumbCache.get(c.hash) ?? null} alt={`file ${c.fileId}`} onClick={(e) => { e.stopPropagation(); handleOpenPreview(c) }} />
                     </td>
                     <td className="px-2 py-1.5 font-mono font-bold">
