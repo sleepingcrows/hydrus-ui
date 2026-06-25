@@ -150,21 +150,42 @@ export function TagSkillsPanel() {
     let cancelled = false
     const pending = candidates.filter((c) => !thumbCacheRef.current.has(c.hash))
     if (pending.length === 0) return
-    Promise.all(pending.map(async (c) => {
-      const url = await getThumbnailUrl(c.hash)
-      return { hash: c.hash, url }
-    })).then((results) => {
-      if (cancelled) {
-        results.forEach((r) => URL.revokeObjectURL(r.url))
-        return
+    const BATCH = 10
+    async function loadThumbs() {
+      for (let i = 0; i < pending.length; i += BATCH) {
+        if (cancelled) break
+        const batch = pending.slice(i, i + BATCH)
+        const results = await Promise.all(batch.map(async (c) => {
+          const url = await getThumbnailUrl(c.hash)
+          return { hash: c.hash, url }
+        }))
+        if (cancelled) {
+          results.forEach((r) => URL.revokeObjectURL(r.url))
+          break
+        }
+        setThumbCache((prev) => {
+          const next = new Map(prev)
+          results.forEach((r) => next.set(r.hash, r.url))
+          return next
+        })
       }
+    }
+    loadThumbs()
+    return () => { cancelled = true }
+  }, [candidates])
+
+  useEffect(() => {
+    if (candidates.length > 0) {
+      const validHashes = new Set(candidates.map((c) => c.hash))
       setThumbCache((prev) => {
-        const next = new Map(prev)
-        results.forEach((r) => next.set(r.hash, r.url))
+        const next = new Map<string, string>()
+        for (const [hash, url] of prev) {
+          if (validHashes.has(hash)) next.set(hash, url)
+          else URL.revokeObjectURL(url)
+        }
         return next
       })
-    })
-    return () => { cancelled = true }
+    }
   }, [candidates])
 
   useEffect(() => {

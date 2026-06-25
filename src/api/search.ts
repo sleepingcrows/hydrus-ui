@@ -26,6 +26,7 @@ export async function searchFiles(opts: SearchOptions): Promise<{ file_ids?: num
 }
 
 const CHUNK_SIZE = 100
+const METADATA_CONCURRENCY = 5
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
   const chunks: T[][] = []
@@ -35,13 +36,24 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return chunks
 }
 
+async function batchFetch<T>(
+  chunks: T[][],
+  fn: (chunk: T[]) => Promise<unknown>,
+): Promise<unknown[][]> {
+  const results: unknown[][] = []
+  for (let i = 0; i < chunks.length; i += METADATA_CONCURRENCY) {
+    const batch = chunks.slice(i, i + METADATA_CONCURRENCY)
+    const batchResults = await Promise.all(batch.map((chunk) => fn(chunk)))
+    results.push(...batchResults)
+  }
+  return results
+}
+
 export async function fetchFileMetadata(hashes: string[]): Promise<FileMetadata[]> {
   if (hashes.length === 0) return []
   const chunks = chunkArray(hashes, CHUNK_SIZE)
-  const results = await Promise.all(
-    chunks.map((chunk) =>
-      api.get<unknown>('/get_files/file_metadata', { hashes: api.jsonEncodeForGet(chunk) })
-    )
+  const results = await batchFetch(chunks, (chunk) =>
+    api.get<unknown>('/get_files/file_metadata', { hashes: api.jsonEncodeForGet(chunk) })
   )
   return results.flatMap((data) => FileMetadataResponseSchema.parse(data).metadata)
 }
@@ -49,10 +61,8 @@ export async function fetchFileMetadata(hashes: string[]): Promise<FileMetadata[
 export async function fetchFileMetadataByIds(file_ids: number[]): Promise<FileMetadata[]> {
   if (file_ids.length === 0) return []
   const chunks = chunkArray(file_ids, CHUNK_SIZE)
-  const results = await Promise.all(
-    chunks.map((chunk) =>
-      api.get<unknown>('/get_files/file_metadata', { file_ids: api.jsonEncodeForGet(chunk) })
-    )
+  const results = await batchFetch(chunks, (chunk) =>
+    api.get<unknown>('/get_files/file_metadata', { file_ids: api.jsonEncodeForGet(chunk) })
   )
   return results.flatMap((data) => FileMetadataResponseSchema.parse(data).metadata)
 }
