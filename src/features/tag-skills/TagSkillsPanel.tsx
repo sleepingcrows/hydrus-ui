@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { getThumbnailUrl, getFileUrl } from '../../api/search'
+import { getThumbnailUrl, getFileUrl, fetchFileMetadata } from '../../api/search'
 import { computeTagElos, findCandidateFiles, applyCandidateRatingsBatch, type TagElo, type CandidateFile } from './tag-skills'
 import { useSettingsStore } from '../../stores/settings-store'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { SERVICE_TYPE } from '../../api/types'
 import { TagSearch } from '../search/TagSearch'
+import { FileRenderer } from '../../components/FileRenderer'
 
 function CandidateThumbnail({ url, alt, onClick }: { url: string | null; alt: string; onClick?: (e: React.MouseEvent) => void }) {
   if (!url) return <div className="w-32 h-32 bg-gray-700 rounded animate-pulse" />
@@ -25,6 +26,7 @@ export function TagSkillsPanel() {
   const [statusMsg, setStatusMsg] = useState('')
   const [previewFile, setPreviewFile] = useState<CandidateFile | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewMime, setPreviewMime] = useState<string>('image/jpeg')
   const previewUrlRef = useRef<string | null>(null)
   const [thumbCache, setThumbCache] = useState<Map<string, string>>(new Map())
   const thumbCacheRef = useRef(thumbCache)
@@ -119,11 +121,18 @@ export function TagSkillsPanel() {
   }
 
   async function handleOpenPreview(file: CandidateFile) {
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+    previewUrlRef.current = null
+    setPreviewUrl(null)
     setPreviewFile(file)
     try {
-      const url = await getFileUrl(file.hash)
+      const [url, meta] = await Promise.all([
+        getFileUrl(file.hash),
+        fetchFileMetadata([file.hash]),
+      ])
       previewUrlRef.current = url
       setPreviewUrl(url)
+      if (meta.length > 0) setPreviewMime(meta[0].mime)
     } catch {
       setPreviewUrl(null)
     }
@@ -416,12 +425,9 @@ export function TagSkillsPanel() {
           onClick={handleClosePreview}
         >
           {previewUrl ? (
-            <img
-              src={previewUrl}
-              alt={`Preview ${previewFile.fileId}`}
-              className="max-w-[95vw] max-h-[95vh] object-contain cursor-default"
-              onClick={(e) => e.stopPropagation()}
-            />
+            <div onClick={(e) => e.stopPropagation()}>
+              <FileRenderer url={previewUrl} mime={previewMime} className="max-w-[95vw] max-h-[95vh] object-contain cursor-default" />
+            </div>
           ) : (
             <div className="text-gray-400 text-lg">Loading preview...</div>
           )}
