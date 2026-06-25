@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { getThumbnailUrl, getFileUrl } from '../../api/search'
 import { computeTagElos, findCandidateFiles, applyCandidateRatingsBatch, type TagElo, type CandidateFile } from './tag-skills'
 import { useSettingsStore } from '../../stores/settings-store'
@@ -29,6 +29,9 @@ export function TagSkillsPanel() {
   const [thumbCache, setThumbCache] = useState<Map<string, string>>(new Map())
   const thumbCacheRef = useRef(thumbCache)
   thumbCacheRef.current = thumbCache
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const observerRef = useRef<IntersectionObserver | null>(null)
+  const requestedRef = useRef<Set<string>>(new Set())
 
   const configuredKey = useSettingsStore((s) => s.ratingServiceKey)
   const services = useRatingServicesStore((s) => s.services)
@@ -145,34 +148,36 @@ export function TagSkillsPanel() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [previewFile])
 
+  const thumbRowRef = useCallback((el: HTMLTableCellElement | null) => {
+    if (el) observerRef.current?.observe(el)
+  }, [])
+
   useEffect(() => {
-    if (candidates.length === 0) return
-    let cancelled = false
-    const pending = candidates.filter((c) => !thumbCacheRef.current.has(c.hash))
-    if (pending.length === 0) return
-    const BATCH = 10
-    async function loadThumbs() {
-      for (let i = 0; i < pending.length; i += BATCH) {
-        if (cancelled) break
-        const batch = pending.slice(i, i + BATCH)
-        const results = await Promise.all(batch.map(async (c) => {
-          const url = await getThumbnailUrl(c.hash)
-          return { hash: c.hash, url }
-        }))
-        if (cancelled) {
-          results.forEach((r) => URL.revokeObjectURL(r.url))
-          break
+    const root = scrollRef.current
+    if (!root) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue
+          const hash = entry.target.getAttribute('data-hash')
+          if (!hash || requestedRef.current.has(hash) || thumbCacheRef.current.has(hash)) continue
+          requestedRef.current.add(hash)
+          getThumbnailUrl(hash).then((url) => {
+            setThumbCache((prev) => {
+              const next = new Map(prev)
+              next.set(hash, url)
+              return next
+            })
+          }).catch(() => {
+            requestedRef.current.delete(hash)
+          })
         }
-        setThumbCache((prev) => {
-          const next = new Map(prev)
-          results.forEach((r) => next.set(r.hash, r.url))
-          return next
-        })
-      }
-    }
-    loadThumbs()
-    return () => { cancelled = true }
-  }, [candidates])
+      },
+      { root, rootMargin: '500px 0px' }
+    )
+    observerRef.current = observer
+    return () => { observer.disconnect(); observerRef.current = null }
+  }, [phase])
 
   useEffect(() => {
     if (candidates.length > 0) {
@@ -325,7 +330,7 @@ export function TagSkillsPanel() {
             </div>
           </div>
 
-          <div className="overflow-x-auto max-h-[calc(100vh-380px)] overflow-y-auto border dark:border-gray-700 rounded">
+          <div ref={scrollRef} className="overflow-x-auto max-h-[calc(100vh-380px)] overflow-y-auto border dark:border-gray-700 rounded">
             <table className="w-full text-xs">
               <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0">
                 <tr>
@@ -357,7 +362,7 @@ export function TagSkillsPanel() {
                         className="w-3.5 h-3.5"
                       />
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td ref={thumbRowRef} data-hash={c.hash} className="px-2 py-1.5">
                       <CandidateThumbnail url={thumbCache.get(c.hash) ?? null} alt={`file ${c.fileId}`} onClick={() => handleOpenPreview(c)} />
                     </td>
                     <td className="px-2 py-1.5 font-mono font-bold">
