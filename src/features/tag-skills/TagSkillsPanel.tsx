@@ -6,7 +6,7 @@ import { useRatingServicesStore } from '../../stores/rating-services-store'
 import { SERVICE_TYPE } from '../../api/types'
 import { TagSearch } from '../search/TagSearch'
 
-function CandidateThumbnail({ url, alt, onClick }: { url: string | null; alt: string; onClick?: () => void }) {
+function CandidateThumbnail({ url, alt, onClick }: { url: string | null; alt: string; onClick?: (e: React.MouseEvent) => void }) {
   if (!url) return <div className="w-32 h-32 bg-gray-700 rounded animate-pulse" />
   return <img src={url} alt={alt} className="w-32 h-32 object-cover rounded cursor-pointer" onClick={onClick} />
 }
@@ -330,7 +330,7 @@ export function TagSkillsPanel() {
                       className="w-3.5 h-3.5"
                     />
                   </th>
-                  <th className="px-2 py-1.5 text-left w-20">File</th>
+                  <th className="px-2 py-1.5 text-left">File</th>
                   <th className="px-2 py-1.5 text-left">Predicted ELO</th>
                   <th className="px-2 py-1.5 text-left">Confidence</th>
                   <th className="px-2 py-1.5 text-left">Tags</th>
@@ -350,8 +350,8 @@ export function TagSkillsPanel() {
                         className="w-3.5 h-3.5"
                       />
                     </td>
-                    <td className="px-2 py-1.5">
-                      <CandidateThumbnail url={thumbCache.get(c.hash) ?? null} alt={`file ${c.fileId}`} onClick={() => handleOpenPreview(c)} />
+                    <td className="px-2 py-1.5 cursor-pointer" onClick={() => toggleSelect(c.fileId)}>
+                      <CandidateThumbnail url={thumbCache.get(c.hash) ?? null} alt={`file ${c.fileId}`} onClick={(e) => { e.stopPropagation(); handleOpenPreview(c) }} />
                     </td>
                     <td className="px-2 py-1.5 font-mono font-bold">
                       {c.predictedElo}
