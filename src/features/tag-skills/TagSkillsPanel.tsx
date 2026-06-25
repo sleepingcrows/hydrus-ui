@@ -425,8 +425,8 @@ export function TagSkillsPanel() {
           onClick={handleClosePreview}
         >
           {previewUrl ? (
-            <div onClick={(e) => e.stopPropagation()}>
-              <FileRenderer url={previewUrl} mime={previewMime} className="max-w-[95vw] max-h-[95vh] object-contain cursor-default" />
+            <div className="w-full h-full" onClick={(e) => e.stopPropagation()}>
+              <FileRenderer url={previewUrl} mime={previewMime} className="w-full h-full" />
             </div>
           ) : (
             <div className="text-gray-400 text-lg">Loading preview...</div>
