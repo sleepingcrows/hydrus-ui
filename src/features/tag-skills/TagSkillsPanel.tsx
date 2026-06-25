@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { getThumbnailUrl, getFileUrl, fetchFileMetadata } from '../../api/search'
+import { getThumbnailUrl, fetchFileMetadata } from '../../api/search'
 import { computeTagElos, findCandidateFiles, applyCandidateRatingsBatch, type TagElo, type CandidateFile } from './tag-skills'
 import { useSettingsStore } from '../../stores/settings-store'
 import { useRatingServicesStore } from '../../stores/rating-services-store'
-import { SERVICE_TYPE } from '../../api/types'
+import { SERVICE_TYPE, type FileMetadata } from '../../api/types'
 import { TagSearch } from '../search/TagSearch'
-import { FileRenderer } from '../../components/FileRenderer'
+import { GalleryCarousel } from '../search/GalleryCarousel'
 
 function CandidateThumbnail({ url, alt, onClick }: { url: string | null; alt: string; onClick?: (e: React.MouseEvent) => void }) {
   if (!url) return <div className="w-32 h-32 bg-gray-700 rounded animate-pulse" />
@@ -24,9 +24,7 @@ export function TagSkillsPanel() {
   const [minConfidence, setMinConfidence] = useState(0)
   const [sortBy, setSortBy] = useState<'confidence' | 'elo' | 'tags'>('confidence')
   const [statusMsg, setStatusMsg] = useState('')
-  const [previewFile, setPreviewFile] = useState<CandidateFile | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [previewMime, setPreviewMime] = useState<string>('image/jpeg')
+  const [previewMeta, setPreviewMeta] = useState<FileMetadata | null>(null)
   const previewUrlRef = useRef<string | null>(null)
   const [thumbCache, setThumbCache] = useState<Map<string, string>>(new Map())
   const thumbCacheRef = useRef(thumbCache)
@@ -123,36 +121,29 @@ export function TagSkillsPanel() {
   async function handleOpenPreview(file: CandidateFile) {
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
     previewUrlRef.current = null
-    setPreviewUrl(null)
-    setPreviewFile(file)
+    setPreviewMeta(null)
     try {
-      const [url, meta] = await Promise.all([
-        getFileUrl(file.hash),
-        fetchFileMetadata([file.hash]),
-      ])
-      previewUrlRef.current = url
-      setPreviewUrl(url)
-      if (meta.length > 0) setPreviewMime(meta[0].mime)
+      const meta = await fetchFileMetadata([file.hash])
+      if (meta.length > 0) setPreviewMeta(meta[0])
     } catch {
-      setPreviewUrl(null)
+      setPreviewMeta(null)
     }
   }
 
   function handleClosePreview() {
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
     previewUrlRef.current = null
-    setPreviewUrl(null)
-    setPreviewFile(null)
+    setPreviewMeta(null)
   }
 
   useEffect(() => {
-    if (!previewFile) return
+    if (!previewMeta) return
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') handleClosePreview()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [previewFile])
+  }, [previewMeta])
 
   useEffect(() => {
     if (candidates.length === 0) return
@@ -417,26 +408,12 @@ export function TagSkillsPanel() {
         </div>
       )}
 
-      {/* Preview modal */}
-      {previewFile && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center cursor-pointer"
-          onClick={handleClosePreview}
-        >
-          {previewUrl ? (
-            <div className="max-w-[95vw] max-h-[95vh]" onClick={(e) => e.stopPropagation()}>
-              <FileRenderer url={previewUrl} mime={previewMime} className="max-w-[95vw] max-h-[95vh] object-contain" />
-            </div>
-          ) : (
-            <div className="text-gray-400 text-lg">Loading preview...</div>
-          )}
-          <button
-            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-white bg-black/50 rounded-full hover:bg-black/70 text-xl cursor-pointer z-10"
-            onClick={handleClosePreview}
-          >
-            ✕
-          </button>
-        </div>
+      {previewMeta && (
+        <GalleryCarousel
+          files={[previewMeta]}
+          initialIndex={0}
+          onClose={() => handleClosePreview()}
+        />
       )}
     </div>
   )
