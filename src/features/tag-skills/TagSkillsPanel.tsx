@@ -413,6 +413,10 @@ export function TagSkillsPanel() {
           files={[previewMeta]}
           initialIndex={0}
           onClose={() => handleClosePreview()}
+          onRatingChange={async (hash) => {
+            const meta = await fetchFileMetadata([hash])
+            if (meta.length > 0) setPreviewMeta(meta[0])
+          }}
         />
       )}
     </div>
