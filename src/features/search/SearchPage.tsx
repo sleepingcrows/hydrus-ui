@@ -413,9 +413,9 @@ export function SearchPage({ presetTags, initialTags, initialSortType, initialSo
           if (!entry.isIntersecting) continue
           const id = Number(entry.target.getAttribute('data-id'))
           if (!id || requestedThumbnailsRef.current.has(id)) continue
-          requestedThumbnailsRef.current.add(id)
           const hash = hashByIdRef.current.get(id)
           if (!hash) continue
+          requestedThumbnailsRef.current.add(id)
           const sid = searchIdRef.current
           getThumbnailUrl(hash)
             .then((url) => {
@@ -423,7 +423,10 @@ export function SearchPage({ presetTags, initialTags, initialSortType, initialSo
               pendingThumbnailsRef.current.set(id, url)
               scheduleFlush()
             })
-            .catch((e) => console.warn('Thumbnail fetch failed for', id, e))
+            .catch((e) => {
+              console.warn('Thumbnail fetch failed for', id, e)
+              requestedThumbnailsRef.current.delete(id)
+            })
         }
       },
       { root: scrollRef.current, rootMargin: '5000px 0px 5000px 0px' }
@@ -724,6 +727,17 @@ const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' 
                         return next
                       })
                     }
+                  }}
+                  onError={() => {
+                    const url = thumbnails.get(id)
+                    if (url) URL.revokeObjectURL(url)
+                    thumbnailsRef.current.delete(id)
+                    requestedThumbnailsRef.current.delete(id)
+                    setThumbnails((prev) => {
+                      const next = new Map(prev)
+                      next.delete(id)
+                      return next
+                    })
                   }}
                 />
               ) : (
