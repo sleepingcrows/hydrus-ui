@@ -444,6 +444,17 @@ export function SearchPage({ presetTags, initialTags, initialSortType, initialSo
     if (el) observerRef.current?.observe(el)
   }, [])
 
+  useEffect(() => {
+    const observer = observerRef.current
+    if (!observer || !gridRef.current) return
+    for (const child of gridRef.current.children) {
+      if (child.hasAttribute('data-id')) {
+        observer.unobserve(child)
+        observer.observe(child)
+      }
+    }
+  }, [fileIds])
+
   const pageRef = useRef(page)
   const totalPagesRef = useRef(totalPages)
   pageRef.current = page
