@@ -265,7 +265,6 @@ export function TagSkillsPanel() {
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500 whitespace-nowrap">Tag filter:</span>
             <TagSearch
-              disableHistory
               tags={tagFilter}
               onTagsChange={setTagFilter}
             />
