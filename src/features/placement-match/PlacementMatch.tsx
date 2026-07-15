@@ -12,7 +12,15 @@ import { TagSearch } from '../search/TagSearch'
 const ELO_DIST_CACHE_KEY = 'hydrus-placement-elo-dist'
 const ELO_DIST_TTL = 30 * 60 * 1000
 
-type Phase = 'idle' | 'loading-queue' | 'loading-distribution' | 'finding-opponents' | 'fetching-metadata' | 'voting' | 'result' | 'done'
+type Phase = 'idle' | 'loading-queue' | 'loading-index' | 'voting' | 'result' | 'done'
+
+interface RankedEntry {
+  fileId: number
+  hash: string
+  mime: string
+  elo: number
+  tags: string[]
+}
 
 interface PlacementMatchup {
   opponentFile: FileMetadata
@@ -107,6 +115,14 @@ function buildDistFromRatingsCache(ratingServiceKey: string): number[] | null {
   return elos
 }
 
+function tagsFromMeta(file: FileMetadata): string[] {
+  if (!file.tags) return []
+  for (const entry of Object.values(file.tags)) {
+    if (entry.type === 10) return entry.display_tags?.['0'] ?? []
+  }
+  return []
+}
+
 export function PlacementMatch() {
   const [phase, setPhase] = useState<Phase>('idle')
   const [unrankedQueue, setUnrankedQueue] = useState<FileMetadata[]>([])
@@ -122,7 +138,6 @@ export function PlacementMatch() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [progressMsg, setProgressMsg] = useState<string | null>(null)
-  const [distLoading, setDistLoading] = useState(false)
 
   const placementTags = useSettingsStore((s) => s.placementTags)
   const setPlacementTags = useSettingsStore((s) => s.setPlacementTags)
@@ -135,56 +150,104 @@ export function PlacementMatch() {
 
   const currentFileRef = useRef<FileMetadata | null>(null)
   const placementRoundRef = useRef(0)
+  const rankedIndexRef = useRef<Map<number, RankedEntry> | null>(null)
   const distFetchedRef = useRef(false)
 
-  function ensureDistribution(): Promise<number[]> {
-    const cached = loadDistFromCache()
-    if (cached) {
-      setLeaderboardElos(cached)
+  async function ensureRankedIndex(): Promise<number[]> {
+    const distCached = loadDistFromCache()
+    if (distCached && rankedIndexRef.current) {
+      setLeaderboardElos(distCached)
+      return distCached
+    }
+
+    if (distCached && !rankedIndexRef.current) {
+      setLeaderboardElos(distCached)
       distFetchedRef.current = true
-      return Promise.resolve(cached)
+      return distCached
     }
 
     const fromCache = ratingServiceKey ? buildDistFromRatingsCache(ratingServiceKey) : null
-    if (fromCache) {
+    if (fromCache && fromCache.length >= 10) {
       saveDistToCache(fromCache)
       setLeaderboardElos(fromCache)
       distFetchedRef.current = true
-      return Promise.resolve(fromCache)
+      return fromCache
     }
 
-    setDistLoading(true)
-    setProgressMsg('Loading leaderboard ELO distribution...')
-
-    return fetchLeaderboardElos().finally(() => {
-      setDistLoading(false)
-      setProgressMsg(null)
-    })
-  }
-
-  async function fetchLeaderboardElos(): Promise<number[]> {
     if (!ratingServiceKey) return []
+
+    setPhase('loading-index')
+    setProgressMsg('Building ranked file index (one-time load)...')
+
     try {
-      const result = await searchFiles({ tags: ['system:has count for skill'], file_limit: 2000 })
+      const result = await searchFiles({ tags: ['system:has count for skill'], file_limit: 3000 })
       const ids = result.file_ids ?? []
       if (ids.length === 0) return []
+
+      const index = new Map<number, RankedEntry>()
       const elos: number[] = []
+
       for (let i = 0; i < ids.length; i += 500) {
         const chunk = ids.slice(i, i + 500)
+        setProgressMsg(`Loading ranked files (${Math.min(i + 500, ids.length)}/${ids.length})...`)
         const meta = await fetchFileMetadataByIds(chunk)
         for (const f of meta) {
           const v = f.ratings?.[ratingServiceKey]
-          if (typeof v === 'number' && v > 0) elos.push(v)
+          if (typeof v === 'number' && v > 0) {
+            elos.push(v)
+            index.set(f.file_id, {
+              fileId: f.file_id,
+              hash: f.hash,
+              mime: f.mime,
+              elo: v,
+              tags: tagsFromMeta(f),
+            })
+          }
         }
       }
+
+      if (index.size < 10) {
+        setPhase('idle')
+        setError('Not enough ranked files found in the database. Place some ratings first via Smash/Pass.')
+        setProgressMsg(null)
+        return []
+      }
+
       elos.sort((a, b) => a - b)
+      rankedIndexRef.current = index
       setLeaderboardElos(elos)
       saveDistToCache(elos)
       distFetchedRef.current = true
+      setProgressMsg(null)
       return elos
-    } catch {
+    } catch (e) {
+      setPhase('idle')
+      setError(String(e))
+      setProgressMsg(null)
       return []
     }
+  }
+
+  function findOpponentsLocally(fileTags: string[]): RankedEntry[] {
+    const index = rankedIndexRef.current
+    if (!index || index.size === 0) return []
+
+    const selfId = currentFileRef.current?.file_id
+
+    const scored: { entry: RankedEntry; overlap: number }[] = []
+    for (const [, entry] of index) {
+      if (entry.fileId === selfId) continue
+      let overlap = 0
+      for (const tag of fileTags) {
+        if (entry.tags.includes(tag)) overlap++
+      }
+      if (overlap > 0) {
+        scored.push({ entry, overlap })
+      }
+    }
+
+    scored.sort((a, b) => b.overlap - a.overlap)
+    return scored.slice(0, opponentCount).map((s) => s.entry)
   }
 
   async function loadUnrankedQueue() {
@@ -219,13 +282,10 @@ export function PlacementMatch() {
         return
       }
       setUnrankedQueue(unranked)
-      setProgressMsg(null)
 
-      if (!distFetchedRef.current && ratingServiceKey) {
-        setPhase('loading-distribution')
-        setProgressMsg('Loading leaderboard ELO distribution...')
-        await ensureDistribution()
-        setProgressMsg(null)
+      if (!rankedIndexRef.current || !distFetchedRef.current) {
+        const elos = await ensureRankedIndex()
+        if (elos.length === 0 && phase !== 'idle') return
       }
 
       startPlacement(unranked, 0)
@@ -234,55 +294,6 @@ export function PlacementMatch() {
       setError(String(e))
       setProgressMsg(null)
     }
-  }
-
-  async function searchOpponents(fileTags: string[]): Promise<{ file: FileMetadata; elo: number; overlap: number }[]> {
-    const minRequired = opponentCount
-    const sortedTags = [...fileTags].sort((a, b) => b.length - a.length)
-    const MAX_TAGS = 3
-
-    for (let tagCount = Math.min(MAX_TAGS, sortedTags.length); tagCount >= 0; tagCount--) {
-      const searchTags = tagCount > 0
-        ? ['system:has count for skill', ...sortedTags.slice(0, tagCount)]
-        : ['system:has count for skill']
-
-      const limit = tagCount > 0 ? 100 : 250
-      const result = await searchFiles({
-        tags: searchTags,
-        file_limit: limit,
-        return_hashes: false,
-      })
-      const ids = result.file_ids ?? []
-      if (ids.length === 0) continue
-
-      const MAX_FETCH = Math.min(ids.length, 200)
-      const candidates: { file: FileMetadata; elo: number; overlap: number }[] = []
-
-      for (let i = 0; i < MAX_FETCH && candidates.length < minRequired * 2; i += 100) {
-        const end = Math.min(i + 100, MAX_FETCH)
-        const chunk = ids.slice(i, end)
-        setProgressMsg(`Fetching opponents (${candidates.length}/${MAX_FETCH})...`)
-        const meta = await fetchFileMetadataByIds(chunk)
-        for (const f of meta) {
-          if (ratingServiceKey) {
-            const v = f.ratings?.[ratingServiceKey]
-            if (typeof v === 'number' && v > 0 && f.file_id !== currentFileRef.current?.file_id) {
-              candidates.push({
-                file: f,
-                elo: v,
-                overlap: getAllKnownTags(f).filter((t) => fileTags.includes(t)).length,
-              })
-            }
-          }
-        }
-      }
-
-      if (candidates.length >= minRequired) {
-        candidates.sort((a, b) => b.overlap - a.overlap)
-        return candidates.slice(0, minRequired)
-      }
-    }
-    return []
   }
 
   async function startPlacement(queue: FileMetadata[], idx: number) {
@@ -307,32 +318,57 @@ export function PlacementMatch() {
     if (thisRound !== placementRoundRef.current) return
     if (url) setCurrentUrl(url)
 
-    setPhase('finding-opponents')
-    setProgressMsg('Searching for ranked opponents...')
-
     try {
       const fileTags = getAllKnownTags(file)
       if (fileTags.length === 0) {
         throw new Error('File has no tags — cannot find opponents')
       }
 
-      const ranked = await searchOpponents(fileTags)
+      const ranked = findOpponentsLocally(fileTags)
       if (ranked.length < 2) {
-        throw new Error('Not enough ranked opponents with similar tags (need at least 2). Try broadening your search tags.')
+        throw new Error('Not enough ranked opponents with similar tags (need at least 2). Try a broader tag filter or rank more files via Smash/Pass first.')
       }
 
       if (thisRound !== placementRoundRef.current) return
 
-      const matchups: PlacementMatchup[] = ranked.map((r) => ({
-        opponentFile: r.file,
-        opponentElo: r.elo,
-        tagOverlap: r.overlap,
-        won: null,
-      }))
+      const matchups: PlacementMatchup[] = ranked.map((r) => {
+        const overlap = fileTags.filter((t) => r.tags.includes(t)).length
+        const stub: FileMetadata = {
+          file_id: r.fileId,
+          hash: r.hash,
+          mime: r.mime,
+          size: 0,
+          width: 0,
+          height: 0,
+          duration: null,
+          has_audio: false,
+          is_inbox: false,
+          is_local: false,
+          is_trashed: false,
+          is_deleted: false,
+          has_exif: false,
+          known_urls: [],
+          blurhash: null,
+          pixel_hash: '',
+          num_frames: null,
+          num_words: null,
+          file_services: { current: {}, deleted: {} },
+          ratings: { [ratingServiceKey!]: r.elo },
+          tags: {},
+          file_viewing_statistics: [],
+          file_notes: {},
+        }
+        return {
+          opponentFile: stub,
+          opponentElo: r.elo,
+          tagOverlap: overlap,
+          won: null,
+        }
+      })
       setMatchups(matchups)
       setProgressMsg(null)
 
-      const oppUrl = await getFileUrl(ranked[0].file.hash).catch(() => null)
+      const oppUrl = await getFileUrl(ranked[0].hash).catch(() => null)
       if (thisRound !== placementRoundRef.current) return
       if (oppUrl) setOpponentUrl(oppUrl)
 
@@ -423,9 +459,10 @@ export function PlacementMatch() {
     setSaved(false)
     setCompletedResults([])
     setPhase('idle')
-    setLeaderboardElos([])
     setProgressMsg(null)
+    rankedIndexRef.current = null
     distFetchedRef.current = false
+    setLeaderboardElos([])
   }
 
   useEffect(() => {
@@ -457,7 +494,7 @@ export function PlacementMatch() {
   function phaseStatus() {
     const msg = progressMsg
     if (!msg && phase === 'loading-queue') return 'Finding unranked files...'
-    if (!msg && phase === 'finding-opponents') return 'Finding ranked opponents...'
+    if (!msg && phase === 'loading-index') return 'Building ranked file index...'
     if (msg) return msg
     return null
   }
@@ -481,6 +518,9 @@ export function PlacementMatch() {
             )}
             {phase === 'result' && result && (
               <span>ELO: <b className="text-yellow-400">{result.placementElo}</b></span>
+            )}
+            {rankedIndexRef.current && (
+              <span>Ranked pool: <b className="text-purple-400">{rankedIndexRef.current.size}</b> files</span>
             )}
           </>
         )}
@@ -507,16 +547,10 @@ export function PlacementMatch() {
           </div>
         )}
 
-        {(phase === 'loading-queue' || phase === 'finding-opponents' || phase === 'fetching-metadata' || phase === 'loading-distribution') && (
+        {(phase === 'loading-queue' || phase === 'loading-index') && (
           <div className="flex items-center gap-2 text-gray-400">
             {phaseSpinner()}
             <span>{phaseStatus() || 'Working...'}</span>
-          </div>
-        )}
-
-        {distLoading && (
-          <div className="flex items-center gap-2 text-gray-400 mt-2">
-            <span className="text-xs text-gray-500">(Caching distribution for future use)</span>
           </div>
         )}
 
