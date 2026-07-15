@@ -32,6 +32,8 @@ async function applyImportData(data: import('../../utils/qr-io').ExportData) {
   if (set.smashPassDualMode !== undefined && s.smashPassDualMode !== set.smashPassDualMode) s.toggleSmashPassDualMode()
   if (set.terminatedMode !== undefined && s.terminatedMode !== set.terminatedMode) s.toggleTerminatedMode()
   if (set.smashPassSwipeVote !== undefined && s.smashPassSwipeVote !== set.smashPassSwipeVote) s.toggleSmashPassSwipeVote()
+  if (set.placementOpponentCount !== undefined) s.setPlacementOpponentCount(set.placementOpponentCount)
+  if (set.placementTags !== undefined) s.setPlacementTags(set.placementTags)
   if (set.galleryLayoutMode !== undefined) s.setGalleryLayoutMode(set.galleryLayoutMode)
   if (set.carouselFloatingPanel !== undefined && s.carouselFloatingPanel !== set.carouselFloatingPanel) s.toggleCarouselFloatingPanel()
   if (set.carouselNavSide !== undefined) s.setCarouselNavSide(set.carouselNavSide)
@@ -287,8 +289,24 @@ export function ConnectionSettings() {
 
       <hr className="border-gray-200 dark:border-gray-700" />
       <GalleryLayoutSettings />
+      <hr className="border-gray-200 dark:border-gray-700" />
+
+      <h3 className="text-sm font-bold">Placement Match</h3>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+        Compare unranked files against ranked opponents to place them on the ELO leaderboard.
+        Opponent ELOs are not affected.
+      </p>
+      <label className="flex items-center gap-2 text-sm">
+        <span className="text-gray-500 dark:text-gray-400">Opponents per placement</span>
+        <input type="range" min={5} max={8} step={1}
+          value={useSettingsStore((s) => s.placementOpponentCount)}
+          onChange={(e) => useSettingsStore.getState().setPlacementOpponentCount(Number(e.target.value))}
+          className="w-24" />
+        <span className="font-mono text-xs">{useSettingsStore((s) => s.placementOpponentCount)}</span>
+      </label>
 
       <hr className="border-gray-200 dark:border-gray-700" />
+
       <h3 className="text-sm font-bold">Search</h3>
       <label className="flex items-center gap-2 text-sm cursor-pointer">
         <input
@@ -328,6 +346,7 @@ export function ConnectionSettings() {
                   searchAutoSubmit: s.searchAutoSubmit,
                   smashPassStaticMode: s.smashPassStaticMode, smashPassTags: s.smashPassTags, smashPassTagsB: s.smashPassTagsB,
                   smashPassDualMode: s.smashPassDualMode, terminatedMode: s.terminatedMode, smashPassSwipeVote: s.smashPassSwipeVote,
+                  placementOpponentCount: s.placementOpponentCount, placementTags: s.placementTags,
                   galleryLayoutMode: s.galleryLayoutMode,
                   carouselFloatingPanel: s.carouselFloatingPanel, carouselNavSide: s.carouselNavSide,
                   smashFloatingPanel: s.smashFloatingPanel, smashNavSide: s.smashNavSide,

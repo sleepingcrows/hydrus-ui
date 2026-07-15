@@ -26,6 +26,8 @@ const SMASH_NAV_SIDE_KEY = 'hydrus-smash-nav-side'
 const SMASH_SWIPE_VOTE_KEY = 'hydrus-smash-swipe-vote'
 const SEARCH_AUTO_SUBMIT_KEY = 'hydrus-search-auto-submit'
 const BOOKMARKS_KEY = 'hydrus-bookmarks'
+const PLACEMENT_OPPONENT_COUNT_KEY = 'hydrus-placement-opponent-count'
+const PLACEMENT_TAGS_KEY = 'hydrus-placement-tags'
 
 type GalleryLayoutMode = 'grid' | 'mosaic'
 
@@ -65,6 +67,8 @@ interface SettingsState {
   smashPassSwipeVote: boolean
   searchAutoSubmit: boolean
   bookmarks: Bookmark[]
+  placementOpponentCount: number
+  placementTags: string[]
   toggleDark: () => void
   toggleSmashPassStatic: () => void
   toggleTerminatedMode: () => void
@@ -88,6 +92,8 @@ interface SettingsState {
   setSmashNavSide: (side: 'left' | 'right') => void
   toggleSmashPassSwipeVote: () => void
   toggleSearchAutoSubmit: () => void
+  setPlacementOpponentCount: (n: number) => void
+  setPlacementTags: (tags: string[]) => void
   addBookmark: (b: Omit<Bookmark, 'id'>) => string
   removeBookmark: (id: string) => void
   hydrate: () => void
@@ -168,6 +174,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   smashPassSwipeVote: loadBool('hydrus-smash-swipe-vote'),
   searchAutoSubmit: loadBool('hydrus-search-auto-submit'),
   bookmarks: loadJson<Bookmark[]>('hydrus-bookmarks', []),
+  placementOpponentCount: loadNum('hydrus-placement-opponent-count', 5),
+  placementTags: loadJson<string[]>('hydrus-placement-tags', []),
   ratingsCacheBuildProgress: null,
   ratingsCacheVersion: 0,
   toggleDark: () => {
@@ -254,6 +262,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const next = !get().searchAutoSubmit
     localStorage.setItem(SEARCH_AUTO_SUBMIT_KEY, String(next))
     set({ searchAutoSubmit: next })
+  },
+  setPlacementOpponentCount: (n) => {
+    const clamped = Math.max(5, Math.min(8, n))
+    localStorage.setItem(PLACEMENT_OPPONENT_COUNT_KEY, String(clamped))
+    set({ placementOpponentCount: clamped })
+  },
+  setPlacementTags: (tags) => {
+    localStorage.setItem(PLACEMENT_TAGS_KEY, JSON.stringify(tags))
+    set({ placementTags: tags })
   },
   addBookmark: (b) => {
     const id = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 8)

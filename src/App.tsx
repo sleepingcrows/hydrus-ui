@@ -12,12 +12,13 @@ import { SmashOrPass } from './features/smash-or-pass/SmashOrPass'
 import { TagAnalyticsPanel } from './features/smash-or-pass/TagAnalyticsPanel'
 import { EloGraph } from './features/smash-or-pass/EloGraph'
 import { TagSkillsPanel } from './features/tag-skills/TagSkillsPanel'
+import { PlacementMatch } from './features/placement-match/PlacementMatch'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
 })
 
-type Tab = 'search' | 'smash-pass' | 'analytics' | 'leaderboard' | 'favorites' | 'settings' | 'home'
+type Tab = 'search' | 'smash-pass' | 'placement' | 'analytics' | 'leaderboard' | 'favorites' | 'settings' | 'home'
 
 export default function App() {
   const { connected, hydrate } = useApiStore()
@@ -66,6 +67,7 @@ export default function App() {
     { id: 'home', label: 'Home' },
     { id: 'search', label: 'Search' },
     { id: 'smash-pass', label: 'Smash/Pass' },
+    { id: 'placement', label: 'Placement' },
     { id: 'leaderboard', label: 'Leaderboard' },
     { id: 'favorites', label: 'Favorites' },
     { id: 'analytics', label: 'Analytics' },
@@ -265,6 +267,7 @@ export default function App() {
           {tab === 'smash-pass' && <SmashOrPass smashSearchOpen={smashSearchOpen} onSmashSearchToggle={() => setSmashSearchOpen((v) => !v)} />}
           {tab === 'leaderboard' && <SearchPage key="leaderboard" presetTags={['system:has count for skill']} title="Leaderboard" sortByRating displayLimit={500} />}
           {tab === 'favorites' && <SearchPage key="favorites" presetTags={favTags} title="Favorites" />}
+          {tab === 'placement' && <PlacementMatch />}
           {tab === 'analytics' && analyticsView === 'tag-preferences' && <TagAnalyticsPanel />}
           {tab === 'analytics' && analyticsView === 'elo-graph' && <EloGraph />}
           {tab === 'analytics' && analyticsView === 'tag-skills' && <TagSkillsPanel />}
